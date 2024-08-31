@@ -15,12 +15,11 @@ def time_delta_str(start,end)->str:
 	i_end=int(end)
 	ret=''
 	#print(f'{start=} {end=} {end - start}')
-	
-	if i_start == i_end:
-		delta = (end - start) * 1000
-		return f'{int(delta)}ms'
-	#print (f'{delta=}')
-	delta = i_end - i_start
+	secs_delta = i_end - i_start
+	if secs_delta == 0:
+		delta = int ( (end - start) * 1000 )
+		return f'{delta}ms'
+	delta=secs_delta
 	if delta > HOUR_SECS:
 		ret = f'{delta // HOUR_SECS }h:'
 		delta = delta % HOUR_SECS
@@ -30,7 +29,22 @@ def time_delta_str(start,end)->str:
 	ret = ret + f"{delta}'"
 	return ret
 
+def differ_percentage(a,b):
+	a = abs(a)
+	b = abs(b)
+	if a > b :
+		return (b/a)*100
+	return (a/b)*100
+
 if __name__ == '__main__':
+	max = 300
+	a = max
+	for b in range(1,max,17):
+		percent = differ_percentage(a,b)
+		print (f'{a=} {b=} {percent:.2f}%')
+		max -= b
+	exit(0)
+	
 	past = time.time()
 	slp=.0001
 	while slp < 362:
