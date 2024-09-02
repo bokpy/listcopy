@@ -8,7 +8,7 @@ import re
 import pathlib
 import time
 import signal
-import extensions
+import extensions as ext
 
 ok_file=os.path.join(os.path.expanduser('~'),'slowcopy.ok')
 bad_file=os.path.join(os.path.expanduser('~'),'slowcopy.bad')
@@ -16,11 +16,13 @@ processed_file=None
 FILTEROUT=['/Cookies/','/Microsoft/','/Windows/','/Cache','#.*#$','\.lnk$',
            '\.tmp$','\.log$','\.err$','~$','/AppData/',
            '\.ini$','/NTUSER.DAT',]
-skiplist=None
+#skiplist=None
 DATA_BEGIN_MARKER='<-DATA_BEGIN_MARKER->'
 DATA_END_MARKER='<-DATA_END_MARKER->'
 MIN_SECS=60
 HOUR_SECS=3600
+SourcePath=''
+INCLUDE_RE=EXCLUDE_RE=None
 DIFFER_PERCENTAGE=5 # percentage of speed difference when the chunk size is
 # recalculated
 MAXCHUNK=16*1024*1024
@@ -39,7 +41,8 @@ FsMaxFile = {
     'reiserfs': 8 * 1024**6,  # 8 EB in bytes
     'jfs': 4 * 1024**6,       # 4 EB in bytes
     'ufs': 2**32 - 1,         # 4 GB in bytes (with 32-bit limit)
-    'zfs': 16 * 1024**6       # 16 EB in bytes
+    'zfs': 16 * 1024**6 ,      # 16 EB in bytes
+	'f2fs': 16 * 1024**4,
 }
 
 def handler(signum, frame):
@@ -67,14 +70,22 @@ parser = argparse.ArgumentParser(
 parser.add_argument('-u', '--usage', help='How to use.',
                     action='store_true')
 parser.add_argument('-s', '--source', help='Generate a source files list.',action='store_true')
-parser.add_argument('-f', '--filter', help=f'don\'t copy {FILTEROUT}',action='store_true')
-parser.add_argument('--skiplist', nargs='*', help='filepaths containing a '
+parser.add_argument('-f', '--filter', help=f'don\'t copy {FILTEROUT}',
+                    action='store_true')
+parser.add_argument('-S','--skip', nargs='*', help='filepaths containing a '
                                                   'match with one of these '
                                                 'regular expressions are skipped')
-parser.add_argument('-m', '--matching',
+parser.add_argument('-m', '--match',
 	help='Only filenames matching one of the regular expressions are listed.',
 	action='store',
 	nargs='*')
+
+parser.add_argument('-x','--extension',
+                    help='select files by extensions  ',
+                    choices=ext.ext_classes.keys(),
+                    nargs='*',
+                    action='store'
+)
 
 parser.add_argument('-t', '--todo',
 	help='print the files that still need to bee copied of the file-list-file.',
@@ -232,26 +243,60 @@ def list_to_do(list_file):
 		os.renames(ok_file,f'{ok_file}.{int(time.time()) // 60}')
 	return 0
 
+
+def create_incl_excl_regs():
+	global INCLUDE_RE,EXCLUDE_RE,FILTEROUT
+	excl_str=''
+	skip_str=''
+	filter_str=''
+	incl_str=''
+	ext_str=''
+	match_str=''
+	incl_list=[]
+	if args.filter:
+		filter_str="|".join(FILTEROUT)
+	if args.skip:
+		skip_str="|".join(args.skip)
+	
+	if filter_str and skip_str:
+		excl_str=skip_str + '|' + filter_str
+	else:
+		excl_str=skip_str + filter_str
+	if len(excl_str)>0:
+		EXCLUDE_RE=re.compile(excl_str)
+	else:
+		EXCLUDE_RE=None
+	if args.extension:
+		print(args.extension)
+		for key in args.extension:
+			print(ext.ext_classes[key])
+			incl_list=incl_list + ext.ext_classes[key]
+		ext_str=r'\.(' + ext.string_extensions(incl_list)+ r')$'
+		print (ext_str)
+		#print(incl_list)
+	if args.match:
+		print (f'{args.match}')
+		match_str="|".join(args.match)
+		print (f'{match_str=}')
+		
+	if ext_str and match_str:
+		incl_str= match_str + '|' + ext_str
+	else:
+		if match_str:
+			incl_str=match_str
+		else:
+			incl_str=ext_str
+	if len(incl_str)>0:
+		INCLUDE_RE=re.compile(incl_str,flags=re.IGNORECASE)
+	else:
+		INCLUDE_RE=None
+	return INCLUDE_RE,EXCLUDE_RE
+	
 def list_sources(path:str)-> int:
 	"""List files to stdout and return the count."""
 	global ok_file,DATA_BEGIN_MARKER,DATA_END_MARKER
-	skiplist=[]
-	if args.skiplist:
-		for reg in args.skiplist:
-			print(f"'{reg}'")
-			p=re.compile(reg)
-			skiplist.append(p)
-		print(f'{skiplist=}')
-		
-	if args.filter:
-		print('--filter ',end='')
-		for reg in FILTEROUT:
-			print(f"'{reg} '",end='')
-			p=re.compile(reg)
-			skiplist.append(p)
-		print()
-		
-	
+	in_re,out_re=create_incl_excl_regs()
+	print(in_re,out_re)
 	if os.path.exists(ok_file):
 		os.remove(ok_file)
 	
@@ -269,10 +314,12 @@ def list_sources(path:str)-> int:
 				fullpath=os.path.join(dirpath,filename)
 				if pathlib.Path(fullpath).is_symlink():
 					continue
-				# if args.filter and SkipThis(fullpath,FILTEROUT):
-				# 	continue
-				if skiplist and SkipReg(fullpath,skiplist):
-					continue
+				if out_re:
+					if out_re.search(fullpath):# skip it
+						continue
+				if in_re:
+					if not in_re.search(fullpath):
+						continue
 				count+=1
 				print(fullpath)
 				
@@ -304,17 +351,6 @@ def differ_percentage(a,b):
 		fraction = (a/b)*100
 	return 100.0 - fraction
 
-def double_chunk(chunk)->int:
-	global MAXCHUNK
-	chunk+=chunk
-	if chunk >= MAXCHUNK:
-		return MAXCHUNK
-	return chunk
-
-def devide_chunk(chunk)->int:
-	if chunk <= 512:
-		return 512
-	return chunk // 2
 
 def format_bytesize(size_in_bytes,strlen=0):
 	# Eenheden voor de grootte in bytes
@@ -334,62 +370,80 @@ def format_bytesize(size_in_bytes,strlen=0):
 	return ret
 
 chunk_size=512
-cpy_spd=1
-prev_copy_speed=0.0
-prev_chunk_size = chunk_size
+chunk_got_bigger=True
+copy_speed=1.0
+prev_copy_speed=copy_speed
+
+def double_chunk(chunk)->int:
+	global MAXCHUNK,chunk_got_bigger
+	chunk+=chunk
+	chunk_got_bigger=True
+	if chunk >= MAXCHUNK:
+		return MAXCHUNK
+	return chunk
+
+def devide_chunk(chunk)->int:
+	global chunk_got_bigger
+	chunk_got_bigger=False
+	if chunk <= 512:
+		return 512
+	return chunk // 2
+
+AverageChunk=0
+ChunkCount=0
+def average_chunk_size(new_chunk):
+	global AverageChunk,ChunkCount
+	pass
 
 def write_chunks_to_file(input_file_path, output_file_path ):
-	global MaxFileSize,chunk_size,cpy_spd,prev_copy_speed,prev_chunk_size
+	global MaxFileSize
+	global chunk_size,chunk_got_bigger,copy_speed,prev_copy_speed
 	bytes_done=0
 	file_size = os.path.getsize(input_file_path)
 	if file_size > MaxFileSize:
 		return OSError(27,'Too Big for Filesystem.')
-	
-	# cpy_spd=1
-	# prev_copy_speed=0.0
-	# prev_chunk_size = chunk_size
-	
+		
 	with open(input_file_path, 'rb') as input_file:
 		while True:
 			start_time = time.time()
 			chunk = input_file.read(chunk_size)
 			if not chunk:
 				break
-		# Process the chunk as needed (e.g., decompress, transform data)
-		# processed_chunk = process_chunk(chunk)
+
 			try:
 				with open(output_file_path, 'ab') as output_file:
 					output_file.write(chunk)
 			except OSError as e:
 				print('write_chunks_to_file Failed')
 				return e
-
+			end_time = time.time()
 			bytes_copied=len(chunk)
 			bytes_done+=bytes_copied
-			
-			end_time = time.time()
-			dt = end_time - start_time
-			cpy_spd = bytes_copied / dt
-			old_chunk = chunk_size
-			percent = differ_percentage(cpy_spd , prev_copy_speed)
-			if percent > DIFFER_PERCENTAGE:
-				if cpy_spd > prev_copy_speed:
-					if prev_chunk_size > chunk_size:
-						chunk_size = devide_chunk(chunk_size)
-					else:
+			time_used = end_time - start_time
+			copy_speed = bytes_copied / time_used
+			speed_difference_percent = differ_percentage(copy_speed ,
+			                                        prev_copy_speed)
+			speed='='
+			if speed_difference_percent > DIFFER_PERCENTAGE:
+				if copy_speed > prev_copy_speed:
+					speed='+'
+					if chunk_got_bigger:
 						chunk_size = double_chunk(chunk_size)
+					else:
+						chunk_size = devide_chunk(chunk_size)
 				else:
-					if prev_chunk_size < chunk_size:
+					speed='-'
+					if chunk_got_bigger:
 						chunk_size = devide_chunk(chunk_size)
 					else:
 						chunk_size = double_chunk(chunk_size)
 						
-				prev_copy_speed = cpy_spd
-				prev_chunk_size = old_chunk
+			prev_copy_speed = copy_speed
 			percent_done= (100*bytes_done)/file_size
 			print( "\r" +
-				f'{percent:5.2f}% speeddelta ' +
-				format_bytesize(cpy_spd,9)  + '/s ' +
+			       f'{speed}' +
+			       f'{speed_difference_percent:5.2f}% ' +
+				format_bytesize(copy_speed,9)  + '/s ' +
 				format_bytesize(file_size-bytes_done) +
 				' >[' + format_bytesize(chunk_size) + ']> ' +
 				format_bytesize(bytes_done) +
@@ -410,10 +464,18 @@ def ShutilCopyFile(source_file,dest_file):
 	return None
 
 def BadFile(nasty,nasty_dest,error):
+	global SourcePath
 	print (f'/nError:{error.errno} "{error.strerror}"')
 	if os.path.exists(nasty_dest):
 		os.remove(nasty_dest)
 		print (f'Removed "{nasty_dest}"')
+	
+	if not os.path.exists(bad_file): # if no bad_file write a header so it
+	# later can bee used as an copy.list file
+		with open(bad_file,'w') as bad:
+			bad.write(DATA_BEGIN_MARKER + '\n')
+			bad.write(SourcePath + '\n')
+
 	with open(bad_file,'a') as bad:
 		bad.write(nasty + '\n')
 	if error.errno == 75: #
@@ -447,14 +509,15 @@ def max_destination_file(path):
 	
 def CopyTo(destination_path):
 	global ok_file,bad_file,DATA_BEGIN_MARKER,DATA_END_MARKER,processed_file
+	global SourcePath
 	max_destination_file(destination_path)
-	psutil.disk_partitions()
+	#psutil.disk_partitions()
 	while True:
 		startmark = input() # look where the list data starts
 		if startmark == DATA_BEGIN_MARKER:
 			break
-	source_path = input()
-	cutlen=len(source_path) # length of the source path
+	SourcePath = input()
+	cutlen=len(SourcePath) # length of the source path
 	
 	count_copied=0
 	if os.path.exists(ok_file): # a the file with the number of copied
@@ -478,7 +541,7 @@ def CopyTo(destination_path):
 		base_path=source_file[cutlen:]
 		#print(f'base_path:"{base_path}"')
 		dest_file=os.path.join(destination_path,base_path)
-		print (f'copy :"{base_path}"\nfrom:"{source_path}"\nto  :'
+		print (f'copy :"{base_path}"\nfrom:"{SourcePath}"\nto  :'
 		       f'"{destination_path}"')
 		dest_dir = os.path.dirname(dest_file)
 		if not os.path.exists(dest_dir):
@@ -518,11 +581,7 @@ def main() -> None:
 		count=list_sources(path)
 		print(f'Files counted {count}', file=sys.stderr)
 		exit(0)
-	if args.matching:
-		count=list_matching(path)
-		print(f'Files counted {count}', file=sys.stderr)
-		exit(0)
-		
+	
 	if path:
 		CopyTo(path)
 		exit(0)

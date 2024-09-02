@@ -5,7 +5,10 @@ import argparse
 import sys
 import re
 import pathlib
+import extensions as ext
 import time
+
+
 MIN_SECS=60
 HOUR_SECS=3600
 
@@ -36,7 +39,40 @@ def differ_percentage(a,b):
 		return (b/a)*100
 	return (a/b)*100
 
+def test_extensions():
+	reg = ext.create_regular_expresion(ext.RASTER_IMAGE_EXT)
+	path='/home/bob/temp/Toshiba'
+	count = 0
+	for dirpath, dirnames, filenames in os.walk(path):
+		for filename in filenames:
+			if reg.search(filename):
+				print (f'{dirpath}/{filename}')
+				count+=1
+	print (reg)
+	print(f'{count} plaatjes in "{path}" gevonden.')
+VIDEO_EXT = [
+    "\.STR",          # YouTube Livestream Recording
+    "\.TTML",         # Timed Text Markup Language Subtitles File
+    "\.RXR",          # RecordXR Recording
+    "\.SWF",          # Shockwave Flash Movie
+    "\.AEP",          # After Effects Project
+    "\.MKV",          # Matroska Video
+    "\.PZ",           # Panzoid Video Project
+    "\.PLOT",         # Plotagon Studio Project
+    "\.KINE",         # KineMaster Project File
+]
+
+def string_extensions(list):
+	extensions=[x[2:] for x in list]
+	print(extensions)
+	extensions="|".join(extensions)
+	print(extensions)
+	
 if __name__ == '__main__':
+	string_extensions(VIDEO_EXT)
+	exit(0)
+	test_extensions()
+	exit(0)
 	max = 300
 	a = max
 	for b in range(1,max,17):
