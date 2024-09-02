@@ -1,9 +1,9 @@
-'''Extendions found at https://fileinfo.com/filetypes/common
-the lists where made with the help of Opera Aria A.I. '''
+#Extendions found at https://fileinfo.com/filetypes/common
+#the lists where made with the help of Opera Aria A.I.
 
-#noinspection PyPep8Naming
 import re
 
+# noinspection SpellCheckingInspection
 VIDEO_EXT = [
     "\.STR",          # YouTube Livestream Recording
     "\.TTML",         # Timed Text Markup Language Subtitles File
@@ -108,6 +108,7 @@ VIDEO_EXT = [
     "\.DPA"           # DrawPlus Animation File
 ]
 
+# noinspection SpellCheckingInspection
 AUDIO_EXT = [
     "\.SEQUENCE",
     "\.SVP",
@@ -215,7 +216,7 @@ AUDIO_EXT = [
     "\.QCP",
     "\.EMX"
 ]
-
+# noinspection SpellCheckingInspection
 D3_EXT = [
     "\.BBMODEL",      # Blockbench 3D Model
     "\.HIPNC",        # Houdini Apprentice File
@@ -319,7 +320,7 @@ D3_EXT = [
     "\.IFC",          # Industry Foundation Classes File
     "\.PSK"           # Unreal Engine Skeletal Model File
 ]
-
+# noinspection SpellCheckingInspection
 RASTER_IMAGE_EXT = [
     "\.BIF",          # Ventana Whole Slide Image
     "\.JXL",          # JPEG XL Image
@@ -420,7 +421,7 @@ RASTER_IMAGE_EXT = [
     "\.MDP",          # FireAlpaca Image
     "\.ECW"           # Enhanced Compression Wavelet Image
 ]
-
+# noinspection SpellCheckingInspection
 VECTOR_IMAGE_EXT = [
     "\.SVG",          # Scalable Vector Graphic
     "\.SVGZ",         # Compressed SVG File
@@ -517,7 +518,7 @@ VECTOR_IMAGE_EXT = [
     "\.CLARIFY",      # Clarify Document
     "\.FH11"          # FreeHand 11 Drawing File
 ]
-
+# noinspection SpellCheckingInspection
 TEXT_EXT = [
     "\.SMF",         # StarMath Formula File
     "\.STY",         # LaTeX Style
@@ -623,7 +624,7 @@ TEXT_EXT = [
     "\.RIS",         # Research Information Systems Citation File
     "\.ODT"          # OpenDocument Text Document
 ]
-
+# noinspection SpellCheckingInspection
 CAD_FILE_EXT = [
     "\.BAK",      # AutoCAD Drawing Backup
     "\.AXM",      # FormIt Sketch
@@ -729,25 +730,23 @@ ext_classes={'video':VIDEO_EXT,'audio':AUDIO_EXT,'3d-model':D3_EXT,
              'raster-image':RASTER_IMAGE_EXT,'vector-image':VECTOR_IMAGE_EXT,
              'text':TEXT_EXT,'cad':CAD_FILE_EXT}
 
-# \.(DRP|AEC|DCR|AMC|BIK|MSWMM|PAC)$
-
-def string_extensions(list)->str:
-    no_slach=[x[2:] for x in list]
-    glued="|".join(no_slach)
+def string_extensions(reg_list)->str:
+    """forms a string from a list from extensions."""
+    no_slash=[x[2:] for x in reg_list]
+    glued="|".join(no_slash)
     return glued
     
-def create_regular_expresion(reg_str:str,re_flags=re.IGNORECASE):
-    '''create_regular_expresion from a extension list
+def create_regular_expression(reg_str:str,re_flags=re.IGNORECASE):
+    """create_regular_expression from a extension list
     parameter re_flags: a combination with operator '|' of re.ASCII re.DEBUG
     re.DOTALL re.IGNORECASE re.LOCALE  re.MULTILINE re.TEMPLATE  re.UNICODE
-    re.VERBOSE
-    '''
+    re.VERBOSE"""
     return re.compile(r'\.(' + reg_str + r')$',flags=re_flags)
 
 if __name__ == '__main__':
     reg_str=string_extensions(VIDEO_EXT)
     print(reg_str)
-    reg=create_regular_expresion(reg_str)
+    reg=create_regular_expression(reg_str)
     print(reg)
 
    

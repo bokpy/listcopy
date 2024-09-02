@@ -1,0 +1,13 @@
+__pycache__/
+.*
+!.gitignore
+*.txt
+*.list
+*~
+*.so
+*.a
+*.o
+a.out
+\#
+doc/
+qodana.yaml
