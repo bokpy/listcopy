@@ -2,6 +2,7 @@
 #the lists where made with the help of Opera Aria A.I.
 
 import re
+import subprocess
 
 # noinspection SpellCheckingInspection
 VIDEO_EXT = [
@@ -107,7 +108,6 @@ VIDEO_EXT = [
     "\.G2M",          # GoToMeeting Recording File
     "\.DPA"           # DrawPlus Animation File
 ]
-
 # noinspection SpellCheckingInspection
 AUDIO_EXT = [
     "\.SEQUENCE",
@@ -729,6 +729,77 @@ CAD_FILE_EXT = [
 ext_classes={'video':VIDEO_EXT,'audio':AUDIO_EXT,'3d-model':D3_EXT,
              'raster-image':RASTER_IMAGE_EXT,'vector-image':VECTOR_IMAGE_EXT,
              'text':TEXT_EXT,'cad':CAD_FILE_EXT}
+
+count_spaces=re.compile(r'^\s*')
+def count_and_strip_leading_spaces(string):
+    global count_spaces
+    match = count_spaces.match(string)
+    count=len(match.group(0))
+    return count,string[count:]
+
+def do_convert(picture_file):
+    #convert pas2.png  json:
+pass
+def do_magick(picture_file):
+    try:
+        meta = subprocess.run(['magick','identify','-verbose',picture_file],
+                              capture_output=True,text=True)
+    except OSError as e:
+        print(f'do_magick Got {e.errno} "{e.strerror}')
+        if e.errno==2:
+            print(f'You need to install "magick" to use do_magick('
+                  f'picture_file).')
+            print(f'https://imagemagick.org/')
+        exit(1)
+    if not meta.stdout:
+        return {}
+    lines=meta.stdout.split('\n')
+    prev_level=0
+    ret={}
+    for line_string in lines:
+        level,key_value=count_and_strip_leading_spaces(line_string)
+        print(f'{level} "{key_value}"')
+        level//=2
+        line=key_value.split(':')
+        if len(line)>1:
+           line[1]=line[1].strip()
+        print(line)
+        if level == 0:
+            print(f'{{"{line[0]}:{{')
+            branche=ret
+            continue
+        if level==prev_level:
+            if len(line)==1:
+                print(f'{{"{line[0]}"')
+                continue
+            print(f'"{line[0]}":"{line[1]}",')
+            continue
+        if level>prev_level:
+             print(f'"{line[0]}":"{line[1]}",')
+             prev_level=level
+             continue
+        print(f'}},')
+        print(f'"{line[0]}":{{"')
+        prev_level=level
+        continue
+        
+   
+def get_picture_meta_data(picture_file,program = 'magick'):
+    """Try to read neta data of a picture and
+    on success return a diprogram = 'magick'ct with the data."""
+    
+    if program == 'magick':
+        return do_magick(picture_file)
+    
+ 
+''''JPEG	.jpg, .jpeg	EXIF, IPTC, XMP
+PNG	.png	tEXt, iTXt, zTXt (limited)
+TIFF	.tif, .tiff	EXIF, IPTC
+BMP	.bmp	Limited metadata
+GIF	.gif	Limited metadata
+HEIF	.heif, .heic	EXIF, XMP
+RAW	Various (e.g., .raw, .cr2, .nef)	EXIF, proprietary formats
+https://imagemagick.org/script/download.php#linux'''
 
 def string_extensions(reg_list)->str:
     """forms a string from a list from extensions."""

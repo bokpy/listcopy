@@ -69,6 +69,12 @@ def string_extensions(list):
 	print(extensions)
 	
 if __name__ == '__main__':
+	ext.get_picture_meta_data("/home/bob/gimpies/pasfoto/1xBril.xcf")
+	ext.get_picture_meta_data("/home/bob/temp/Users/Sander/Desktop/Foto's"
+	                          "/2015/201501/IMG_1183.JPG")
+	ext.get_picture_meta_data("/home/bob/gimpies/pasfoto/pasfotos.pdf")
+	ext.get_picture_meta_data('/home/bob/Arduino/Blink-edit/Blink-edit.ino')
+	exit(0)
 	string_extensions(VIDEO_EXT)
 	exit(0)
 	test_extensions()

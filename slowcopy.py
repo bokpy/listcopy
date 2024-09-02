@@ -26,24 +26,7 @@ INCLUDE_RE=EXCLUDE_RE=None
 DIFFER_PERCENTAGE=5 # percentage of speed difference when the chunk size is
 # recalculated
 MAXCHUNK=16*1024*1024
-MaxFileSize=1024*1024
-FsMaxFile = {
-	'fat16': 2 * 1024**3,    # 2 GB in bytes
-	'vfat': 4 * 1024**3,    # 4 GB in bytes
-    'fat32': 4 * 1024**3,    # 4 GB in bytes
-    'exfat': 16 * 1024**6,   # 16 EB in bytes
-    'ntfs': 16 * 1024**4,    # 16 TB in bytes
-    'hfs_plus': 8 * 1024**6, # 8 EB in bytes
-    'apfs': 8 * 1024**6,     # 8 EB in bytes
-    'ext4': 16 * 1024**4,     # 16 TB in bytes
-    'btrfs': 16 * 1024**6,    # 16 EB in bytes
-    'xfs': 8 * 1024**6,       # 8 EB in bytes
-    'reiserfs': 8 * 1024**6,  # 8 EB in bytes
-    'jfs': 4 * 1024**6,       # 4 EB in bytes
-    'ufs': 2**32 - 1,         # 4 GB in bytes (with 32-bit limit)
-    'zfs': 16 * 1024**6 ,      # 16 EB in bytes
-	'f2fs': 16 * 1024**4,
-}
+FsMaxFileSize=1024*1024
 
 def handler(signum, frame):
 	global processed_file
@@ -66,7 +49,8 @@ parser = argparse.ArgumentParser(
 	epilog='Have Fun'
 )
 
-# parser.add_argument('-n', '--name'  , help='Full Name off a Mouse' , action='store')
+parser.add_argument('-v', '--verbose', help='Verbose output.',
+                    action='store_true')
 parser.add_argument('-u', '--usage', help='How to use.',
                     action='store_true')
 parser.add_argument('-s', '--source', help='Generate a source files list.',action='store_true')
@@ -116,21 +100,6 @@ def HowTo()->None:
 	print ('slowcopy destination_dir < sourcefilelist')
 	print ('To start or restart copying')
 	
-def SkipThis(filepath:str,skiplist:list)->bool:
-	for skip in skiplist:
-		if skip in filepath:
-			return True
-	return False
-
-def SkipReg(filepath:str,skiplist:list)->bool:
-	#print('SkipReg')
-	for skip in skiplist:
-		#print(f'{skip=}')
-		#print(f'{skip.search(filepath)}')
-		if skip.search(filepath):
-			return True
-	return False
-
 def time_delta_str(start, end) -> str:
 	global MIN_SECS, HOUR_SECS
 	i_start = int(start)
@@ -152,48 +121,42 @@ def time_delta_str(start, end) -> str:
 	ret = ret + f"{delta}'"
 	return ret
 
-def match(file_name:str,regexs:list)->bool:
-	for reg in regexs:
-		if reg.search(file_name):
-			return True
-	return False
 
-def list_matching(path)-> int:
-	global DATA_BEGIN_MARKER,DATA_END_MARKER,ok_file
-	match_list=[]
-	for reg in args.matching:
-		print(f"'{reg}'")
-		p=re.compile(reg)
-		match_list.append(p)
-		print(f'{match_list=}')
-		
-	if os.path.exists(ok_file):
-		os.remove(ok_file)
-	
-	if not os.path.exists(path):
-		print(f'"{path}" does not exist.')
-		exit(1)
-		
-	count = 0
-	print (DATA_BEGIN_MARKER)
-	print (path)
-	try:
-		for dirpath, dirnames, filenames in os.walk(path):
-			for filename in filenames:
-				fullpath=os.path.join(dirpath,filename)
-				if pathlib.Path(fullpath).is_symlink():
-					continue
-				# if args.filter and SkipThis(fullpath,FILTEROUT):
-				# 	continue
-				if match(fullpath,match_list):
-					count+=1
-					print(fullpath)
-				
-	except OSError as err:
-		print(f'OSError : {type(err)} {err.args}')
-		exit(1)
-	print (DATA_END_MARKER)
-	return count
+# def list_matching(path)-> int:
+# 	global DATA_BEGIN_MARKER,DATA_END_MARKER,ok_file
+# 	match_list=[]
+# 	for reg in args.matching:
+# 		print(f"'{reg}'")
+# 		p=re.compile(reg)
+# 		match_list.append(p)
+# 		print(f'{match_list=}')
+#
+# 	if os.path.exists(ok_file):
+# 		os.remove(ok_file)
+#
+# 	if not os.path.exists(path):
+# 		print(f'"{path}" does not exist.')
+# 		exit(1)
+#
+# 	count = 0
+# 	print (DATA_BEGIN_MARKER)
+# 	print (path)
+# 	try:
+# 		for dirpath, dirnames, filenames in os.walk(path):
+# 			for filename in filenames:
+# 				fullpath=os.path.join(dirpath,filename)
+# 				if pathlib.Path(fullpath).is_symlink():
+# 					continue
+#
+# 				if match(fullpath,match_list):
+# 					count+=1
+# 					print(fullpath)
+#
+# 	except OSError as err:
+# 		print(f'OSError : {type(err)} {err.args}')
+# 		exit(1)
+# 	print (DATA_END_MARKER)
+# 	return count
 	
 def list_to_do(list_file):
 	global ok_file,DATA_BEGIN_MARKER,DATA_END_MARKER
@@ -242,7 +205,6 @@ def list_to_do(list_file):
 	if not sys.stdout.isatty(): # being piped or redirected
 		os.renames(ok_file,f'{ok_file}.{int(time.time()) // 60}')
 	return 0
-
 
 def create_incl_excl_regs():
 	global INCLUDE_RE,EXCLUDE_RE,FILTEROUT
@@ -342,7 +304,10 @@ def ErrorExit(e,message=None)->None:
 	      'medium')
 	exit(1)
 	
+	# chunk size optimising
+	
 def differ_percentage(a,b):
+	"""gives a the percentage the smallest divers from the biggest."""
 	a = abs(a)
 	b = abs(b)
 	if a > b :
@@ -351,16 +316,16 @@ def differ_percentage(a,b):
 		fraction = (a/b)*100
 	return 100.0 - fraction
 
-
 def format_bytesize(size_in_bytes,strlen=0):
-	# Eenheden voor de grootte in bytes
+	"""Make a compact human readable string of byte sizes."""
 	units = ["B", "KB", "MB", "GB", "TB"]
 	size = size_in_bytes
 	unit_index = 0
 
 	# Loop totdat de grootte kleiner is dan 1024 of de hoogste eenheid is bereikt
+	
 	while size >= 1024 and unit_index < len(units) - 1:
-		size /= 1024.0
+		size /= 1024
 		unit_index += 1
 
 	# Return de grootte als een string met twee decimalen en de juiste eenheid
@@ -382,25 +347,38 @@ def double_chunk(chunk)->int:
 		return MAXCHUNK
 	return chunk
 
-def devide_chunk(chunk)->int:
+def decrease_chunk(chunk,fraction=4)->int:
+	"""Make the chunks a fraction smaller so 2 halves 4 substracs 1/4."""
 	global chunk_got_bigger
 	chunk_got_bigger=False
-	if chunk <= 512:
-		return 512
-	return chunk // 2
+	cut_size=chunk // fraction
+	chunk-=cut_size
+	chunk-= chunk % FsBlockSize
+	if chunk <= FsBlockSize:
+		return FsBlockSize
+	return chunk
 
 AverageChunk=0
 ChunkCount=0
-def average_chunk_size(new_chunk):
+def average_chunk_size(chunk_size):
 	global AverageChunk,ChunkCount
-	pass
+	new_count=ChunkCount + 1
+	muliplier=ChunkCount/new_count
+	delta=chunk_size/new_count
+	AverageChunk=(AverageChunk*muliplier) + delta
+	ChunkCount=new_count
+	return AverageChunk
+
+# end chunk size optimising
 
 def write_chunks_to_file(input_file_path, output_file_path ):
-	global MaxFileSize
+	global FsMaxFileSize
 	global chunk_size,chunk_got_bigger,copy_speed,prev_copy_speed
 	bytes_done=0
 	file_size = os.path.getsize(input_file_path)
-	if file_size > MaxFileSize:
+	if file_size > FsMaxFileSize:
+		print(f'->{input_file_path}<-')
+		print(f'{FsMaxFileSize} {file_size} ')
 		return OSError(27,'Too Big for Filesystem.')
 		
 	with open(input_file_path, 'rb') as input_file:
@@ -424,44 +402,47 @@ def write_chunks_to_file(input_file_path, output_file_path ):
 			speed_difference_percent = differ_percentage(copy_speed ,
 			                                        prev_copy_speed)
 			speed='='
+			
 			if speed_difference_percent > DIFFER_PERCENTAGE:
 				if copy_speed > prev_copy_speed:
 					speed='+'
 					if chunk_got_bigger:
 						chunk_size = double_chunk(chunk_size)
 					else:
-						chunk_size = devide_chunk(chunk_size)
+						chunk_size = decrease_chunk(chunk_size)
 				else:
 					speed='-'
 					if chunk_got_bigger:
-						chunk_size = devide_chunk(chunk_size)
+						chunk_size = decrease_chunk(chunk_size)
 					else:
 						chunk_size = double_chunk(chunk_size)
-						
+			average_chunk_size(chunk_size)
 			prev_copy_speed = copy_speed
 			percent_done= (100*bytes_done)/file_size
-			print( "\r" +
-			       f'{speed}' +
-			       f'{speed_difference_percent:5.2f}% ' +
-				format_bytesize(copy_speed,9)  + '/s ' +
-				format_bytesize(file_size-bytes_done) +
-				' >[' + format_bytesize(chunk_size) + ']> ' +
-				format_bytesize(bytes_done) +
-				f' {percent_done:.2f}% done.' +
-				"     " ,
-				end=''
-			       )
-	print()
+			if args.verbose:
+				print( "\r" +
+						f'{speed}' +
+						f'{speed_difference_percent:5.2f}% ' +
+						f'[{format_bytesize(AverageChunk)}] ' +
+						format_bytesize(copy_speed,9)  + '/s ' +
+						format_bytesize(file_size-bytes_done) +
+						' >[' + format_bytesize(chunk_size) + ']> ' +
+						format_bytesize(bytes_done) +
+						f' {percent_done:.2f}% done.' +
+						"     " ,
+						end=''
+					)
+	if args.verbose:print()
 	return None
 
-def ShutilCopyFile(source_file,dest_file):
-	try:
-		shutil.copyfile(source_file,dest_file,follow_symlinks=False)
-		print ('os.sync()',end=' ')
-		os.sync()
-	except IOError as e:
-		return e
-	return None
+# def ShutilCopyFile(source_file,dest_file):
+# 	try:
+# 		shutil.copyfile(source_file,dest_file,follow_symlinks=False)
+# 		print ('os.sync()',end=' ')
+# 		os.sync()
+# 	except IOError as e:
+# 		return e
+# 	return None
 
 def BadFile(nasty,nasty_dest,error):
 	global SourcePath
@@ -484,33 +465,61 @@ def BadFile(nasty,nasty_dest,error):
 		return
 	ErrorExit(error)
 
-def max_destination_file(path):
-	global MaxFileSize,FsMaxFile
-	#sdiskpart(device='/dev/sdb5', mountpoint='/media/bob/YELOWFLASH',
-	# fstype='vfat', opts='rw,nosuid,nodev,relatime,uid=1000,gid=1000,
-	# fmask=0022,dmask=0022,codepage=437,iocharset=iso8859-1,shortname=mixed,
-	# showexec,utf8,flush,errors=remount-ro', maxfile=1530, maxpath=4096)
-	#print(FsMaxFile)
-	partions=[(x.mountpoint,x.fstype) for x in psutil.disk_partitions()]
-	partions.sort(reverse=True,key=lambda x: len(x[0]))
-	# print(partions)
-	# exit(1)
-	for mnt_pnt,fs_type in partions:
-		mnt_len=len(mnt_pnt)
-		# print(f'"{mnt_pnt}" == "{path[:mnt_len]}" {mnt_len}'
-		#       f' {mnt_pnt == path[:mnt_len]}')
-		#
-		if mnt_pnt == path[:mnt_len]:
-			MaxFileSize=FsMaxFile[fs_type]
-			# print(f'{mnt_pnt} {fs_type=}'
-			#       f'max {format_bytesize(MaxFileSize)}')
-			return MaxFileSize
-	exit(1)
+def target_fs_properties(destination_path):
+	"""Determine the maximum file size and the block size for the
+	filesystem "path" is on.
+	returns the global FsMaxFileSize,FsBlockSize,
+	FsBlockSize"""
+	global FsMaxFileSize,FsBlockSize
+	fs_max_file = {
+	'fat16': 2 * 1024**3,    # 2 GB in bytes
+	'vfat': 4 * 1024**3,    # 4 GB in bytes
+    'fat32': 4 * 1024**3,    # 4 GB in bytes
+    'exfat': 16 * 1024**6,   # 16 EB in bytes
+    'ntfs': 16 * 1024**4,    # 16 TB in bytes
+    'hfs_plus': 8 * 1024**6, # 8 EB in bytes
+    'apfs': 8 * 1024**6,     # 8 EB in bytes
+    'ext4': 16 * 1024**4,     # 16 TB in bytes
+    'btrfs': 16 * 1024**6,    # 16 EB in bytes
+    'xfs': 8 * 1024**6,       # 8 EB in bytes
+    'reiserfs': 8 * 1024**6,  # 8 EB in bytes
+    'jfs': 4 * 1024**6,       # 4 EB in bytes
+    'ufs': 2**32 - 1,         # 4 GB in bytes (with 32-bit limit)
+    'zfs': 16 * 1024**6 ,      # 16 EB in bytes
+	'f2fs': 16 * 1024**4,
+}
+	st = os.statvfs(destination_path)
+	FsBlockSize=st.f_bsize
+	partitions=psutil.disk_partitions()
+	sorted_partitions = sorted(partitions, key=lambda x: len(x.mountpoint),
+	                           reverse=True)
+	
+	for part in sorted_partitions:
+		if  part.mountpoint in destination_path:
+			FsMaxFileSize=fs_max_file[part.fstype]
+			break
+	print( f'type {part.fstype} {FsMaxFileSize=} {FsBlockSize=}')
+	return FsMaxFileSize,FsBlockSize
+
+def coping_done(count):
+	global bad_file,DATA_END_MARKER
+	if not os.path.exists(bad_file):
+		print (f'All {count} files are copied Bye.')
+		exit(0)
+	
+	print(f'{count} files with success copied .')
+	print(f'The files "{bad_file}" failed.')
+	print('These files could not bee copied because of errors or filesystem')
+	print('limitations.')
+	print(f'You can retry this list on an other medium or filesystem.')
+	with open(bad_file,'a') as bad:
+		bad.write(DATA_END_MARKER+'\n')
+	exit(0)
 	
 def CopyTo(destination_path):
 	global ok_file,bad_file,DATA_BEGIN_MARKER,DATA_END_MARKER,processed_file
 	global SourcePath
-	max_destination_file(destination_path)
+	target_fs_properties(destination_path)
 	#psutil.disk_partitions()
 	while True:
 		startmark = input() # look where the list data starts
@@ -524,7 +533,8 @@ def CopyTo(destination_path):
 		# files exists read it
 		with open(ok_file,'r') as f:
 			count_copied=int(f.read())
-			print (f'{count_copied} files are copied earlier.')
+			if args.verbose:
+				print (f'{count_copied} files are copied earlier.')
 			
 	done = count_copied # skip what is done
 	while done>0:
@@ -534,15 +544,16 @@ def CopyTo(destination_path):
 	while True:
 		source_file = input()
 		if DATA_END_MARKER in source_file:
-			print (f'{count_copied} Files copied done')
+			coping_done(count_copied)
 			break
 		#source_file=source_file[:-1] # cut newline
 		#print(f'"{source_file}"')
 		base_path=source_file[cutlen:]
 		#print(f'base_path:"{base_path}"')
 		dest_file=os.path.join(destination_path,base_path)
-		print (f'copy :"{base_path}"\nfrom:"{SourcePath}"\nto  :'
-		       f'"{destination_path}"')
+		if args.verbose:
+			print (f'copy :"{base_path}"\nfrom:"{SourcePath}"\nto  :'
+				f'"{destination_path}"')
 		dest_dir = os.path.dirname(dest_file)
 		if not os.path.exists(dest_dir):
 			try:
@@ -558,10 +569,11 @@ def CopyTo(destination_path):
 			if error:
 				BadFile(source_file,dest_file,error)
 			end_time=time.time()
-			print ('File copied in: '+ time_delta_str(start_time,end_time) +
+			if args.verbose:
+				print ('File copied in: '+ time_delta_str(start_time,end_time) +
 			       f' files now copied: {count_copied+1}.\n')
 		else:
-			print ('destination existed.')
+			if args.verbose:print ('destination existed.')
 		count_copied+=1
 		with open(ok_file, 'w' ) as ok:
 			ok.write(str(count_copied))
