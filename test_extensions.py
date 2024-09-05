@@ -7,6 +7,7 @@ import re
 import pathlib
 import extensions as ext
 import time
+import json
 
 
 MIN_SECS=60
@@ -69,11 +70,35 @@ def string_extensions(list):
 	print(extensions)
 	
 if __name__ == '__main__':
-	ext.get_picture_meta_data("/home/bob/gimpies/pasfoto/1xBril.xcf")
-	ext.get_picture_meta_data("/home/bob/temp/Users/Sander/Desktop/Foto's"
-	                          "/2015/201501/IMG_1183.JPG")
-	ext.get_picture_meta_data("/home/bob/gimpies/pasfoto/pasfotos.pdf")
-	ext.get_picture_meta_data('/home/bob/Arduino/Blink-edit/Blink-edit.ino')
+	p='exiftool'
+	r=ext.get_picture_meta_data("/home/bob/gimpies/pasfoto/1xBril.xcf",p)
+	if r:
+		print(json.dumps(r, indent=4))
+	else:
+		print('No luck')
+	r=ext.get_picture_meta_data("/home/bob/temp/Users/Sander/Desktop/Foto's"
+	                          "/2015/201501/IMG_1183.JPG",p)
+	if r:
+		print(json.dumps(r, indent=4))
+	else:
+		print('No luck')
+	r=ext.get_picture_meta_data("/home/bob/gimpies/pasfoto/pasfotos.pdf",p)
+	if r:
+		print(json.dumps(r, indent=4))
+	else:
+		print('No luck')
+	r=ext.get_picture_meta_data(
+		'/home/bob/Arduino/Blink-edit/Blink-edit.ino',p)
+	if r:
+		print(json.dumps(r, indent=4))
+	else:
+		print('No luck')
+	r=ext.get_picture_meta_data(
+		'/home/bob/20240903_105152.jpg',p)
+	if r:
+		print(json.dumps(r, indent=4))
+	else:
+		print('No luck')
 	exit(0)
 	string_extensions(VIDEO_EXT)
 	exit(0)

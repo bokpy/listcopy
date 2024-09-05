@@ -1,6 +1,9 @@
 #!/usr/bin/python3
 import os
+#import keyboard needs root
 import shutil
+from fileinput import filename
+
 import psutil
 import argparse
 import sys
@@ -9,6 +12,8 @@ import pathlib
 import time
 import signal
 import extensions as ext
+
+DEBUGPRINT=print
 
 ok_file=os.path.join(os.path.expanduser('~'),'slowcopy.ok')
 bad_file=os.path.join(os.path.expanduser('~'),'slowcopy.bad')
@@ -19,23 +24,25 @@ FILTEROUT=['/Cookies/','/Microsoft/','/Windows/','/Cache','#.*#$','\.lnk$',
 #skiplist=None
 DATA_BEGIN_MARKER='<-DATA_BEGIN_MARKER->'
 DATA_END_MARKER='<-DATA_END_MARKER->'
+CONT='<CONTINUE>'
 MIN_SECS=60
 HOUR_SECS=3600
-SourcePath=''
+WorkPath='' # path for reading source listing or copy the files to
 INCLUDE_RE=EXCLUDE_RE=None
 DIFFER_PERCENTAGE=5 # percentage of speed difference when the chunk size is
 # recalculated
 MAXCHUNK=16*1024*1024
 FsMaxFileSize=1024*1024
+FsBlockSize=1024
 
 def handler(signum, frame):
 	global processed_file
 	signame = signal.Signals(signum).name
-	print('\n\nINTERUPTED by a SIGNAL.')
+	#DEBUGPRINT('\n\nINTERUPTED by a SIGNAL.')
 	if processed_file and os.path.exists(processed_file):
 		os.remove(processed_file)
-		print (f'removed partly copied "{processed_file}"')
-	print(f'Signal handler called with signal {signame} ({signum})')
+		#DEBUGPRINT (f'removed partly copied "{processed_file}"')
+	#DEBUGPRINT(f'Signal handler called with signal {signame} ({signum})')
 	sys.exit(signum)
 
 signal.signal(signal.SIGINT, handler)
@@ -43,9 +50,8 @@ signal.signal(signal.SIGINT, handler)
 ##################  Argument parsing  ###################
 parser = argparse.ArgumentParser(
 	prog='slowcopy.py',
-	description='Make a slow but failsafe copy of directories e.g. to usb '
-	            'thumb drives. ',
-	            
+	description='Make a slow copy of directories'
+		' without frying a flash drive.',
 	epilog='Have Fun'
 )
 
@@ -72,7 +78,7 @@ parser.add_argument('-x','--extension',
 )
 
 parser.add_argument('-t', '--todo',
-	help='print the files that still need to bee copied of the file-list-file.',
+	help='#DEBUGPRINT the files that still need to bee copied of the file-list-file.',
 	action='store_true')
  
 # parser.add_argument('-c','--chunk',
@@ -81,7 +87,8 @@ parser.add_argument('-t', '--todo',
 # 		            action='store',
 #                     nargs='?')
 
-parser.add_argument('Path' , help = 'Path to the source or destination directory',
+parser.add_argument('Path' ,
+                    help = f'Path to the source or destination directory {CONT} to continue copy to the previous directory',
                     action='store', nargs='?')
 
 args = parser.parse_args()
@@ -105,12 +112,12 @@ def time_delta_str(start, end) -> str:
 	i_start = int(start)
 	i_end = int(end)
 	ret = ''
-	# print(f'{start=} {end=} {end - start}')
+	# #DEBUGPRINT(f'{start=} {end=} {end - start}')
 	
 	if i_start == i_end:
 		delta = (end - start) * 1000
 		return f'{int(delta)}ms'
-	# print (f'{delta=}')
+	# #DEBUGPRINT (f'{delta=}')
 	delta = i_end - i_start
 	if delta > HOUR_SECS:
 		ret = f'{delta // HOUR_SECS}:'
@@ -120,87 +127,50 @@ def time_delta_str(start, end) -> str:
 		delta = delta % MIN_SECS
 	ret = ret + f"{delta}'"
 	return ret
-
-
-# def list_matching(path)-> int:
-# 	global DATA_BEGIN_MARKER,DATA_END_MARKER,ok_file
-# 	match_list=[]
-# 	for reg in args.matching:
-# 		print(f"'{reg}'")
-# 		p=re.compile(reg)
-# 		match_list.append(p)
-# 		print(f'{match_list=}')
-#
-# 	if os.path.exists(ok_file):
-# 		os.remove(ok_file)
-#
-# 	if not os.path.exists(path):
-# 		print(f'"{path}" does not exist.')
-# 		exit(1)
-#
-# 	count = 0
-# 	print (DATA_BEGIN_MARKER)
-# 	print (path)
-# 	try:
-# 		for dirpath, dirnames, filenames in os.walk(path):
-# 			for filename in filenames:
-# 				fullpath=os.path.join(dirpath,filename)
-# 				if pathlib.Path(fullpath).is_symlink():
-# 					continue
-#
-# 				if match(fullpath,match_list):
-# 					count+=1
-# 					print(fullpath)
-#
-# 	except OSError as err:
-# 		print(f'OSError : {type(err)} {err.args}')
-# 		exit(1)
-# 	print (DATA_END_MARKER)
-# 	return count
 	
 def list_to_do(list_file):
 	global ok_file,DATA_BEGIN_MARKER,DATA_END_MARKER
 	
 	if not os.path.exists(ok_file):
-		print (f'no "{ok_file}" so can\'t know wath is already copied.')
-		print ('Sorry exit')
+		#DEBUGPRINT (f'no "{ok_file}" so can\'t know wath is already copied.')
+		#DEBUGPRINT ('Sorry exit')
 		exit(0)
 		
 	with open(ok_file,'r') as f:
 		c=f.read()
 		done_count=int(c)
 		
-	print (f'There are {done_count} already copied.')
+	#DEBUGPRINT (f'There are {done_count} already copied.')
 	#return 0
 	#time.sleep(3)
 	with open(list_file,'r') as f:
 		while True: # find the start of the list
 			find_mark = f.readline()
 			if not find_mark:
-				print(f'no "{DATA_BEGIN_MARKER}" found.')
+				#DEBUGPRINT(f'no "{DATA_BEGIN_MARKER}" found.')
 				exit(1)
 			find_mark=find_mark[:-1]
 			# the list data starts
 			if find_mark == DATA_BEGIN_MARKER:
 				break
-			print(find_mark)
+			#DEBUGPRINT(find_mark)
 		source_dir=f.readline()
 		# time.sleep(3)
 		# return 0
 		count = done_count
 		while True:
 			source_file = f.readline()[:-1]
-			print(f'{count} "{source_file}"')
+			#DEBUGPRINT(f'{count} "{source_file}"')
 			count-=1
 			if count <= 0:
 				break
 		
-		print(DATA_BEGIN_MARKER)
-		print(source_dir)
+		#DEBUGPRINT(DATA_BEGIN_MARKER)
+		#DEBUGPRINT(source_dir)
 		#return 0
 		source_file = f.readline()
 		while source_file:
-			print(source_file[:-1])
+			#DEBUGPRINT(source_file[:-1])
 			source_file = f.readline()
 	if not sys.stdout.isatty(): # being piped or redirected
 		os.renames(ok_file,f'{ok_file}.{int(time.time()) // 60}')
@@ -229,17 +199,17 @@ def create_incl_excl_regs():
 	else:
 		EXCLUDE_RE=None
 	if args.extension:
-		print(args.extension)
+		#DEBUGPRINT(args.extension)
 		for key in args.extension:
-			print(ext.ext_classes[key])
+			#DEBUGPRINT(ext.ext_classes[key])
 			incl_list=incl_list + ext.ext_classes[key]
 		ext_str=r'\.(' + ext.string_extensions(incl_list)+ r')$'
-		print (ext_str)
-		#print(incl_list)
+		#DEBUGPRINT (ext_str)
+		#DEBUGPRINT(incl_list)
 	if args.match:
-		print (f'{args.match}')
+		#DEBUGPRINT (f'{args.match}')
 		match_str="|".join(args.match)
-		print (f'{match_str=}')
+		#DEBUGPRINT (f'{match_str=}')
 		
 	if ext_str and match_str:
 		incl_str= match_str + '|' + ext_str
@@ -254,24 +224,27 @@ def create_incl_excl_regs():
 		INCLUDE_RE=None
 	return INCLUDE_RE,EXCLUDE_RE
 	
-def list_sources(path:str)-> int:
+def list_sources()-> int:
 	"""List files to stdout and return the count."""
-	global ok_file,DATA_BEGIN_MARKER,DATA_END_MARKER
+	global WorkPath,ok_file,DATA_BEGIN_MARKER,DATA_END_MARKER
 	in_re,out_re=create_incl_excl_regs()
-	print(in_re,out_re)
+	#DEBUGPRINT(in_re,out_re)
 	if os.path.exists(ok_file):
 		os.remove(ok_file)
 	
-	if not os.path.exists(path):
-		print(f'"{path}" does not exist.')
+	if WorkPath[-1:] != '/':
+		WorkPath+='/'
+		
+	if not os.path.exists(WorkPath):
+		#DEBUGPRINT(f'"{WorkPath}" does not exist.')
 		exit(1)
 		
 	count = 0
 	
-	print (DATA_BEGIN_MARKER)
-	print (path)
+	#DEBUGPRINT (DATA_BEGIN_MARKER)
+	#DEBUGPRINT (WorkPath)
 	try:
-		for dirpath, dirnames, filenames in os.walk(path):
+		for dirpath, dirnames, filenames in os.walk(WorkPath):
 			for filename in filenames:
 				fullpath=os.path.join(dirpath,filename)
 				if pathlib.Path(fullpath).is_symlink():
@@ -283,19 +256,19 @@ def list_sources(path:str)-> int:
 					if not in_re.search(fullpath):
 						continue
 				count+=1
-				print(fullpath)
+				#DEBUGPRINT(fullpath)
 				
 	except OSError as err:
-		print(f'OSError : {type(err)} {err.args}')
+		#DEBUGPRINT(f'OSError : {type(err)} {err.args}')
 		exit(1)
 	except TypeError as err:
-		print(f'TypeError : "did you give a valid source directory?')
+		#DEBUGPRINT(f'TypeError : "did you give a valid source directory?')
 		exit(1)
-	print (DATA_END_MARKER)
+	#DEBUGPRINT (DATA_END_MARKER)
 	return count
 	
 def ErrorExit(e,message=None)->None:
-	print(f"I/O error ({e.errno}): {e.strerror}")
+	#DEBUGPRINT(f"I/O error ({e.errno}): {e.strerror}")
 	if message:
 		print(message)
 	# I/O error (28): No space left on device
@@ -334,7 +307,7 @@ def format_bytesize(size_in_bytes,strlen=0):
 		return ret.rjust(strlen,' ')
 	return ret
 
-chunk_size=512
+chunk_size=0
 chunk_got_bigger=True
 copy_speed=1.0
 prev_copy_speed=copy_speed
@@ -372,10 +345,13 @@ def average_chunk_size(chunk_size):
 # end chunk size optimising
 
 def write_chunks_to_file(input_file_path, output_file_path ):
+	#DEBUGPRINT(f'BKC {input_file_path} \n {output_file_path}')
 	global FsMaxFileSize
 	global chunk_size,chunk_got_bigger,copy_speed,prev_copy_speed
 	bytes_done=0
 	file_size = os.path.getsize(input_file_path)
+	if args.verbose:
+		print(f'filesize: {format_bytesize(file_size)}')
 	if file_size > FsMaxFileSize:
 		print(f'->{input_file_path}<-')
 		print(f'{FsMaxFileSize} {file_size} ')
@@ -392,7 +368,7 @@ def write_chunks_to_file(input_file_path, output_file_path ):
 				with open(output_file_path, 'ab') as output_file:
 					output_file.write(chunk)
 			except OSError as e:
-				print('write_chunks_to_file Failed')
+				#DEBUGPRINT('write_chunks_to_file Failed')
 				return e
 			end_time = time.time()
 			bytes_copied=len(chunk)
@@ -438,7 +414,7 @@ def write_chunks_to_file(input_file_path, output_file_path ):
 # def ShutilCopyFile(source_file,dest_file):
 # 	try:
 # 		shutil.copyfile(source_file,dest_file,follow_symlinks=False)
-# 		print ('os.sync()',end=' ')
+# 		#DEBUGPRINT ('os.sync()',end=' ')
 # 		os.sync()
 # 	except IOError as e:
 # 		return e
@@ -446,10 +422,10 @@ def write_chunks_to_file(input_file_path, output_file_path ):
 
 def BadFile(nasty,nasty_dest,error):
 	global SourcePath
-	print (f'/nError:{error.errno} "{error.strerror}"')
+	#DEBUGPRINT (f'/nError:{error.errno} "{error.strerror}"')
 	if os.path.exists(nasty_dest):
 		os.remove(nasty_dest)
-		print (f'Removed "{nasty_dest}"')
+		#DEBUGPRINT (f'Removed "{nasty_dest}"')
 	
 	if not os.path.exists(bad_file): # if no bad_file write a header so it
 	# later can bee used as an copy.list file
@@ -470,7 +446,7 @@ def target_fs_properties(destination_path):
 	filesystem "path" is on.
 	returns the global FsMaxFileSize,FsBlockSize,
 	FsBlockSize"""
-	global FsMaxFileSize,FsBlockSize
+	global FsMaxFileSize,FsBlockSize,chunk_size
 	fs_max_file = {
 	'fat16': 2 * 1024**3,    # 2 GB in bytes
 	'vfat': 4 * 1024**3,    # 4 GB in bytes
@@ -488,8 +464,7 @@ def target_fs_properties(destination_path):
     'zfs': 16 * 1024**6 ,      # 16 EB in bytes
 	'f2fs': 16 * 1024**4,
 }
-	st = os.statvfs(destination_path)
-	FsBlockSize=st.f_bsize
+	
 	partitions=psutil.disk_partitions()
 	sorted_partitions = sorted(partitions, key=lambda x: len(x.mountpoint),
 	                           reverse=True)
@@ -497,70 +472,129 @@ def target_fs_properties(destination_path):
 	for part in sorted_partitions:
 		if  part.mountpoint in destination_path:
 			FsMaxFileSize=fs_max_file[part.fstype]
+			st = os.statvfs(part.mountpoint)
+			FsBlockSize=st.f_bsize
 			break
-	print( f'type {part.fstype} {FsMaxFileSize=} {FsBlockSize=}')
+	#DEBUGPRINT( f'type {part.fstype} {FsMaxFileSize=} {FsBlockSize=}')
 	return FsMaxFileSize,FsBlockSize
 
 def coping_done(count):
 	global bad_file,DATA_END_MARKER
 	if not os.path.exists(bad_file):
-		print (f'All {count} files are copied Bye.')
+		#DEBUGPRINT (f'All {count} files are copied Bye.')
 		exit(0)
 	
-	print(f'{count} files with success copied .')
-	print(f'The files "{bad_file}" failed.')
-	print('These files could not bee copied because of errors or filesystem')
-	print('limitations.')
-	print(f'You can retry this list on an other medium or filesystem.')
+	#DEBUGPRINT(f'{count} files with success copied .')
+	#DEBUGPRINT(f'The files in "{bad_file}" failed.')
+	#DEBUGPRINT('These files could not be copied,')
+	#DEBUGPRINT('because of errors or filesystem limitations.')
+	#DEBUGPRINT(f'You can retry this list on an other medium or filesystem.')
 	with open(bad_file,'a') as bad:
 		bad.write(DATA_END_MARKER+'\n')
 	exit(0)
+
+def read_ok_file()->(int,str):
+	global CONT,WorkPath
 	
-def CopyTo(destination_path):
-	global ok_file,bad_file,DATA_BEGIN_MARKER,DATA_END_MARKER,processed_file
-	global SourcePath
-	target_fs_properties(destination_path)
-	#psutil.disk_partitions()
+	if not os.path.exists(ok_file):
+		#if not os.path.exists(to_path):
+		return 0
+	# a file with the number of copied
+	# files exists read it
+	with open(ok_file,'r') as f:
+		count_copied=int(f.readline())
+		dst_path=f.readline()
+		dst_path=dst_path[:-1]
+	if args.verbose:
+		print (f'{count_copied} files copied earlier.')
+	if WorkPath==CONT:
+		WorkPath=dst_path
+	if args.verbose:
+		print (f'copy to "{WorkPath}"')
+	return count_copied
+
+def target_file_path(source_file,source_path_length):
+	global WorkPath
+	base_path = source_file[source_path_length:]
+	#file_name = os.path.join(WorkPath,base_path)
+	target_name= WorkPath + base_path
+	dest_dir = os.path.dirname(target_name)
+	#DEBUGPRINT(f'BK:S \n{WorkPath=}\n{base_path=}\n{target_name=}\n{dest_dir=}')
+	if not os.path.exists(dest_dir):
+		try:
+			os.makedirs(dest_dir, 0o755)
+		except IOError as e:
+			ErrorExit(e,f'os.makedirs("{dest_dir}", 0o755) FAILED')
+	return target_name,dest_dir
+
+def file_check_ok(src,l)->bool:
+	# if the destination of src exists and the
+	# sizes are the same it wil be ok and return is True
+	dst,_=target_file_path(src,l)
+	try:
+		size_src=os.stat(src).st_size
+	except OSError as e:
+		print(f'{e.errno} "{e.strerror}"')
+		exit(e.errno)
+	try:
+		size_dst=os.stat(dst).st_size
+	except OSError as e:
+		if e.errno == 2: # No such file
+			return False
+		print (f'Can\'t stat "{dst}"')
+		print(f'{e.errno} "{e.strerror}"')
+		exit(e.errno)
+	if size_src == size_dst:
+		return True
+	os.remove(dst)
+	return False
+	
+def CopyTo():
+	global WorkPath,ok_file,bad_file,DATA_BEGIN_MARKER,DATA_END_MARKER,processed_file
+	global SourcePath,chunk_size
+	
+	#DEBUGPRINT(f'BK:4 {WorkPath=}')
+	done = read_ok_file()
+	# read how many files are copied before
+	# determ the destination dir
+	#DEBUGPRINT(f'BK:4 {done=} "{WorkPath}"')
+	target_fs_properties(WorkPath)
+	#exit(0)
+	chunk_size=FsBlockSize
+	
 	while True:
 		startmark = input() # look where the list data starts
 		if startmark == DATA_BEGIN_MARKER:
 			break
+	
 	SourcePath = input()
+	#DEBUGPRINT(f'{source_path}')
 	cutlen=len(SourcePath) # length of the source path
-	
 	count_copied=0
-	if os.path.exists(ok_file): # a the file with the number of copied
-		# files exists read it
-		with open(ok_file,'r') as f:
-			count_copied=int(f.read())
-			if args.verbose:
-				print (f'{count_copied} files are copied earlier.')
-			
-	done = count_copied # skip what is done
-	while done>0:
-		input()
-		done -= 1
+	source_file=None # if the where files copied check if it went ok
 	
+	while done>0: # read over wath is finished
+		source_file=input()
+		done -= 1
+	#exit(0)
+	if source_file:
+		# is the last file copied before beter check on it
+		if  file_check_ok(source_file,cutlen):
+			# file exists and is the same size
+			# start with the next
+			source_file=None
+		
 	while True:
-		source_file = input()
+		if source_file == None:
+			source_file = input()
 		if DATA_END_MARKER in source_file:
 			coping_done(count_copied)
 			break
-		#source_file=source_file[:-1] # cut newline
-		#print(f'"{source_file}"')
-		base_path=source_file[cutlen:]
-		#print(f'base_path:"{base_path}"')
-		dest_file=os.path.join(destination_path,base_path)
+		dest_file,dest_dir = target_file_path(source_file,cutlen)
 		if args.verbose:
-			print (f'copy :"{base_path}"\nfrom:"{SourcePath}"\nto  :'
-				f'"{destination_path}"')
-		dest_dir = os.path.dirname(dest_file)
-		if not os.path.exists(dest_dir):
-			try:
-				os.makedirs(dest_dir, 0o755)
-			except IOError as e:
-				ErrorExit(e,f'os.makedirs("{dest_dir}", 0o755) FAILED')
-				
+			print(f'copy :"{source_file[cutlen:]}"\nfrom:"{source_file[:cutlen]}"\nto  :'
+				f'"{dest_dir}"')
+			
 		if not os.path.exists(dest_file):
 			processed_file=dest_file # save for signal handler
 			start_time=time.time()
@@ -570,39 +604,44 @@ def CopyTo(destination_path):
 				BadFile(source_file,dest_file,error)
 			end_time=time.time()
 			if args.verbose:
-				print ('File copied in: '+ time_delta_str(start_time,end_time) +
+				print('File copied in: '+ time_delta_str(start_time,end_time) +
 			       f' files now copied: {count_copied+1}.\n')
 		else:
-			if args.verbose:print ('destination existed.')
+			if args.verbose:print('destination existed.')
 		count_copied+=1
 		with open(ok_file, 'w' ) as ok:
-			ok.write(str(count_copied))
-			
+			ok.write(f'{str(count_copied)}\n{WorkPath}\n')
+		source_file=None # clear to copy next
 	exit(0)
 	
 def main() -> None:
-	path=args.Path
+	global WorkPath
+	if args.Path:
+		if args.Path[-1:]=='/':
+			WorkPath=args.Path
+		else:
+			WorkPath=args.Path+'/'
 	
 	if args.usage:
 		HowTo()
 		exit(0)
 	if args.todo:
-		list_to_do(path)
+		list_to_do()
 		exit(0)
 	if args.source :
-		count=list_sources(path)
-		print(f'Files counted {count}', file=sys.stderr)
+		count=list_sources()
+		#DEBUGPRINT(f'Files counted {count}', file=sys.stderr)
 		exit(0)
 	
-	if path:
-		CopyTo(path)
+	if WorkPath:
+		CopyTo()
 		exit(0)
 	
 	parser.print_help()
 	
 if __name__ == '__main__':
-	# print(f'{args.chunk}')
+	# #DEBUGPRINT(f'{args.chunk}')
 	# if args.chunk:
-	# 	print(f'{args.chunk}')
+	# 	#DEBUGPRINT(f'{args.chunk}')
 	# 	exit (0)
 	main()
