@@ -15,8 +15,8 @@ import extensions as ext
 
 DEBUGPRINT=print
 
-ok_file=os.path.join(os.path.expanduser('~'),'slowcopy.ok')
-bad_file=os.path.join(os.path.expanduser('~'),'slowcopy.bad')
+ok_file=os.path.join(os.path.expanduser('~'),'listcopy.ok')
+bad_file=os.path.join(os.path.expanduser('~'),'listcopy.bad')
 processed_file=None
 FILTEROUT=['/Cookies/','/Microsoft/','/Windows/','/Cache','#.*#$','\.lnk$',
            '\.tmp$','\.log$','\.err$','~$','/AppData/',
@@ -51,9 +51,11 @@ signal.signal(signal.SIGINT, handler)
 
 ##################  Argument parsing  ###################
 parser = argparse.ArgumentParser(
-	prog='slowcopy.py',
-	description='Make a slow copy of directories'
-		' without frying a flash drive.',
+	prog='listcopy.py',
+	description='Create a list of files matching some criteria.'
+	            ' Then the files can be copied using this list.'
+	            ' Copying can be interrupted and restarted with the same or an other destination '
+	            'directory',
 	epilog='Have Fun'
 )
 
@@ -95,14 +97,15 @@ parser.add_argument('-t', '--todo',
 	action='store_true')
  
 parser.add_argument('Path' ,
-                    help = f'Path to the source or destination directory {CONT} to continue copy to the previous directory',
+                    help = f'Path to the source or destination directory {CONT} '
+                           f'to continue copying to the same directory',
                     action='store', nargs='?')
 
 args = parser.parse_args()
 
 def HowTo()->None:
 	print ('Make a slow but failsafe copy of directories e.g. to usb thumb drives.')
-	print ('\nslowcopy.py -s path > file_with_sourcefiles')
+	print ('\nlistcopy.py -s path > file_with_sourcefiles')
 	print ('to create file with a list of the source files')
 	print ('for example do "cat file_with_sourcefiles | grep -v \'Remove '
 	       'these\' > filterd_sourcefiles"')
@@ -111,7 +114,7 @@ def HowTo()->None:
 	print ("for example: --skiplist '.ico$' '.lnk$' '.log$' '.tmp$'")
 	print (f'Successful copied files are listed in "{ok_file}" and skipped '
 	       f'next try')
-	print ('slowcopy destination_dir < sourcefilelist')
+	print ('listcopy destination_dir < sourcefilelist')
 	print ('To start or restart copying')
 	
 def time_delta_str(start, end) -> str:

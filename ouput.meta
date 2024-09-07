@@ -1,0 +1,192 @@
+{'Filename': '/home/bob/ik.jpg', 'Permissions': 'rwxr--r--', 'Format': 'JPEG (Joint Photographic Experts Group JFIF format)', 'Mime type': 'image/jpeg', 'Class': 'DirectClass', 'Geometry': '3264x2448+0+0', 'Resolution': '72x72', 'Print size': '45.3333x34', 'Units': 'PixelsPerInch', 'Colorspace': 'sRGB', 'Type': 'TrueColor', 'Base type': 'Undefined', 'Endianness': 'Undefined', 'Depth': '8-bit', 'Channels': '3.0', 'Red': '8-bit', 'Green': '8-bit', 'Blue': '8-bit', 'Pixels': '7990272', 'min': '34  (0.133333)', 'max': '255 (1)', 'mean': '182.898 (0.717248)', 'median': '189.333 (0.742484)', 'standard deviation': '32.9112 (0.129064)', 'kurtosis': '0.316452', 'skewness': '-0.794961', 'entropy': '0.891564', 'Rendering intent': 'Perceptual', 'Gamma': '0.454545', 'red primary': '(0.64,0.33,0.03)', 'green primary': '(0.3,0.6,0.1)', 'blue primary': '(0.15,0.06,0.79)', 'white point': '(0.3127,0.329,0.3583)', 'Matte color': 'grey74', 'Background color': 'white', 'Border color': 'srgb(223,223,223)', 'Transparent color': 'black', 'Interlace': 'None', 'Intensity': 'Undefined', 'Compose': 'Over', 'Page geometry': '3264x2448+0+0', 'Dispose': 'Undefined', 'Iterations': '0', 'Compression': 'JPEG', 'Quality': '90', 'Orientation': 'RightTop', 'Profile-exif': '40433 bytes', 'date': 'timestamp: 2024-09-06T11:37:53+00:00', 'exif': 'YCbCrPositioning: 1', 'jpeg': 'sampling-factor: 2x2,1x1,1x1', 'signature': '14c0aff9efb880743e0b0ab5d892e6c94162a35f3a948d68002bb5705abffa1d', 'verbose': 'true', 'Tainted': 'False', 'Filesize': '1.45998MiB', 'Number pixels': '7.99027M', 'Pixel cache type': 'Memory', 'Pixels per second': '30.9608MP', 'User time': '0.250u', 'Elapsed time': '0:01.258', 'Version': 'ImageMagick 7.1.1-37 Q16-HDRI x86_64 5b2825b29:20240824 https://imagemagick.org'}
+[{
+  "version": "1.0",
+  "image": {
+    "name": "/home/bob/ik.jpg",
+    "format": "JPEG",
+    "formatDescription": "Joint Photographic Experts Group JFIF format",
+    "mimeType": "image/jpeg",
+    "class": "DirectClass",
+    "geometry": {
+      "width": 3264,
+      "height": 2448,
+      "x": 0,
+      "y": 0
+    },
+    "resolution": {
+      "x": 72,
+      "y": 72
+    },
+    "printSize": {
+      "x": 45.3333,
+      "y": 34
+    },
+    "units": "PixelsPerInch",
+    "type": "TrueColor",
+    "endianness": "Undefined",
+    "colorspace": "sRGB",
+    "depth": 8,
+    "baseDepth": 8,
+    "channelDepth": {
+      "red": 8,
+      "green": 8,
+      "blue": 8
+    },
+    "pixels": 7990272,
+    "imageStatistics": {
+      "all": {
+        "min": 34,
+        "max": 255,
+        "mean": 182.898,
+        "standardDeviation": 32.9112,
+        "kurtosis": 0.262108,
+        "skewness": -0.6229,
+        "entropy": 0.891564
+      }
+    },
+    "channelStatistics": {
+      "red": {
+        "min": 39,
+        "max": 255,
+        "mean": 198.444,
+        "standardDeviation": 33.5131,
+        "kurtosis": 0.411376,
+        "skewness": -0.709372,
+        "entropy": 0.900025
+      },
+      "green": {
+        "min": 35,
+        "max": 254,
+        "mean": 179.576,
+        "standardDeviation": 33.0841,
+        "kurtosis": 0.310565,
+        "skewness": -0.850825,
+        "entropy": 0.88742
+      },
+      "blue": {
+        "min": 34,
+        "max": 250,
+        "mean": 170.674,
+        "standardDeviation": 32.1365,
+        "kurtosis": 0.227413,
+        "skewness": -0.824687,
+        "entropy": 0.887245
+      }
+    },
+    "renderingIntent": "Perceptual",
+    "gamma": 0.454545,
+    "chromaticity": {
+      "redPrimary": {
+        "x": 0.64,
+        "y": 0.33
+      },
+      "greenPrimary": {
+        "x": 0.3,
+        "y": 0.6
+      },
+      "bluePrimary": {
+        "x": 0.15,
+        "y": 0.06
+      },
+      "whitePrimary": {
+        "x": 0.3127,
+        "y": 0.329
+      }
+    },
+    "backgroundColor": "#FFFFFF",
+    "borderColor": "#DFDFDF",
+    "matteColor": "#BDBDBD",
+    "transparentColor": "#000000",
+    "interlace": "None",
+    "intensity": "Undefined",
+    "compose": "Over",
+    "pageGeometry": {
+      "width": 3264,
+      "height": 2448,
+      "x": 0,
+      "y": 0
+    },
+    "dispose": "Undefined",
+    "iterations": 0,
+    "compression": "JPEG",
+    "quality": 90,
+    "orientation": "RightTop",
+    "properties": {
+      "date:create": "2024-09-05T06:10:21+00:00",
+      "date:modify": "2024-09-03T08:51:45+00:00",
+      "exif:ApertureValue": "200/100",
+      "exif:BrightnessValue": "41/100",
+      "exif:ColorSpace": "1",
+      "exif:DateTime": "2024:09:03 10:51:43",
+      "exif:DateTimeDigitized": "2024:09:03 10:51:43",
+      "exif:DateTimeOriginal": "2024:09:03 10:51:43",
+      "exif:DigitalZoomRatio": "100/100",
+      "exif:ExifOffset": "236",
+      "exif:ExifVersion": "48, 50, 50, 48",
+      "exif:ExposureBiasValue": "0/100",
+      "exif:ExposureMode": "0",
+      "exif:ExposureProgram": "2",
+      "exif:ExposureTime": "1/33",
+      "exif:Flash": "0",
+      "exif:FNumber": "200/100",
+      "exif:FocalLength": "261/100",
+      "exif:FocalLengthIn35mmFilm": "25",
+      "exif:GPSInfo": "694",
+      "exif:GPSLatitude": "52/1, 57/1, 12634200/1000000",
+      "exif:GPSLatitudeRef": "N",
+      "exif:GPSLongitude": "5/1, 56/1, 5332920/1000000",
+      "exif:GPSLongitudeRef": "E",
+      "exif:ImageLength": "2448",
+      "exif:ImageUniqueID": "Z08QLLA00NM",
+      "exif:ImageWidth": "3264",
+      "exif:Make": "samsung",
+      "exif:MaxApertureValue": "200/100",
+      "exif:MeteringMode": "2",
+      "exif:Model": "SM-T720",
+      "exif:OffsetTime": "+02:00",
+      "exif:OffsetTimeOriginal": "+02:00",
+      "exif:PhotographicSensitivity": "320",
+      "exif:PixelXDimension": "3264",
+      "exif:PixelYDimension": "2448",
+      "exif:SceneCaptureType": "0",
+      "exif:ShutterSpeedValue": "1/33",
+      "exif:Software": "T720XXS3DWA1",
+      "exif:thumbnail:Compression": "6",
+      "exif:thumbnail:ImageLength": "384",
+      "exif:thumbnail:ImageWidth": "512",
+      "exif:thumbnail:JPEGInterchangeFormat": "914",
+      "exif:thumbnail:JPEGInterchangeFormatLength": "39513",
+      "exif:thumbnail:ResolutionUnit": "2",
+      "exif:thumbnail:XResolution": "72/1",
+      "exif:thumbnail:YResolution": "72/1",
+      "exif:WhiteBalance": "0",
+      "exif:YCbCrPositioning": "1",
+      "jpeg:colorspace": "2",
+      "jpeg:sampling-factor": "2x2,1x1,1x1",
+      "signature": "5406ae606b26e47cd58665d5554fd635422c55a76141becaddb03d3282ccf0de"
+    },
+    "profiles": {
+      "app4": {
+        "length": 28
+      },
+      "app5": {
+        "length": 10
+      },
+      "exif": {
+        "length": 40433
+      }
+    },
+    "artifacts": {
+      "filename": "/home/bob/ik.jpg"
+    },
+    "tainted": false,
+    "filesize": "1.5309MB",
+    "numberPixels": "7.99027M",
+    "pixelsPerSecond": "102.721MB",
+    "userTime": "0.070u",
+    "elapsedTime": "0:01.077",
+    "version": "ImageMagick 6.9.11-60 Q16 x86_64 2021-01-25 https://imagemagick.org"
+  }
+}
+]
+[{'SourceFile': '/home/bob/ik.jpg', 'ExifToolVersion': 12.4, 'FileName': 'ik.jpg', 'Directory': '/home/bob', 'FileSize': '1495 KiB', 'FileModifyDate': '2024:09:03 10:51:45+02:00', 'FileAccessDate': '2024:09:06 12:13:24+02:00', 'FileInodeChangeDate': '2024:09:05 08:10:21+02:00', 'FilePermissions': '-rwxr--r--', 'FileType': 'JPEG', 'FileTypeExtension': 'jpg', 'MIMEType': 'image/jpeg', 'ExifByteOrder': 'Little-endian (Intel, II)', 'Make': 'samsung', 'Model': 'SM-T720', 'Orientation': 'Rotate 90 CW', 'XResolution': 72, 'YResolution': 72, 'ResolutionUnit': 'inches', 'Software': 'T720XXS3DWA1', 'ModifyDate': '2024:09:03 10:51:43', 'YCbCrPositioning': 'Centered', 'ExposureTime': '1/33', 'FNumber': 2.0, 'ExposureProgram': 'Program AE', 'ISO': 320, 'ExifVersion': '0220', 'DateTimeOriginal': '2024:09:03 10:51:43', 'CreateDate': '2024:09:03 10:51:43', 'OffsetTime': '+02:00', 'OffsetTimeOriginal': '+02:00', 'ShutterSpeedValue': 1, 'ApertureValue': 2.0, 'BrightnessValue': 0.41, 'ExposureCompensation': 0, 'MaxApertureValue': 2.0, 'MeteringMode': 'Center-weighted average', 'Flash': 'No Flash', 'FocalLength': '2.6 mm', 'ColorSpace': 'sRGB', 'ExifImageWidth': 3264, 'ExifImageHeight': 2448, 'ExposureMode': 'Auto', 'WhiteBalance': 'Auto', 'DigitalZoomRatio': 1, 'FocalLengthIn35mmFormat': '25 mm', 'SceneCaptureType': 'Standard', 'ImageUniqueID': 'Z08QLLA00NM', 'GPSLatitudeRef': 'North', 'GPSLongitudeRef': 'East', 'Compression': 'JPEG (old-style)', 'ThumbnailOffset': 926, 'ThumbnailLength': 39513, 'ImageWidth': 3264, 'ImageHeight': 2448, 'EncodingProcess': 'Baseline DCT, Huffman coding', 'BitsPerSample': 8, 'ColorComponents': 3, 'YCbCrSubSampling': 'YCbCr4:2:0 (2 2)', 'TimeStamp': '2024:09:03 10:51:45+02:00', 'Aperture': 2.0, 'ImageSize': '3264x2448', 'Megapixels': 8.0, 'ScaleFactor35efl': 9.6, 'ShutterSpeed': '1/33', 'SubSecDateTimeOriginal': '2024:09:03 10:51:43+02:00', 'SubSecModifyDate': '2024:09:03 10:51:43+02:00', 'ThumbnailImage': '(Binary data 39513 bytes, use -b option to extract)', 'GPSLatitude': '52 deg 57\' 12.63" N', 'GPSLongitude': '5 deg 56\' 5.33" E', 'CircleOfConfusion': '0.003 mm', 'FOV': '71.5 deg', 'FocalLength35efl': '2.6 mm (35 mm equivalent: 25.0 mm)', 'GPSPosition': '52 deg 57\' 12.63" N, 5 deg 56\' 5.33" E', 'HyperfocalDistance': '1.09 m', 'LightValue': 5.4}]

@@ -730,125 +730,10 @@ CAD_FILE_EXT = [
 	"\.FCStd"
 ]
 
-ext_classes={'video':VIDEO_EXT,'audio':AUDIO_EXT,'3d-model':D3_EXT,
+ext_classes={'video':VIDEO_EXT,'audio':AUDIO_EXT,'3d-model':D3_EXT,'picture':RASTER_IMAGE_EXT,
              'raster-image':RASTER_IMAGE_EXT,'vector-image':VECTOR_IMAGE_EXT,
              'text':TEXT_EXT,'cad':CAD_FILE_EXT}
 
-count_spaces=re.compile(r'^\s*')
-find_colon=re.compile(r'^\:*')
-def count_and_split(string):
-    # count the leading spaces of string
-    # split string in striped key,value paars 
-    global count_spaces
-    match = count_spaces.match(string)
-    count=len(match.group(0))
-    match = find_colon.match(string)
-    
-    colon = 0
-    match = re.search(r":", string)
-    if match:
-        colon = match.start()
-        
-    key=string[:colon]
-    value=string[colon+1:]
-    #print(f'>{key}<>{value}<')
-    return count,key.strip(),value.strip()
-
-''' GIMP
-(define (extract-image-metadata filename)
-  (let* ((image (car (gimp-file-load RUN-NONINTERACTIVE filename filename)))
-         (drawable (car (gimp-image-get-active-drawable image))))
-    (if (not (null? image))
-        (begin
-          (let ((metadata (car (gimp-image-get-metadata image))))
-            (file-png-save RUN-NONINTERACTIVE image drawable "output.png" "output.png")
-            (gimp-message (string-append "Metadata: " metadata)))
-          (gimp-image-delete image)))))
-gimp -i -b '(extract-image-metadata "path/to/your/image.jpg")' -b '(gimp-quit 0)'
-'''
-def error2(program,site='Try a search'):
-    print(f'You need to install "{program}"')
-    print(f'from: "{site}".')
-    exit(1)
-    
-def do_exiftool(picture_file):
-    try:
-        meta = subprocess.run(['exiftool','-j','-all',picture_file],
-                              capture_output=True,text=True)
-    except OSError as e:
-        print(f'do_exiftool Got {e.errno} "{e.strerror}')
-        if e.errno==2:
-            error2('exiftool','https://exiftool.org')
-        return None
-    try:
-        meta_data=json.loads(meta.stdout)
-    except json.decoder.JSONDecodeError as e:
-        print (f'ERROR DATA START\n\n{meta.stdout}\n\nERROR DATA END')
-        print (f'{e} "{picture_file}"')
-        return None
-        
-    return meta_data
-        
-def do_convert(picture_file):
-    try:
-        meta = subprocess.run(['convert',picture_file,'json:'],
-                              capture_output=True,text=True)
-    except OSError as e:
-        print(f'do_convert Got {e.errno} "{e.strerror}')
-        if e.errno==2:
-            error2("convert","https://imagemagick.org/magick")
-        return None
-    if meta.stdout:
-        return json.loads(meta.stdout)
-    return None
-    
-def do_magick(picture_file):
-    try:
-        meta = subprocess.run(['magick','identify','-verbose',picture_file],
-                              capture_output=True,text=True)
-    except OSError as e:
-        print(f'do_magick Got {e.errno} "{e.strerror}')
-        if e.errno==2:
-            error2("magick",'https://imagemagick.org/')
-        
-    if not meta.stdout:
-        return None
-    lines=meta.stdout.split('\n')
-    # for line_string in lines:
-    #     print(line_string)
-    # return
-    # prev_level=0
-    # key_stack=deque()
-    # branche={}
-    exif={}
-    for line_string in lines:
-        level,key,value=count_and_split(line_string)
-        if value == '':
-            continue
-        exif[key]=value
-    return exif
- 
-def get_picture_meta_data(picture_file,program = 'magick'):
-    """Try to read neta data of a picture and
-    on success return a diprogram = 'magick'ct with the data."""
-    
-    if program == 'magick':
-        return do_magick(picture_file)
-    
-    if program == 'convert':
-        return do_convert(picture_file)
-    
-    if program == 'exiftool':
-        return do_exiftool(picture_file)
-        
-''''JPEG	.jpg, .jpeg	EXIF, IPTC, XMP
-PNG	.png	tEXt, iTXt, zTXt (limited)
-TIFF	.tif, .tiff	EXIF, IPTC
-BMP	.bmp	Limited metadata
-GIF	.gif	Limited metadata
-HEIF	.heif, .heic	EXIF, XMP
-RAW	Various (e.g., .raw, .cr2, .nef)	EXIF, proprietary formats
-https://imagemagick.org/script/download.php#linux'''
 
 def string_extensions(reg_list)->str:
     """forms a string from a list from extensions."""
@@ -864,10 +749,11 @@ def create_regular_expression(reg_str:str,re_flags=re.IGNORECASE):
     return re.compile(r'\.(' + reg_str + r')$',flags=re_flags)
 
 if __name__ == '__main__':
+    print("No Tests Defined")
     # reg_str=string_extensions(VIDEO_EXT)
     # print(reg_str)
     # reg=create_regular_expression(reg_str)
     # print(reg)
-    print(get_picture_meta_data("/home/bob/ik.jpg"))
+    
 
    
