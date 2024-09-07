@@ -278,7 +278,7 @@ def list_sources()-> int:
 					if out_re.search(fullpath):# skip it
 						continue
 				if in_re:
-					if not in_re.search(fullpath):
+					if not in_re.search(fullpath): # not what we looking for
 						continue
 				if do_size_check:
 					st=os.stat(fullpath)
