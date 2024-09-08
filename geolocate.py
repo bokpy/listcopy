@@ -38,6 +38,57 @@ HTTP_STATUS_CODES = {
     504: "Gateway Timeout"
 }
 
+def do_request(url,parameters={},request_type=requests.get):
+	response = request_type(url,parameters)
+	status=response.status_code
+	if status == 200:
+		return response.text
+	print(f'do_request err {status}:')
+	for err in requests.status_codes._codes[status]:
+		print(f'\t{err}')
+	return ''
+		# building(around:{near},{latitude} , {longitude});
+		# house(around:{near},{latitude}, {longitude});
+		# way(around:{near},{latitude}, {longitude});
+		# relation(around:{near},{latitude}, {longitude});
+		# addr:street(around:{near},{latitude}, {longitude});
+		# addr:housenumber(around:{near},{latitude}, {longitude});
+		# addr:city(around:{near},{latitude}, {longitude});
+		# addr:postcode(around:{near},{latitude}, {longitude});
+		# addr:country(around:{near},{latitude}, {longitude});
+
+# def overpass_reverse_geocoder(latitude:float,longitude:float,near=30)->str:
+# 	global OVERPASS_URL
+# 	# https://taginfo.openstreetmap.org/keys/
+# 	query=f'''[out:json];
+# 	(
+# 	 house(around:{near},{latitude}, {longitude});
+# 	);
+# 	out body;
+# 	>;
+# 	out skel qt;
+# 	'''
+# 	print(query)
+# 	# Send the query to the Overpass API
+# 	response = requests.post(OVERPASS_URL, data={"data": query})
+# 	#response = do_request(OVERPASS_URL,{"data":query},requests.post)
+# 	#data = response.json()
+# 	#DEBUGPRINT(json.dumps(data,indent=4))
+# 	DEBUGPRINT(response)
+# 	return response
+near=10
+latitude=49.257544
+longitude=11.651196
+working_query=f'''[out:json];
+	(
+	  node(around:{near},{latitude} , {longitude});  // replace with your lat, lon
+	  way(around:{near},{latitude}, {longitude});
+	  relation(around:{near},{latitude}, {longitude});
+	);
+	out body;
+	>;
+	out skel qt;
+	'''
 def overpass_reverse_geocoder(latitude:float,longitude:float,near=30)->str:
 	global OVERPASS_URL
 
@@ -62,8 +113,8 @@ def overpass_reverse_geocoder(latitude:float,longitude:float,near=30)->str:
 		print(data)
 	else:
 		print(f"Error: {response.status_code}")
-
-def Overpass_find_nearby_landmarks(lat, lon):
+		
+def overpass_find_nearby_landmarks(lat, lon):
     # Using OpenStreetMap's Overpass API to find nearby landmarks
     overpass_url = "http://overpass-api.de/api/interpreter"
     overpass_query = f"""
@@ -98,40 +149,6 @@ def overpass_info(latitude:float, longitude:float,radius=20)->dict:
 	return data
 	
 
-def do_request(request,parameters=[]):
-	response = requests.get(request,params=parameters)
-	status=response.status_code
-	if status == 200:
-		return response.text
-	print(f'do_request err {status}:')
-	for err in requests.status_codes._codes[status]:
-		print(f'\t{err}')
-	return ''
-	
-# def google_address_coords(address:str)->(float,float):
-# 	global GOOGLE_API_KEY
-# 	DEBUGPRINT(f'{GOOGLE_API_KEY=}')
-# 	# https://api.opencagedata.com/geocode/v1/json?q=ADDRESS&key=YOUR_API_KEY
-#
-# 	url = f'https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={GOOGLE_API_KEY}'
-# 	response = do_request(url)
-# 	if response:
-# 		DEBUGPRINT(response)
-# 		return 50.0,50.0
-# 	DEBUGPRINT(response)
-# 	return 0.0,0.0
-#
-# 	# Parse the JSON response
-# 	data = response.json()
-#
-# 	# Check if the request was successful
-# 	if data['status'] == 'OK':
-# 		# Extract latitude and longitude
-# 		location = data['results'][0]['geometry']['location']
-# 		return location['lat'], location['lng']
-# 	else:
-# 		print("Error:", data['status'])
-# 		return None
 
 def get_osm_info(latitude,longitude,zoom=4):
 	# Create an Overpass API instance
