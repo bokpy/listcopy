@@ -2,17 +2,23 @@
 #https://pygis.io/docs/d_access_osm.html
 # request status_code https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
 import json
-import requests
+
 import osmnx
 from os import eventfd_read
 import geopandas as gpd
 import overpass
-from osm2geojson.helpers import OVERPASS
+import requests
+from fontTools.misc.cython import returns
+from networkx import radius
 
-OVERPASS_API = overpass.API()
-OVERPASS_URL = "http://overpass-api.de/api/interpreter"
+import requests
+#from geopy.geocoders import Nominatim
+from geopy.geocoders import Photon
 
-DEBUGPRINT=print
+# Create a geocoder object
+GEOLOCATOR = Photon()
+
+from slowcopy import DEBUGPRINT
 HTTP_STATUS_CODES = {
     200: "OK",
     201: "Created",
@@ -38,32 +44,7 @@ HTTP_STATUS_CODES = {
     504: "Gateway Timeout"
 }
 
-def overpass_reverse_geocoder(latitude:float,longitude:float,near=30)->str:
-	global OVERPASS_URL
-
-	query=f'''[out:json];
-	(
-	  node(around:{near},{latitude} , {longitude});  // replace with your lat, lon
-	  way(around:{near},{latitude}, {longitude});
-	  relation(around:{near},{latitude}, {longitude});
-	);
-	out body;
-	>;
-	out skel qt;
-	'''
-	print(query)
-	# Send the query to the Overpass API
-	response = requests.post(OVERPASS_URL, data={"data": query})
-
-	# Check if the request was successful
-	if response.status_code == 200:
-		# Parse the JSON response
-		data = response.json()
-		print(data)
-	else:
-		print(f"Error: {response.status_code}")
-
-def Overpass_find_nearby_landmarks(lat, lon):
+def find_nearby_landmarks(lat, lon):
     # Using OpenStreetMap's Overpass API to find nearby landmarks
     overpass_url = "http://overpass-api.de/api/interpreter"
     overpass_query = f"""
@@ -97,9 +78,26 @@ def overpass_info(latitude:float, longitude:float,radius=20)->dict:
 	DEBUGPRINT(json.dumps(data,indent=4))
 	return data
 	
+def photon_address_coords(address:str)->(float,float):
+	global GEOLOCATOR
+	location = GEOLOCATOR.geocode(address)
 
-def do_request(request,parameters=[]):
-	response = requests.get(request,params=parameters)
+	if location:
+		print(f"Address: {location.address}")
+		print(f"Latitude: {location.latitude}, Longitude: {location.longitude}")
+		return location.latitude,location.longitude
+	else:
+		print("Location not found.")
+		return 0,0
+
+
+import requests
+
+# Replace with your Google Maps API key
+GOOGLE_API_KEY = '7553-2291-1342'
+
+def do_request(request):
+	response = requests.get(request)
 	status=response.status_code
 	if status == 200:
 		return response.text
@@ -108,30 +106,31 @@ def do_request(request,parameters=[]):
 		print(f'\t{err}')
 	return ''
 	
-# def google_address_coords(address:str)->(float,float):
-# 	global GOOGLE_API_KEY
-# 	DEBUGPRINT(f'{GOOGLE_API_KEY=}')
-# 	# https://api.opencagedata.com/geocode/v1/json?q=ADDRESS&key=YOUR_API_KEY
-#
-# 	url = f'https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={GOOGLE_API_KEY}'
-# 	response = do_request(url)
-# 	if response:
-# 		DEBUGPRINT(response)
-# 		return 50.0,50.0
-# 	DEBUGPRINT(response)
-# 	return 0.0,0.0
-#
-# 	# Parse the JSON response
-# 	data = response.json()
-#
-# 	# Check if the request was successful
-# 	if data['status'] == 'OK':
-# 		# Extract latitude and longitude
-# 		location = data['results'][0]['geometry']['location']
-# 		return location['lat'], location['lng']
-# 	else:
-# 		print("Error:", data['status'])
-# 		return None
+def google_address_coords(address:str)->(float,float):
+	global GOOGLE_API_KEY
+	DEBUGPRINT(f'{GOOGLE_API_KEY=}')
+	# https://api.opencagedata.com/geocode/v1/json?q=ADDRESS&key=YOUR_API_KEY
+
+	url = f'https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={GOOGLE_API_KEY}'
+	response = do_request(url)
+	if response:
+		DEBUGPRINT(response)
+		return 50.0,50.0
+	DEBUGPRINT(response)
+	return 0.0,0.0
+	
+	# Parse the JSON response
+	data = response.json()
+	
+	# Check if the request was successful
+	if data['status'] == 'OK':
+		# Extract latitude and longitude
+		location = data['results'][0]['geometry']['location']
+		return location['lat'], location['lng']
+	else:
+		print("Error:", data['status'])
+		return None
+
 
 def get_osm_info(latitude,longitude,zoom=4):
 	# Create an Overpass API instance
@@ -140,13 +139,27 @@ def get_osm_info(latitude,longitude,zoom=4):
 	# Nominatim API URL
 	#url = f"https://nominatim.openstreetmap.org/reverse?lat={latitude}&lon={longitude}&format=json"
 	url=f"http://osm.org/#map={zoom}/{latitude}/{longitude}"
-	DEBUGPRINT(f'{url=}')
+	print(f'{url=}')
 	# Make the request
-	response = do_request(url)
+	response = requests.get(url)
+	with open('/home/bob/temp/geo.html',"w") as f:
+		f.write(response.text)
+	#print(response.text)
+	if response.status_code == 200:
+		dir(response)
+	
 	return response
 
+	# Check if the request was successful
+	if response.status_code == 200:
+		geo_info = response.json()
+		print("Address:", geo_info.get('display_name'))
+	else:
+		print("Error retrieving data:", response.status_code)
+
+
 def get_info_on_coordinates(latitude,longitude,R=50):
-	global OVERPASS_API
+	api = overpass.API()
 	
 	# Execute the query and retrieve the results
 	coords=latitude,longitude
@@ -160,7 +173,7 @@ def get_info_on_coordinates(latitude,longitude,R=50):
 	out geom;
 	"""
 	
-	res=OVERPASS_API.query(request)
+	res=api.query(request)
 	return res
 
 def show_geo_results(results): # Process the results
@@ -241,10 +254,10 @@ if __name__ == '__main__':
 	# area.plot()
 	
 	#lat, lon = photon_address_coords("1600 Amphitheatre Parkway, Mountain View, CA")
-	
-	#DEBUGPRINT(f'{lat=},{lon=}')
-	overpass_reverse_geocoder(52.95973520817635, 5.944264413055178)
-	#overpass_info(lat, lon)
+	lat, lon = google_address_coords("1600 Amphitheatre Parkway, Mountain View, CA")
+	DEBUGPRINT(f'{lat=},{lon=}')
+	exit(0)
+	overpass_info(lat, lon)
 	# result = get_info_on_coordinates(49.257544, 11.651196)
 	# show_geo_results(result)
 	

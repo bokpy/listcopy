@@ -2,7 +2,8 @@
 import re
 import subprocess
 import json
-from importlib.metadata import metadata
+import geolocate as geo
+from matplotlib.font_manager import json_dump
 
 DEBUGPRINT=print
 IMAGETAGS=(
@@ -173,7 +174,7 @@ count_spaces = re.compile(r'^\s*')
 
 #DEBUGPRINT(IMG_TAGS_RE)
 STR=""
-bar='' #\d*:\s*(\w+)$"
+bar=''
 for tag in IMAGETAGS:
 	if bar=='':
 		STR=tag
@@ -181,28 +182,21 @@ for tag in IMAGETAGS:
 		continue
 	STR=STR+bar+tag
 	
-DEBUGPRINT(STR)
+#DEBUGPRINT(STR)
 
+#tag_re = r'^(File Type)\s*:\s*(\w+)$'
 #img_tags_re=r'^(' + STR + r')\s*:\s*(\w+)$'
 img_tags_re=r'^(' + STR + ')' + r'\s*: (.*)\s*'
-DEBUGPRINT(img_tags_re)
+#DEBUGPRINT(img_tags_re)
 IMG_TAGS_RE=re.compile(img_tags_re,flags=re.IGNORECASE)
-DEBUGPRINT(IMG_TAGS_RE)
-#tag_re = r'^(File Type)\s*:\s*(\w+)$'
+#DEBUGPRINT(IMG_TAGS_RE)
+
 
 def tag_finder(meta)->{}:
 	global IMG_TAGS_RE
 	tags={}
 	#DEBUGPRINT(meta)
 	for line in meta.split('\n'):
-		#DEBUGPRINT(line)
-		#TAG table print
-		# parts=line.split(':')
-		# value=line[len(parts[0]):]
-		# tag=parts[0].strip()
-		# print (f'"{tag.strip()}", # {value}')
-		# continue
-		#match = IMG_TAGS_RE.match(line)
 		match = IMG_TAGS_RE.search(line)
 		# Check if a match was found
 		if match: # Extract the groups
@@ -210,7 +204,16 @@ def tag_finder(meta)->{}:
 			jpeg_type = match.group(2)   # This will be 'JPEG'
 			tags[file_type]=jpeg_type
 	return tags
-	
+
+def process_tags(tags: dict)->dict:
+	for tag in tags.keys():
+		if tag == "GPS Latitude":
+			DEBUGPRINT(f'GPS data {tags["GPS Latitude"]},{tags["GPS Longitude"]}')
+			lati=geo.gps_alpha_to_float(tags["GPS Latitude"])
+			longi=geo.gps_alpha_to_float(tags["GPS Longitude"])
+			DEBUGPRINT(f'Lati {lati} longi {longi}')
+			geo_info=geo.get_info_on_coordinates(lati,longi)
+			DEBUGPRINT(geo_info)
 
 def count_and_split(string):
 	# count the leading spaces of string
@@ -339,7 +342,8 @@ def main() -> None:
 	metadata=get_picture_meta_data("/home/bob/ik.jpg", 'exiftool')
 	#metadata=get_picture_meta_data("/home/bob/temp/Toshiba/Sjoukje & Dani/Pictures/FOTO'S/P9260039.JPG",'exiftool')
 	tags=tag_finder(metadata)
-	print(tags)
+	print(json.dumps(tags,indent = 4))
+	process_tags(tags)
 
 if __name__ == '__main__':
 	main()
