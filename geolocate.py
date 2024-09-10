@@ -3,16 +3,21 @@
 # request status_code https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
 import json
 import requests
-import osmnx
-from os import eventfd_read
-import geopandas as gpd
 import overpass
-from fontTools.misc.cython import returns
-from geopy.distance import distance
-from osm2geojson.helpers import OVERPASS
+import math
+# import osmnx
+# from os import eventfd_read
+# import geopandas as gpd
+# from fontTools.misc.cython import returns
+# from geopy.distance import distance
+# from osm2geojson.helpers import OVERPASS
 
 OVERPASS_API = overpass.API()
 OVERPASS_URL = "http://overpass-api.de/api/interpreter"
+R_EARTH=6378137
+LONGI_M_PER_DEG=R_EARTH/90.0
+LATI=0
+LNGI=1
 
 DEBUGPRINT=print
 HTTP_STATUS_CODES = {
@@ -39,48 +44,24 @@ HTTP_STATUS_CODES = {
     503: "Service Unavailable",
     504: "Gateway Timeout"
 }
-'''
-1° Latitude            | 111000 meters
-1° Longitude (Equator) | 111000 meters
-1° Longitude (45° N/S) |  78000 meters
-1° Longitude (60° N/S) |  55000 meters
-1° Longitude (75° N/S) |  30000 meters
-'''
-
-DELTA_0_45 =(78000.0,(111000.0-78000.0)/45.0)
-DELTA_45_60=(55000.0,( 78000.0-55000.0)/15.0)
-DELTA_60_75=(30000.0,( 55000.0-30000.0)/15.0)
-DELTA_75_90=(00000.0,( 30000.0-00000.0)/15.0)
 
 def meters_per_degree(longitude:float)->float:
+	global PI,R_EARTH
 	l=abs(longitude)
-	if l < 45.0:
-		dl=45.0 - l
-		return DELTA_0_45[0] + DELTA_0_45[1]*dl
-	if l < 60.0:
-		dl=(60 - l)
-		return DELTA_45_60[0] + DELTA_45_60[1]*dl
-	if l < 75.0:
-		dl=(75 - l)
-		return DELTA_60_75[0] + DELTA_60_75[1]*dl
-	dl = 90.0  - l
-	return DELTA_75_90[0] + DELTA_75_90[1]*dl
+	r_at_lat=R_EARTH * math.cos(math.radians(longitude))
+	circum_lat=2*math.pi*r_at_lat
+	return circum_lat/360.0
 
 def bounding_box(latitude:float,longitude:float,size:float)->(float,float,float,float):
+	global LONGI_M_PER_DEG
+	DEBUGPRINT(f'box point: {latitude:8.6f},{latitude:8.6f}')
 	hs=size/2.0
 	lati_deg=hs/meters_per_degree(latitude)
-	longi_deg=hs/111000.0
+	longi_deg=hs/LONGI_M_PER_DEG
 	
 	#Bounding box
 	#bbox = left,bottom,right,top
 	#bbox = min Longitude , min Latitude , max Longitude , max Latitude
-	# "bounds": {
-	# "minlat": 52.9321019,
-	# "minlon": 5.9338996,
-	# "maxlat": 52.9321916,
-	# "maxlon": 5.9341761
-	# }
-	# 5.73, 52.58,  6.18, 53.34
 	return latitude-lati_deg,longitude-longi_deg,latitude+lati_deg,longitude+longi_deg
 
 def str_bounding_box(box:tuple)->str:
@@ -89,7 +70,7 @@ def str_bounding_box(box:tuple)->str:
 		cords=cords + "," + str("{:9.6f}".format(itude))
 	#cords = str( [str("{:9.6f}".format(i)) for i in box])
 	#return  str(tuple(cords)) + ';'
-	return '('+cords + ');'
+	return cords
 
 def do_request(url:str,parameters:dict)->str:
 	response = requests.get(url,parameters)
@@ -99,16 +80,48 @@ def do_request(url:str,parameters:dict)->str:
 	print(f'do_request err {status}:')
 	for err in requests.status_codes._codes[status]:
 		print(f'\t{err}')
-	return
+	return ''
+
+# Overpass out parameters
+# 	ids - outputs only the id of nodes
+# 	tags - outputs only the id and tags attached to a node
+#  	skel - outputs only the id and geometry
+#  	body - output id, geometry and tags
+# 	meta - output id, geometry, tags plus change history
+
+# query types:
+# "node", "way", "relation", "nwr", "nw", "wr", "nr", or "area".
 
 def overpass_box_query(latitude:float,longitude:float,box_size=10)->dict:
+	# https://osm-queries.ldodds.com/tutorial/02-node-output.osm.html
+	# nwr
+	global OVERPASS_URL
 	bbox=bounding_box(latitude,longitude,box_size)
-	query=f'''
-	[out:json];
-	node{str_bounding_box(bbox)}
-	out body;
-	'''
-	return
+	#[out: json];
+	query_to=f'''
+[bbox:{str_bounding_box(bbox)}];
+wr;
+(._;>;);
+out tags;
+'''
+
+	query_ql=f'''\
+[out:json][timeout:25];
+(
+nwr({str_bounding_box(bbox)});
+);
+out tags;
+//>;
+//out skel qt;
+'''
+	query=query_ql
+	DEBUGPRINT(query)
+	
+	response = do_request(OVERPASS_URL,{'data':query})
+	DEBUGPRINT(response)
+	if response:
+		return json.loads(response)
+	return {}
 	
 near=10
 latitude=49.257544
@@ -124,24 +137,22 @@ working_query=f'''[out:json];
 	out skel qt;
 	'''
 
-def overpass_reverse_geocoder(latitude:float,longitude:float,near=100,)->dict:
+def overpass_around_query(latitude:float,longitude:float,near=100,)->dict:
 	global OVERPASS_URL
-
-	query=f'''[out:json];
-	(
-	  relation(around:{near},{latitude}, {longitude});
-	  node["elements"];
-	  
-	);
-	out body;
-	>;
-	out skel qt;
-	'''
-	#DEBUGPRINT(query)
+	query=f'''
+[out:json];
+(
+nwr(around:{near},{latitude}, {longitude});
+);
+out tags;
+>;
+'''
+	DEBUGPRINT(query)
 	#response = requests.post(OVERPASS_URL, data={"data": query})
 	response = do_request(OVERPASS_URL,{"data": query})
-	#return response
-	return json.loads(response)
+	if response:
+		return json.loads(response)
+	return {}
 		
 def overpass_find_nearby_landmarks(lat, lon):
     # Using OpenStreetMap's Overpass API to find nearby landmarks
@@ -164,62 +175,7 @@ def overpass_find_nearby_landmarks(lat, lon):
     
     return landmarks
 
-def overpass_info(latitude:float, longitude:float,radius=20)->dict:
-	query = f"""
-	[out:json];
-	node(around:{radius},{latitude},{longitude})["addr:housenumber"];
-	out body;
-	"""
-	response = requests.get("http://overpass-api.de/api/interpreter", params={'data': query})
-	if response.status_code != 200:
-		DEBUGPRINT(f'response code {response.status_code}')
-	data = response.json()
-	DEBUGPRINT(json.dumps(data,indent=4))
-	return data
-	
-def get_osm_info(latitude,longitude,zoom=4):
-	# Create an Overpass API instance
-	api = overpass.API()
 
-	# Nominatim API URL
-	#url = f"https://nominatim.openstreetmap.org/reverse?lat={latitude}&lon={longitude}&format=json"
-	url=f"http://osm.org/#map={zoom}/{latitude}/{longitude}"
-	DEBUGPRINT(f'{url=}')
-	# Make the request
-	response = do_request(url)
-	return response
-
-def get_info_on_coordinates(latitude,longitude,R=50):
-	global OVERPASS_API
-	
-	# Execute the query and retrieve the results
-	coords=latitude,longitude
-	request = f"""
-	[out:json];
-	// Find all elements within a radius of 100 meters around the given coordinates
-	node({coords}, {R});
-	way({coords},{R} ;
-	relation({coords}, {R});
-	// Print the results
-	out geom;
-	"""
-	
-	res=OVERPASS_API.query(request)
-	return res
-
-def show_geo_results(results): # Process the results
-	for element in results['elements']:
-	# Extract the element type (node, way, or relation)
-		element_type = element['type']
-
-		# Extract the element's tags
-		tags = element['tags']
-
-		# Print the element type and its tags
-		print(f"Element type: {element_type}")
-		for tag_key, tag_value in tags.items():
-			print(f"  {tag_key}: {tag_value}")
-			
 def gps_alpha_to_float(gps_string:str)->float:
 	'''convert a string like "52 deg 57' 12.63" N" to 52.970175
 	thanks Aria of Opera
@@ -244,40 +200,32 @@ def gps_alpha_to_float(gps_string:str)->float:
 	
 	return decimal_degrees
 
-    
-# query = f"""
- #
-	# [out:json];
-	# // Find roads within a radius of 100 meters around the given coordinates
-	# way({coordinates}, 100);
-	# relation({coordinates}, 100);
-	# // Filter for roads
-	# (way["highway"] || relation["highway"]);
-	# // Print the results
-	# out geom;
-	# """
-
 if __name__ == '__main__':
 	joure_coords=(52.963041973818754, 5.8111289020720855)
 	lat,long=joure_coords
 	joure_box=bounding_box(lat,long,10)
 	
 	print(f'{joure_box[0]:6.2f},{joure_box[1]:6.2f},{joure_box[2]:6.2f},{joure_box[3]:6.2f}')
-	hveen_coords=(52.956637574998254, 5.958298563514454)
-	hveen_box=bounding_box(hveen_coords[0],hveen_coords[1],5)
+	hveen_coords=(52.95841726530616, 5.958291851243422 )
+	hveen_box=bounding_box(hveen_coords[LATI],hveen_coords[LNGI],50)
 	print(str_bounding_box(hveen_box))
 	print(str_bounding_box(joure_box))
-	exit(0)
-	for i in range(0,90,7):
-		print(f'{i:3} {meters_per_degree(i)}')
-	i=90
-	print(f'{i:3} {meters_per_degree(i)}')
 	
-	exit(0)
+	# for i in range(0,90,7):
+	# 	print(f'{i:3} {meters_per_degree(i)}')
+	# i=90
+	# print(f'{i:3} {meters_per_degree(i)}')
+	
+	
+	
 	place='Joure'
 	place = "1600 Amphitheatre Parkway, Mountain View, CA"
 	
-	data=overpass_reverse_geocoder(52.95973520817635, 5.944264413055178)
+	#data=overpass_box_query(hveen_coords[LATI],hveen_coords[LNGI],50)
+	data=overpass_around_query(hveen_coords[LATI],hveen_coords[LNGI])
+	print(data)
+	exit (0)
+	data=overpass_reverse_geocoder(hveen_coords[LATI],hveen_coords[LNGI])
 	print(data)
 	#overpass_info(lat, lon)
 	# result = get_info_on_coordinates(49.257544, 11.651196)

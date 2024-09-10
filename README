@@ -1,0 +1,10 @@
+Make a slow but failsafe copy of directories e.g. to usb thumb drives.
+
+listcopy.py -s path > file_with_sourcefiles
+to create file with a list of the source files
+for example do "cat file_with_sourcefiles | grep -v 'Remove these' > filterd_sourcefiles"
+for --skiplist syntax see: "https://docs.python.org/3/howto/regex.html#regex-howto"
+for example: --skiplist '.ico$' '.lnk$' '.log$' '.tmp$'
+Successful copied files are listed in "/home/bob/listcopy.ok" and skipped next try
+listcopy destination_dir < sourcefilelist
+To start or restart copying

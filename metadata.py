@@ -285,7 +285,7 @@ def do_exiftool(picture_file,format='txt'):
 			except json.decoder.JSONDecodeError as e:
 				print("do_exiftool")
 				print (f'{e} "{picture_file}"')
-				return  None
+				return {}
 		return result
         
 def do_convert(picture_file):

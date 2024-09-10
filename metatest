@@ -1,0 +1,2 @@
+#!/bin/bash
+./listcopy.py -v -M -b "test.monitor" meta < tos-pic.list

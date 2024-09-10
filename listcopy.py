@@ -1,8 +1,8 @@
 #!/usr/bin/python3
+import json
 import os
-#import keyboard needs root
 import shutil
-#from fileinput import filename
+#from importlib.metadata
 
 import psutil
 import argparse
@@ -12,6 +12,7 @@ import pathlib
 import time
 import signal
 import extensions as ext
+import metadata as meta
 
 DEBUGPRINT=print
 
@@ -58,64 +59,74 @@ parser = argparse.ArgumentParser(
 	            'directory',
 	epilog='Have Fun'
 )
-
-parser.add_argument('-v', '--verbose', help='Verbose output.',
-                    action='store_true')
-parser.add_argument('-u', '--usage', help='How to use.',
-                    action='store_true')
-parser.add_argument('-s', '--source', help='Generate a source files list.',action='store_true')
-parser.add_argument('-f', '--filter', help=f'don\'t copy {FILTEROUT}',
-                    action='store_true')
-parser.add_argument('-S','--skip', nargs='*', help='filepaths containing a '
-                                                  'match with one of these '
-                                                'regular expressions are skipped')
+parser.add_argument('-u', '--usage',
+                    help='How to use.',
+                    action='store_true'
+                    )
+parser.add_argument('-v', '--verbose',
+                    help='Verbose output.',
+                    action='store_true'
+                    )
+parser.add_argument('-s', '--source',
+                    help='Generate a source files list.',
+                    action='store_true'
+                    )
+parser.add_argument('-f', '--filter',
+                    help=f'don\'t copy {FILTEROUT}',
+                    action='store_true'
+                    )
+parser.add_argument('-S','--skip',
+                    nargs='*',
+                    help='filepaths containing a '
+                         'match with one of these '
+                         'regular expressions are skipped'
+                    )
 parser.add_argument('-m', '--match',
-	help='Only filenames matching one of the regular expressions are listed.',
-	action='store',
-	nargs='*')
-
-#Greater or Lesser
+                    help='Only filenames matching one of the regular expressions are listed.',
+                    action='store',
+                    nargs='*'
+                    )
 parser.add_argument('-g', '--greater',
-	help='Only files greater than this in mega bytes or use K for Kilo bytes like 32.8K',
-	action='store',
-	nargs=1)
-
+                    help='Only files greater than this in mega bytes or use K for Kilo bytes like 32.8K',
+                    action='store',
+                    nargs=1
+                    )
 parser.add_argument('-l', '--lesser',
-	help='Only files lesser than this in mega bytes or use K for Kilo bytes like 32.8K',
-	action='store',
-	nargs=1)
-
+                    help='Only files lesser than this in mega bytes or use K for Kilo bytes like 32.8K',
+                    action='store',
+                    nargs=1
+                    )
 parser.add_argument('-x','--extension',
                     help='select files by extensions  ',
                     choices=ext.ext_classes.keys(),
                     nargs='*',
                     action='store'
-)
-
+                    )
 parser.add_argument('-t', '--todo',
-	help='print the files that still need to bee copied of the file-list-file.',
-	action='store_true')
- 
+                    help='print the files that still need to bee copied of the file-list-file.',
+                    action='store_true'
+                    )
+parser.add_argument('-M', '--meta',
+                    help='Try copy files to a destination and filename based on meta data',
+                    action='store_true'
+                    )
+parser.add_argument('-b', '--bookkeeper',
+                    help='File stam name to store the bookkeeping data"',
+                    action='store',
+                    nargs='?'
+                    )
 parser.add_argument('Path' ,
                     help = f'Path to the source or destination directory {CONT} '
                            f'to continue copying to the same directory',
-                    action='store', nargs='?')
+                    action='store',
+                    nargs='?'
+                    )
 
 args = parser.parse_args()
 
-def HowTo()->None:
-	print ('Make a slow but failsafe copy of directories e.g. to usb thumb drives.')
-	print ('\nlistcopy.py -s path > file_with_sourcefiles')
-	print ('to create file with a list of the source files')
-	print ('for example do "cat file_with_sourcefiles | grep -v \'Remove '
-	       'these\' > filterd_sourcefiles"')
-	print ('for --skiplist syntax see: '
-	       '"https://docs.python.org/3/howto/regex.html#regex-howto"')
-	print ("for example: --skiplist '.ico$' '.lnk$' '.log$' '.tmp$'")
-	print (f'Successful copied files are listed in "{ok_file}" and skipped '
-	       f'next try')
-	print ('listcopy destination_dir < sourcefilelist')
-	print ('To start or restart copying')
+def explain()->None:
+	with open('README','r') as rm:
+		print (rm.read())
 	
 def time_delta_str(start, end) -> str:
 	global MIN_SECS, HOUR_SECS
@@ -308,7 +319,7 @@ def list_sources()-> int:
 	print(f'{min_file_size=}')
 	return count
 	
-def ErrorExit(e,message=None)->None:
+def exit_error(e,message=None)->None:
 	print(f"I/O error ({e.errno}): {e.strerror}")
 	if message:
 		print(message)
@@ -424,13 +435,13 @@ def write_chunks_to_file(input_file_path, output_file_path ):
 			
 			if speed_difference_percent > DIFFER_PERCENTAGE:
 				if copy_speed > prev_copy_speed:
-					speed='+'
+					speed='^'
 					if chunk_got_bigger:
 						chunk_size = double_chunk(chunk_size)
 					else:
 						chunk_size = decrease_chunk(chunk_size)
 				else:
-					speed='-'
+					speed='v'
 					if chunk_got_bigger:
 						chunk_size = decrease_chunk(chunk_size)
 					else:
@@ -482,7 +493,7 @@ def BadFile(nasty,nasty_dest,error):
 		return
 	if error.errno == 27: # Error:27 "File too large"
 		return
-	ErrorExit(error)
+	exit_error(error)
 
 def target_fs_properties(destination_path):
 	"""Determine the maximum file size and the block size for the
@@ -557,74 +568,78 @@ def read_ok_file()->int:
 	if args.verbose:
 		print (f'copy to "{WorkPath}"')
 	return count_copied
-
-def target_file_path(source_file,source_path_length):
+	
+def assure_target_dir(target_dir)->None:
+	#checks if the directory exist if not makes it or exit if failes
+	if os.path.exists(target_dir):
+		return
+	try:
+		os.makedirs(target_dir,0o755)
+	except IOError as e:
+		exit_error(e,f'os.makedirs("{target_dir}", 0o755) FAILED')
+	
+def target_file_dir(source_file,source_path_length):
 	global WorkPath
 	base_path = source_file[source_path_length:]
 	#file_name = os.path.join(WorkPath,base_path)
 	target_name= WorkPath + base_path
 	dest_dir = os.path.dirname(target_name)
 	#DEBUGPRINT(f'BK:S \n{WorkPath=}\n{base_path=}\n{target_name=}\n{dest_dir=}')
-	if not os.path.exists(dest_dir):
-		try:
-			os.makedirs(dest_dir, 0o755)
-		except IOError as e:
-			ErrorExit(e,f'os.makedirs("{dest_dir}", 0o755) FAILED')
+	assure_target_dir(dest_dir)
 	return target_name,dest_dir
 
-def file_check_ok(src,l)->bool:
+def file_check_ok(source,target,l)->bool:
 	# if the destination of src exists and the
 	# sizes are the same it wil be ok and return is True
-	dst,_=target_file_path(src,l)
 	try:
-		size_src=os.stat(src).st_size
+		size_src=os.stat(source).st_size
 	except OSError as e:
 		print(f'{e.errno} "{e.strerror}"')
 		exit(e.errno)
 	try:
-		size_dst=os.stat(dst).st_size
+		size_dst=os.stat(target).st_size
 	except OSError as e:
 		if e.errno == 2: # No such file
 			return False
-		print (f'Can\'t stat "{dst}"')
+		print (f'Can\'t stat "{target}"')
 		print(f'{e.errno} "{e.strerror}"')
 		exit(e.errno)
 	if size_src == size_dst:
 		return True
-	os.remove(dst)
+	os.remove(target)
 	return False
 	
-def CopyTo():
-	global WorkPath,ok_file,bad_file,DATA_BEGIN_MARKER,DATA_END_MARKER,processed_file
-	global SourcePath,chunk_size
-	
-	#DEBUGPRINT(f'BK:4 {WorkPath=}')
-	count_copied= done = read_ok_file()
-	# read how many files are copied before
-	# determ the destination dir
-	#DEBUGPRINT(f'BK:4 {done=} "{WorkPath}"')
-	target_fs_properties(WorkPath)
-	#exit(0)
-	chunk_size=FsBlockSize
-	
+def find_begin_marker()->None:
+	#read until the begin marker is found in the input
 	while True:
 		startmark = input() # look where the list data starts
 		if startmark == DATA_BEGIN_MARKER:
-			break
+			return
+	# return never reached input error if marker not found
 	
+def copy_to(target_maker):
+	global WorkPath,ok_file,bad_file,DATA_BEGIN_MARKER,DATA_END_MARKER,processed_file
+	global SourcePath,chunk_size
+	
+	count_copied = done = read_ok_file()
+	# read how many files are copied before
+	# determ the destination dir = the global WorkPath
+	
+	target_fs_properties(WorkPath)
+	chunk_size = FsBlockSize
+	find_begin_marker()
 	SourcePath = input()
 	#DEBUGPRINT(f'{source_path}')
 	cutlen=len(SourcePath) # length of the source path
 	
 	source_file=None # if the where files copied check if it went ok
-	
 	while done>0: # read over wath is finished
-		source_file=input()
+		source_file=input() # on the end of the loop it is the last file that was copied
 		done -= 1
-	#exit(0)
+	
 	if source_file:
 		# is the last file copied before beter check on it
-		if  file_check_ok(source_file,cutlen):
+		if  file_check_ok(source_file,target_maker(source_file,cutlen)):
 			# file exists and is the same size
 			# start with the next
 			source_file=None
@@ -635,7 +650,7 @@ def CopyTo():
 		if DATA_END_MARKER in source_file:
 			coping_done(count_copied)
 			break
-		dest_file,dest_dir = target_file_path(source_file,cutlen)
+		dest_file,dest_dir = target_maker(source_file,cutlen)
 		if args.verbose:
 			origin_basename = os.path.basename(source_file)
 			origin_dir = os.path.dirname(source_file)
@@ -662,16 +677,38 @@ def CopyTo():
 		source_file=None # clear to copy next
 	exit(0)
 	
-def main() -> None:
+# copying to metadata based destination
+def target_meta_dir(source_file,source_path_length):
 	global WorkPath
+	base_path = source_file[source_path_length:]
+	target_name= WorkPath + base_path # at least a target if there is no metadata
+	md=meta.do_exiftool(source_file,'json')
+	if meta == {}:
+		return base_path
+	DEBUGPRINT(json.dumps(md,indent=4))
+	exit(0)
+	dest_dir = os.path.dirname(target_name)
+	assure_target_dir(dest_dir)
+	return target_name,dest_dir
+# end copying to metadata based destination
+
+def main() -> None:
+	global WorkPath,ok_file,bad_file
+	
 	if args.Path:
 		if args.Path[-1:]=='/':
 			WorkPath=args.Path
 		else:
 			WorkPath=args.Path+'/'
 	
+	if args.bookkeeper:
+		bkk=args.bookkeeper
+		ok_file= os.path.expanduser(bkk) + '.ok'
+		bad_file=os.path.expanduser(bkk) + '.bad'
+		DEBUGPRINT(f'{ok_file=}\n{bad_file=}')
+	
 	if args.usage:
-		HowTo()
+		explain()
 		exit(0)
 	if args.todo:
 		list_to_do()
@@ -681,8 +718,11 @@ def main() -> None:
 		#DEBUGPRINT(f'Files counted {count}', file=sys.stderr)
 		exit(0)
 	
+	if args.meta:
+		copy_to(target_meta_dir)
+		exit(0)
 	if WorkPath:
-		CopyTo()
+		copy_to(target_file_dir)
 		exit(0)
 	
 	parser.print_help()
