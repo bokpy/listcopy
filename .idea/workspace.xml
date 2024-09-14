@@ -11,6 +11,8 @@
   <component name="ChangeListManager">
     <list default="true" id="7d47a416-3b1c-466e-a851-3e5a458f6704" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/listcopy.py" beforeDir="false" afterPath="$PROJECT_DIR$/listcopy.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/metadata.py" beforeDir="false" afterPath="$PROJECT_DIR$/metadata.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -21,6 +23,7 @@
     <option name="RECENT_TEMPLATES">
       <list>
         <option value="Python Script" />
+        <option value="Setup Script" />
       </list>
     </option>
   </component>
@@ -69,7 +72,7 @@
     "git-widget-placeholder": "master",
     "last_opened_file_path": "/home/bob/python/listcopy",
     "run.code.analysis.last.selected.profile": "aDefault",
-    "settings.editor.selected.configurable": "com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable",
+    "settings.editor.selected.configurable": "actions.on.save",
     "settings.editor.splitter.proportion": "0.3207547"
   },
   "keyToStringList": {
@@ -203,8 +206,8 @@
     <recent_temporary>
       <list>
         <item itemvalue="Python.listcopy " />
-        <item itemvalue="Python.geolocate" />
         <item itemvalue="Python.metadata" />
+        <item itemvalue="Python.geolocate" />
         <item itemvalue="Python.extensions" />
         <item itemvalue="Python.test_extensions" />
       </list>

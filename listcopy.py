@@ -2,6 +2,8 @@
 import json
 import os
 import shutil
+from sys import stdin
+
 #from importlib.metadata
 
 import psutil
@@ -15,9 +17,9 @@ import extensions as ext
 import metadata as meta
 
 DEBUGPRINT=print
-
-ok_file=os.path.join(os.path.expanduser('~'),'listcopy.ok')
-bad_file=os.path.join(os.path.expanduser('~'),'listcopy.bad')
+#DEBUGRETURN=return  return is not a function
+DEBUGEXIT=exit
+TRACKER=os.path.join(os.path.expanduser('~'),'listcopy')
 processed_file=None
 FILTEROUT=['/Cookies/','/Microsoft/','/Windows/','/Cache','#.*#$','\.lnk$',
            '\.tmp$','\.log$','\.err$','~$','/AppData/',
@@ -25,7 +27,7 @@ FILTEROUT=['/Cookies/','/Microsoft/','/Windows/','/Cache','#.*#$','\.lnk$',
 #skiplist=None
 DATA_BEGIN_MARKER='<-DATA_BEGIN_MARKER->'
 DATA_END_MARKER='<-DATA_END_MARKER->'
-CONT='<CONTINUE>'
+CONTINUE='<CONTINUE>'
 MIN_SECS=60
 HOUR_SECS=3600
 MEGA=1024**2
@@ -116,13 +118,82 @@ parser.add_argument('-b', '--bookkeeper',
                     nargs='?'
                     )
 parser.add_argument('Path' ,
-                    help = f'Path to the source or destination directory {CONT} '
+                    help = f'Path to the source or destination directory {CONTINUE} '
                            f'to continue copying to the same directory',
                     action='store',
                     nargs='?'
                     )
 
 args = parser.parse_args()
+
+class InputFileIterator:
+	def __init__(self,tracker_file_stem=TRACKER,input_file=sys.stdin):
+		DEBUGPRINT(f'InputFileIterator.__init__({tracker_file_stem=},{input_file=}')
+		
+		if input_file==sys.stdin:
+			#DEBUGPRINT('input_file==sys.stdin')
+			if sys.stdin.isatty():
+				print(f"I guess you don't want to type a list by hand.")
+				print('Redirect input from a file or give an previous generated,')
+				print('file with a listing of files to copy.')
+				exit(1)
+			#DEBUGPRINT('read sys.stdin')
+			self.filelist=sys.stdin.readlines()
+			#DEBUGPRINT(f'{self.filelist}')
+		else:
+			try:
+				with open(input_file,'r') as f:
+					self.filelist=f.readlines()
+			except IOError as e:
+				print(f'InputFileIterator could not open "{input_file}"')
+				print(f'error {e.errno} "{e.strerr}"')
+				exit(e.errno)
+		self.ok_file=tracker_file_stem+'.ok'
+		self.bad_file=tracker_file_stem+'.bad'
+		self.read_ok_file_processed() # sets: self.processed
+		self.strip_newline()
+		#DEBUGPRINT(self.filelist)
+		self.find_data_begin() # sets: self.index,self.source_dir,self.source_dir_len
+		DEBUGPRINT(f'{self.source_dir=}')
+		self.source_dir_len=len(self.source_dir)
+		# we now know where to start
+		self.index+=self.processed
+		
+	def __iter__(self):
+		return self
+		
+	def __next__(self):
+		self.index+=1
+		ret=self.filelist[self.index]
+		if ret == DATA_END_MARKER:
+			raise StopIteration
+		return ret
+		
+	def read_ok_file_processed(self):
+		self.processed=0
+		if os.path.exists(self.ok_file):
+			with open(self.ok_file,'r') as ok:
+				count=ok.readline()
+				self.processed=int(count)
+			DEBUGPRINT(f'{self.processed=}')
+			
+	def strip_newline(self):
+		fl=self.filelist
+		for i in range(len(fl)):
+			fl[i]=fl[i][:-1]
+	
+	def find_data_begin(self):
+		mark=DATA_BEGIN_MARKER
+		i=0
+		while mark != self.filelist[i]: # find the start marker in the input
+			i+=1
+		self.index=i+1
+		self.source_dir=self.filelist[self.index]
+		DEBUGPRINT(f'{self.source_dir=}')
+		self.source_dir_len=len(self.source_dir)
+		#DEBUGPRINT(f'self.filelist = type({type(self.filelist)})')
+		#DEBUGEXIT(100)
+		
 
 def explain()->None:
 	with open('README','r') as rm:
@@ -549,7 +620,7 @@ def coping_done(count):
 	exit(0)
 
 def read_ok_file()->int:
-	global CONT,WorkPath
+	global CONTINUE,WorkPath
 	
 	if not os.path.exists(ok_file):
 		return 0
@@ -562,7 +633,7 @@ def read_ok_file()->int:
 		
 	if args.verbose:
 		print (f'{count_copied} files copied earlier.')
-	if CONT == WorkPath[:-1]:
+	if CONTINUE == WorkPath[:-1]:
 		#DEBUGPRINT(f'{WorkPath}')
 		WorkPath=dst_path
 	if args.verbose:
@@ -694,7 +765,11 @@ def target_meta_dir(source_file,source_path_length):
 
 def main() -> None:
 	global WorkPath,ok_file,bad_file
-	
+	if True: # InputFileIterator test
+		file_iterator=InputFileIterator(tracker_file_stem='itertest',input_file='/home/bob/python/listcopy/tos-pic.list')
+		for file in file_iterator:
+			print(file)
+		exit(0)
 	if args.Path:
 		if args.Path[-1:]=='/':
 			WorkPath=args.Path
@@ -728,8 +803,5 @@ def main() -> None:
 	parser.print_help()
 	
 if __name__ == '__main__':
-	# #DEBUGPRINT(f'{args.chunk}')
-	# if args.chunk:
-	# 	#DEBUGPRINT(f'{args.chunk}')
-	# 	exit (0)
+	print('Called as main')
 	main()

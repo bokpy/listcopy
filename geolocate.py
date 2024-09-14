@@ -5,6 +5,7 @@ import json
 import requests
 import overpass
 import math
+import re
 # import osmnx
 # from os import eventfd_read
 # import geopandas as gpd
@@ -175,12 +176,21 @@ def overpass_find_nearby_landmarks(lat, lon):
     
     return landmarks
 
-
+#gps_re=re.compile(r"\d+ deg \d+' \d+\.\d+\" [NESW]")
+gps_re=re.compile(r'\d+ deg \d+\' \d+\.\d+" [NSEW]')
 def gps_alpha_to_float(gps_string:str)->float:
 	'''convert a string like "52 deg 57' 12.63" N" to 52.970175
 	thanks Aria of Opera
 	'''
-	DEBUGPRINT(gps_string)
+	#DEBUGPRINT(gps_string)
+	if type(gps_string) != str:
+		#DEBUGPRINT(f'gps_alpha_to_float expect string return 0')
+		return False
+	match=re.match(r'(\d+) deg (\d+)\' (\d+\.\d)+" ([NSEW])',gps_string)
+	if not match:
+		#DEBUGPRINT(f"gps_alpha_to_float can't handle this format return 0")
+		return False
+	
 	parts = gps_string.split()
 	DEBUGPRINT(parts)
 	# Extract degrees, minutes, seconds, and direction
