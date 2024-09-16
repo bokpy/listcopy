@@ -730,9 +730,16 @@ CAD_FILE_EXT = [
 	"\.FCStd"
 ]
 
-ext_classes={'video':VIDEO_EXT,'audio':AUDIO_EXT,'3d-model':D3_EXT,'picture':RASTER_IMAGE_EXT,
-             'raster-image':RASTER_IMAGE_EXT,'vector-image':VECTOR_IMAGE_EXT,
-             'text':TEXT_EXT,'cad':CAD_FILE_EXT}
+ext_classes={'video':VIDEO_EXT,
+             'audio':AUDIO_EXT,
+             'text':TEXT_EXT,
+             'picture':RASTER_IMAGE_EXT,
+             'pixmap':RASTER_IMAGE_EXT,
+             'raster-image':RASTER_IMAGE_EXT,
+             'vector-image':VECTOR_IMAGE_EXT,
+             '3d-model':D3_EXT,
+             'cad':CAD_FILE_EXT
+             }
 
 
 def string_extensions(reg_list)->str:

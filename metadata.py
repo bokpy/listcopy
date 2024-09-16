@@ -1,9 +1,10 @@
 #!/usr/bin/python3
+import os.path
 import re
 import subprocess
 import json
 from collections import deque
-#from distutils
+from listcopy import BasicSubDir
 
 from geolocate import gps_alpha_to_float
 #from matplotlib.font_manager import json_dump
@@ -115,32 +116,208 @@ HEIF	.heif, .heic	EXIF, XMP
 RAW	Various (e.g., .raw, .cr2, .nef)	EXIF, proprietary formats
 https://imagemagick.org/script/download.php#linux'''
 
-class ExifTags:
+class ExifTags(BasicSubDir):
+	EXIFTAGS = ['date', 'yearmonth', 'year', 'month', 'day', 'camera', 'gps',
+	            'flash', 'light', 'mime'] + [str(x) for x in range(4,-5,-1) if x != 0]
+	#"2024:09:03 10:51:43+02:00"
+	date_split=re.compile(r'(\d+):(\d+):(\d+) (\d+):(\d+):(\d+)(.*)')
+	#'date':["2012","01","25","03","41","57"]
+	path_format=['year','camera','gps']
 	
-	def __init__(self):
-		self.tags={}
-		self.early=["3000","12","31"]
+	def __init__(self,format='',file_path=''):
+		DEBUGPRINT(f'ExifTags init ({format=} , {file_path=}')
+		if format!='':
+			self.path_format=format
+		if file_path!='':
+			self.set(file_path)
 		
-	def exstract_datum(self):
+	def set(self,file_path):
+		DEBUGPRINT(f'ExifTags set ( {file_path=}')
+		self.file_path=file_path
+		self.json_tags={}
+		self.tags={}
+		self.early=("3000","12","31", "00", "00","00","+00:00")
+		self._collect_exif_from_file()
+		self._process()
+	
+	def qualified_name(self)->str:
+		return self.make_sub_dir()+os.path.basename(self.file_path)
+	
+	def make_sub_dir(self)->str:
+		dir=''
+		for tag in self.path_format:
+			if tag == 'date':
+				dir += self.extract_datum() + '/'
+				continue
+				
+			if tag == 'yearmonth':
+				if 'date' in self.tags:
+					date=self.tags['date']
+					dir = dir + date[0] + '-' + date[1] + '/'
+					continue
+				dir= dir + UNKNOWN  + '/'
+				continue
+
+			if tag == 'year':
+				if 'date' in self.tags:
+					date=self.tags['date']
+					dir = dir + date[0] + '/'
+					continue
+				dir= dir + UNKNOWN  + '/'
+				continue
+				
+			if tag == 'month':
+				if 'date' in self.tags:
+					date=self.tags['date']
+					dir = dir + date[1] + '/'
+					continue
+				dir= dir + UNKNOWN  + '/'
+				continue
+				
+			if tag == 'day':
+				if 'date' in self.tags:
+					date=self.tags['date']
+					dir = dir + date[2] + '/'
+					continue
+				dir= dir + UNKNOWN  + '/'
+				continue
+				
+			if tag == 'camera':
+				dir = dir + self.extract_camera() + '/'
+				continue
+			
+			if tag == 'gps':
+				if 'gps' in self.tags:
+					dir = dir + 'HAS-----GPS-------DATA' + '/'
+					continue
+				dir= dir + 'gps ' + UNKNOWN  + '/'
+				continue
+				
+			if tag == 'flash':
+				if 'flash' in self.tags:
+					dir = dir + 'Flash '+ self.tags['flash'] + '/'
+					continue
+				dir= dir + UNKNOWN  + '/'
+				continue
+			
+			if tag == 'light':
+				if 'light' in self.tags:
+					dir = dir + 'light '+ self.tags['light'] + '/'
+					continue
+				dir= dir + UNKNOWN  + '/'
+				continue
+				
+			if tag == 'mime':
+				if 'mime' in self.tags:
+					dir = dir + str(self.tags['mime']) + '/'
+					continue
+				dir= dir + UNKNOWN  + '/'
+				continue
+			
+			dir = dir + self.sub_dir(tag) + '/'
+			
+		return dir
+	
+	def sub_dir(self,index)->str:
+		i=int(index)
+		split_path=self.file_path.split('/')
+		DEBUGPRINT(split_path)
+		split_path=split_path[:-1]
+		DEBUGPRINT(split_path)
+		len_split_path=len(split_path)
+		if abs(i)>=len_split_path:
+			return ''
+		if i>0:
+			return split_path[i-1]
+		return split_path[len_split_path+i]
+		
+	def is_empty(self):
+		return self.tags=={}
+	
+	def show(self,tagstype='tags'):
+		if tagstype=='tags':
+			print(json.dumps(self.tags,indent=4))
+			return
+		print(json.dumps(self.json_tags,indent=4))
+	
+	def _collect_exif_from_file(self)->None:
+		metadata=do_exiftool_json(self.file_path)
+		if type(metadata) != dict:
+			print(f'do_exiftool_json returned {type(metadata)}')
+			return
+		if metadata == {}:
+			return
+		self.json_tags=metadata
+		self._process()
+		
+	def _process(self)->None:
+		global TAG_PROCESSOR
+		# if type(meta) != dict:
+		# 	print(f' ExifTags:process_tags({meta=}) expected a dict')
+		# 	exit(1)
+		
+		for meta_key in self.json_tags.keys():
+			if meta_key in TAG_PROCESSOR:
+				#DEBUGPRINT(meta[meta_key])
+				tag,action=TAG_PROCESSOR[meta_key]
+				action(self,tag,meta_key,self.json_tags[meta_key])
+		
+	def extract_datum(self):
 		if 'date' in self.tags:
 			d=self.tags['date']
 			return f'{d[2]}-{d[1]}-{d[0]}'
 		return UNKNOWN
 	
-	def exstract_year(self):
+	def exstract_gps(self):
+		# /home/bob/temp/Users/Sander/Desktop/Foto's/2013/12 december/
+		pass
+	
+	def extract_year(self):
 		if 'date' in self.tags:
 			d=self.tags['date']
 			return f'{d[0]}'
 		return UNKNOWN
-		
-	def exstract_camera(self):
+	
+	def extract_camera_long(self):
 		if not 'camera' in self.tags:
 			return UNKNOWN
-		cam=''
-		for prop in self.tags['camera']:
-			cam=cam + ' ' + prop.strip()
-		return cam.strip()
-		
+		cam_tag_list = []
+		for tag in self.tags['camera']:
+			if tag == '':
+				continue
+			tag_split = tag.split(' ')
+			for sub_tag in tag_split:
+				cam_tag_list.append(sub_tag)
+		cam_tag_set = set(cam_tag_list)
+		ret = ''
+		for tag in cam_tag_list:
+			if tag in cam_tag_set:
+				ret = ret + ' ' + tag
+				cam_tag_set.remove(tag)
+		return ret[1:]  # remove leading space1
+	
+	def extract_camera(self):
+		if not 'camera' in self.tags:
+			return 'camera' + ' ' + UNKNOWN
+		cam_tag_list = []
+		# select a limited number of tag to prevent very long subdir name
+		countdown_tags=3
+		for tag in self.tags['camera']: # sel
+			if tag == '':
+				continue
+			countdown_tags-=1
+			if countdown_tags < 0:
+				break
+			cam_tag_list += tag.split(' ')
+		# filter the doublures out while keeping the order
+		cam_tag_set = set(cam_tag_list)
+		ret = ''
+		for tag in cam_tag_list:
+			if tag in cam_tag_set:
+				ret = ret + ' ' + tag
+				cam_tag_set.remove(tag)
+		return ret[1:]  # remove leading space1
+	
 	def oldest_datum(self,datum):
 		# DEBUGPRINT(self.early)
 		# DEBUGPRINT(datum)
@@ -158,15 +335,16 @@ class ExifTags:
 		if self.early[2] > datum[2]:
 			return datum
 		return datum # don't care for time now
-		
+	
+	
 	def store_none(self,store_key,meta_key,meta_value):
 		pass
 	
 	def store_mime(self,store_key,meta_key,meta_value):
-		self.tags.setdefault(store_key,{meta_key:meta_value})
+		self.tags.setdefault(store_key,meta_value)
 		
 	def store_light(self,store_key,meta_key,meta_value):
-		self.tags.setdefault(store_key,{meta_key:meta_value})
+		self.tags.setdefault(store_key,f'{meta_key}:{meta_value}')
 		
 	def store_info(self,store_key,meta_key,meta_value):
 		#DEBUGPRINT(f'{"-"*80}\n{store_key},{meta_key},{meta_value}')
@@ -176,9 +354,9 @@ class ExifTags:
 		self.tags.setdefault(store_key,{meta_key:meta_value})
 		
 	def store_camera(self,store_key,meta_key,meta_value):
-		str_meta_value=str(meta_value)
+		str_meta_value=str(meta_value).strip()
 		if not store_key in self.tags:
-			self.tags[store_key]=['' for _ in range(8)]
+			self.tags[store_key]=['' for _ in range(10)]
 		cam_tag=self.tags[store_key]
 		i=0
 		if meta_key=='CameraID':
@@ -205,8 +383,11 @@ class ExifTags:
 			cam_tag[i]=str_meta_value
 			return
 		i+=1
-		if meta_key=='CameraTemperature':
+		if meta_key=='DeviceType':
 			cam_tag[i]=str_meta_value
+			return
+		if meta_key=='CameraTemperature':
+			self.tags['temp']=str_meta_value
 			return
 		i+=1
 		cam_tag[i]=f'{meta_key}:{meta_value}'
@@ -221,27 +402,48 @@ class ExifTags:
 			print('"2024:09:03 10:51:43+02:00"')
 			print(f'got: {meta_value} type: {type(meta_value)}')
 			return
-		DEBUGPRINT(f'store_date {store_key=},{meta_key=},{meta_value=}')
-		datum=re.split(r'[ :+-]',meta_value)
+		#DEBUGPRINT(f'store_date {store_key=},{meta_key=},{meta_value=}')
+		date_time=self.date_split.match(meta_value)
+		if not date_time:
+			print(f'ExifTags.store_date')
+			print('Unexpected format')
+			print(f'got: {meta_value}')
+			return
 		#'date':["2012","01","25","03","41","57"]
-		DEBUGPRINT(datum)
+		datum=date_time.groups()
+		#DEBUGPRINT(datum)
 		self.early=self.oldest_datum(datum)
 		self.tags[store_key]=self.early
 		
 	def store_gps(self,store_key,meta_key,meta_value):
-		DEBUGPRINT(f'store_gps {store_key=},{meta_key=},{meta_value=}')
-		self.tags[store_key]=gps_alpha_to_float(meta_value)
+		if not store_key in self.tags:
+			self.tags[store_key]={'GPSLatitude':1000,'GPSLongitude':1000}
+		if meta_key=='GPSLatitude' or meta_key=='GPSLongitude':
+			self.tags[store_key][meta_key]=gps_alpha_to_float(meta_value) #'52 deg 57\' 27.00" N'
+			return
+		
+		if meta_key=='GPSPosition': #meta_value='52 deg 57\' 27.00" N, 5 deg 56\' 10.20" E'
+			lati,longi=meta_value.split(',')
+			DEBUGPRINT(f'{lati=} {longi=}')
+			self.store_gps(store_key,'GPSLatitude',lati)
+			self.store_gps(store_key,'GPSLongitude',longi)
+			return
+		print (f'Not used key {store_key=} {meta_key=} {meta_value}')
 		
 	def store_flash(self,store_key,meta_key,meta_value):
 		if type(meta_value) != str:
 			meta_value=str(meta_value)
-		if 'Off' in meta_value:
+		if 	'Off' in meta_value or\
+			'False' in meta_value or\
+			'No Flash' in meta_value or\
+			'Did not fire' in meta_value:
 			self.tags[store_key]='Off'
 			return
-		if 'On' in meta_value:
+		if 'On' in meta_value or 'Fire' in meta_value:
 			self.tags[store_key]='On'
 			return
-		self.tags[store_key]=meta_value
+		#DEBUGPRINT(f'UNKNOWN flash type {meta_value}')
+		self.tags[store_key]=UNKNOWN + ' = '+ meta_value
 		
 class ExifTagsEncoder(json.JSONEncoder):
 	def default(self,obj):
@@ -249,7 +451,7 @@ class ExifTagsEncoder(json.JSONEncoder):
 			return {"ExifTags":obj.tags}
 		return super().default(obj)
 		
-class ExifTagsDecoder(json.JSONDecoder):
+class ExifTagsDecoder(json.JSONDecoder): # Not tested
 	def __init__(self):
 		super().__init__(object_hook=self._decode_exif_tags)
 
@@ -258,22 +460,7 @@ class ExifTagsDecoder(json.JSONDecoder):
 			return ExifTags(obj['ExifTags'])
 		return obj
 
-def process_tags(meta:dict)->ExifTags:
-	global TAG_PROCESSOR
-	exif_tags = ExifTags()
-	if type(meta) != dict:
-		print(f'process_tags({meta=}) exsected a dict')
-		exit(1)
-	
-	for meta_key in meta.keys():
-		if meta_key in TAG_PROCESSOR:
-			#DEBUGPRINT(meta[meta_key])
-			tag,action=TAG_PROCESSOR[meta_key]
-			action(exif_tags,tag,meta_key,meta[meta_key])
-		# else:
-		# 	result[meta_key]=False
-	return exif_tags
-	
+
 TAG_PROCESSOR={
  'AEBBracketValue':('none',ExifTags.store_none),
  'AELock':('none',ExifTags.store_none),
@@ -1240,40 +1427,32 @@ TAG_PROCESSOR={
  'ZoomTargetWidth':('none',ExifTags.store_none),
  }
 
-# exploration stuff
-tagsmet=set()
-
-def get_meta_from_file(file_path):
-	metadata=do_exiftool_json(file_path)
-	if type(metadata) != dict:
-		print(f'do_exiftool_json returned {type(metadata)}')
-	if metadata == {}:
-		return {}
-	#files_with_meta.append(file_path)
-	cooked=process_tags(metadata)
-	print(f'date: {cooked.exstract_datum()} {cooked.exstract_year()}')
-	print(f'camera {cooked.exstract_camera()}')
-	#DEBUGPRINT(f'process_tags returned {type(cooked)}')
-	#DEBUGPRINT(json.dumps(cooked,indent = 4))
-	return cooked
-
-files_with_meta=deque()
-
-
 def main() -> None:
-	from listcopy import InputFileIterator
+	from listcopy import InputFileIterator,DATA_BEGIN_MARKER,DATA_END_MARKER
 	global tagsmet,files_with_meta
-	#import sys
-	
-	#print(get_picture_meta_data("/home/bob/ik.jpg"))
-	#print(get_picture_meta_data("/home/bob/ik.jpg", 'convert'))
-	#metadata=get_picture_meta_data("/home/bob/ik.jpg", 'exiftool')
+	gps_files=deque()
+	gps_files.append(DATA_BEGIN_MARKER)
 	listing=InputFileIterator( input_file='/home/bob/python/listcopy/tos-pic.list',tracker_file_stem='testlist')
+	exiftags=ExifTags()
+	count=100
 	for file in listing:
-		DEBUGPRINT(file)
-		meta_info=get_meta_from_file(file)
-		json_str = json.dumps(meta_info, cls=ExifTagsEncoder)
-		print(json_str)
+		count-=1
+		if count < 0:
+			print('.',end='')
+			count=100
+		#DEBUGPRINT(file)
+		meta_info=exiftags.collect_exif_from_file(file)
+		if 'gps' in meta_info:
+			print('.',end='')
+			gps_files.append(file)
+	gps_files.append(DATA_END_MARKER)
+	with open('gps_test.list','w') as f:
+		for gpsf in gps_files:
+			f.write(gpsf)
+	for file in gps_files:
+		print(file)
+		#json_str = json.dumps(meta_info, cls=ExifTagsEncoder)
+		#print(json_str)
 		#cooked=process_tags(meta_info)
 		#print(json.dumps(meta_info,indent=4))
 		#print(json.dumps(cooked,indent = 4))

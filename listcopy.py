@@ -1,8 +1,10 @@
 #!/usr/bin/python3
 import json
 import os
+from os.path import basename, dirname
 import shutil
-from sys import stdin
+#from distutils.command.check import check
+from sys import stdin, stdout
 
 #from importlib.metadata
 
@@ -15,18 +17,19 @@ import time
 import signal
 import extensions as ext
 import metadata as meta
+from metadata import ExifTags
 
 DEBUGPRINT=print
 #DEBUGRETURN=return  return is not a function
 DEBUGEXIT=exit
 TRACKER=os.path.join(os.path.expanduser('~'),'listcopy')
-processed_file=None
+processed_file='/No Such File ' + time.ctime() # for signal handler to fail
 FILTEROUT=['/Cookies/','/Microsoft/','/Windows/','/Cache','#.*#$','\.lnk$',
            '\.tmp$','\.log$','\.err$','~$','/AppData/',
            '\.ini$','/NTUSER.DAT',]
 #skiplist=None
-DATA_BEGIN_MARKER='<-DATA_BEGIN_MARKER->'
-DATA_END_MARKER='<-DATA_END_MARKER->'
+DATA_BEGIN_MARKER='-------->Data_Begin_Marker-------->'
+DATA_END_MARKER='<--------Data_End_Marker<--------'
 CONTINUE='<CONTINUE>'
 MIN_SECS=60
 HOUR_SECS=3600
@@ -43,11 +46,11 @@ FsBlockSize=1024
 def handler(signum, frame):
 	global processed_file
 	signame = signal.Signals(signum).name
-	#DEBUGPRINT('\n\nINTERUPTED by a SIGNAL.')
+	#DEBUGPRINT('\n\nINTERRUPT by a SIGNAL.')
 	if processed_file and os.path.exists(processed_file):
 		os.remove(processed_file)
-		#DEBUGPRINT (f'removed partly copied "{processed_file}"')
-	#DEBUGPRINT(f'Signal handler called with signal {signame} ({signum})')
+		print (f'removed partly copied "{processed_file}"')
+	print(f'Signal handler called with signal {signame} ({signum})')
 	sys.exit(signum)
 
 signal.signal(signal.SIGINT, handler)
@@ -61,86 +64,131 @@ parser = argparse.ArgumentParser(
 	            'directory',
 	epilog='Have Fun'
 )
+# 'u u u u u u u u u u u u u u u u '
 parser.add_argument('-u', '--usage',
                     help='How to use.',
                     action='store_true'
                     )
+#v v v v v v v v v v v v v v v v
 parser.add_argument('-v', '--verbose',
                     help='Verbose output.',
                     action='store_true'
                     )
-parser.add_argument('-s', '--source',
-                    help='Generate a source files list.',
-                    action='store_true'
+#d d d d d d d d d d d d d d d d
+parser.add_argument('-d', '--deliver',
+                    help='Read files from a file ( "-" = stdin ) and copy to Path.',
+                    action='store',
+                    metavar='',
+                   # default='Non',
+                    nargs='?'
                     )
+#g g g g g g g g g g g g g g g g
+parser.add_argument('-g', '--gather',
+                    help='Gather files to copy in a file ( "-" = stdout ) from Path.',
+                    action='store',
+                    metavar='',
+                   # default='Non',
+                    nargs='?'
+                    )
+#T T T T T T T T T T T T T T T T T T T T T
+parser.add_argument('-T','--target' ,
+                    help = f'with option -d the target directory or {CONTINUE} '
+                           f'to continue an interrupted session.\n'
+		                   f'with option -g the directory to scan',
+                    action='store',
+                    metavar='',
+                    nargs='?'
+                    )
+#a a a a a a a a a a a a a a a a
+parser.add_argument('-a', '--append',
+                    help='Append a file listing to --gather file from Path.',
+                    action='store_true',
+                    default=False
+                    )
+#f f f f f f f f f f f f f f f f
 parser.add_argument('-f', '--filter',
                     help=f'don\'t copy {FILTEROUT}',
                     action='store_true'
                     )
+#S S S S S S S S S S S S S S S S
 parser.add_argument('-S','--skip',
                     nargs='*',
                     help='filepaths containing a '
                          'match with one of these '
-                         'regular expressions are skipped'
+                         'regular expressions are skipped',
+					metavar='',
                     )
+#m m m m m m m m m m m m m m m m
 parser.add_argument('-m', '--match',
                     help='Only filenames matching one of the regular expressions are listed.',
                     action='store',
+                    metavar='',
                     nargs='*'
                     )
-parser.add_argument('-g', '--greater',
-                    help='Only files greater than this in mega bytes or use K for Kilo bytes like 32.8K',
+#b b b b b b b b b b b b b b b b
+parser.add_argument('-b', '--bigger',
+                    help='Only files bigger than this in mega bytes or use K for Kilo bytes like 32.8K',
                     action='store',
+                    metavar='',
                     nargs=1
                     )
-parser.add_argument('-l', '--lesser',
-                    help='Only files lesser than this in mega bytes or use K for Kilo bytes like 32.8K',
+#s s s s s s s s s s s s s s s s
+parser.add_argument('-s', '--smaller',
+                    help='Only files smaller than this in mega bytes or use K for Kilo bytes like 32.8K',
                     action='store',
+                    metavar='',
                     nargs=1
                     )
+#x x x x x x x x x x x x x x x x
+exts=[str(K) for K in ext.ext_classes.keys()]
+extss=",".join(exts)
 parser.add_argument('-x','--extension',
-                    help='select files by extensions  ',
+                    help='select files by one or more types: ' + extss,
                     choices=ext.ext_classes.keys(),
                     nargs='*',
+                    metavar='',
                     action='store'
                     )
+#t t t t t t t t t t t t t t t t
 parser.add_argument('-t', '--todo',
                     help='print the files that still need to bee copied of the file-list-file.',
                     action='store_true'
                     )
+#M M M M M M M M M M M M M M M M
 parser.add_argument('-M', '--meta',
-                    help='Try copy files to a destination and filename based on meta data',
-                    action='store_true'
+                    help=f'Copy to an on exif tags based dir "{meta.ExifTags.EXIFTAGS}"'
+                         f' a positif number is a subdir above the source root'
+                         f' negatief a subdir under the basename.',
+                    choices=meta.ExifTags.EXIFTAGS,
+                    nargs='*',
+                    metavar='',
+                    action='store'
                     )
-parser.add_argument('-b', '--bookkeeper',
-                    help='File stam name to store the bookkeeping data"',
+#p p p p p p p p p p p p p p p p
+parser.add_argument('-p', '--post-it',
+                    help='File stam for post-it files stem.ok and stem.bad default "~/listcopy"',
                     action='store',
-                    nargs='?'
-                    )
-parser.add_argument('Path' ,
-                    help = f'Path to the source or destination directory {CONTINUE} '
-                           f'to continue copying to the same directory',
-                    action='store',
+                    default='~/listcopy',
+                    metavar='',
                     nargs='?'
                     )
 
 args = parser.parse_args()
 
 class InputFileIterator:
-	def __init__(self,tracker_file_stem=TRACKER,input_file=sys.stdin):
+	def __init__(self,tracker_file_stem=TRACKER,input_file='-'):
 		DEBUGPRINT(f'InputFileIterator.__init__({tracker_file_stem=},{input_file=}')
-		
-		if input_file==sys.stdin:
+		if input_file==sys.stdin or input_file=='-':
+			input_file = sys.stdin
 			#DEBUGPRINT('input_file==sys.stdin')
 			if sys.stdin.isatty():
 				print(f"I guess you don't want to type a list by hand.")
-				print('Redirect input from a file or give an previous generated,')
-				print('file with a listing of files to copy.')
+				print('Redirect input from a file or give a previous generated,')
+				print('file with a listing to option -d , --deliver.')
 				exit(1)
-			#DEBUGPRINT('read sys.stdin')
+				#DEBUGPRINT('read sys.stdin')
 			self.filelist=sys.stdin.readlines()
-			#DEBUGPRINT(f'{self.filelist}')
-		else:
+		else: # input from a file
 			try:
 				with open(input_file,'r') as f:
 					self.filelist=f.readlines()
@@ -148,16 +196,23 @@ class InputFileIterator:
 				print(f'InputFileIterator could not open "{input_file}"')
 				print(f'error {e.errno} "{e.strerr}"')
 				exit(e.errno)
+		self.filelist_len = len(self.filelist)
+		self.strip_newline()
 		self.ok_file=tracker_file_stem+'.ok'
 		self.bad_file=tracker_file_stem+'.bad'
-		self.read_ok_file_processed() # sets: self.processed
-		self.strip_newline()
-		#DEBUGPRINT(self.filelist)
-		self.find_data_begin() # sets: self.index,self.source_dir,self.source_dir_len
-		DEBUGPRINT(f'{self.source_dir=}')
-		self.source_dir_len=len(self.source_dir)
-		# we now know where to start
-		self.index+=self.processed
+		self.read_progress() # sets: self.index,global WorkPath, self.source_dir, self.source_dir_len
+		# DEBUGPRINT(self.filelist[:8])
+		# DEBUGEXIT(0)
+		#DEBUGPRINT(f'{self.filelist[self.index+2:]}')
+		
+		if not DATA_END_MARKER in self.filelist[self.index+2:]:
+			print (f'InputFileIterator:__init__ did not find a "{DATA_BEGIN_MARKER}"')
+			print (f'in "{input_file}"')
+			print (f'or "{self.ok_file}" indicates all has been copied.')
+			print (f'You can edit this file or')
+			print (f'rm "{self.ok_file}"')
+			print (f'to start a new session.')
+			exit (0)
 		
 	def __iter__(self):
 		return self
@@ -166,35 +221,96 @@ class InputFileIterator:
 		self.index+=1
 		ret=self.filelist[self.index]
 		if ret == DATA_END_MARKER:
-			raise StopIteration
+			if not self.find_data_begin_marker():
+				raise StopIteration
+				return 'InputFileIterator done'
+			ret=self.filelist[self.index]
 		return ret
+	
+	def current(self):
+		return self.filelist[self.index]
+	
+	def save_progress(self):
+		try:
+			with open(self.ok_file,'w') as f:
+				f.write(str(self.index)+'\n')
+				f.write(WorkPath+'\n')
+				f.write(self.current() +'\n')
+		except IOError as e:
+			print('InputFileIterator:save_progress failed')
+			print(f'{e.errno} {e.strerror}')
+			exit(e.errno)
 		
-	def read_ok_file_processed(self):
-		self.processed=0
-		if os.path.exists(self.ok_file):
-			with open(self.ok_file,'r') as ok:
-				count=ok.readline()
-				self.processed=int(count)
-			DEBUGPRINT(f'{self.processed=}')
+	def read_progress(self):
+		global WorkPath
+		self.index=0
+		if not os.path.exists(self.ok_file) :
+			if self.find_data_begin_marker():
+				return
+			
+		with open(self.ok_file,'r') as f:
+			data=f.read()
+		data=data.split('\n')
+		self.index=int(data[0])
+		if WorkPath == CONTINUE:
+			WorkPath = data[1]
+		check_file = data[2]
+		if check_file == self.current():
+			return
+		print(f'InputFileIterator:read_progress')
+		print(f'index at {self.index} does point to an other file as before.')
+		print(f'Was :"{check_file}"')
+		print(f'Is  :"{self.current()}"')
+		exit(1)
+	if WorkPath==CONTINUE:
+		print('InputFileIterator found no status ok file.')
+		print("So there is no information where to continue.")
+		exit(1)
 			
 	def strip_newline(self):
 		fl=self.filelist
 		for i in range(len(fl)):
 			fl[i]=fl[i][:-1]
 	
-	def find_data_begin(self):
-		mark=DATA_BEGIN_MARKER
-		i=0
-		while mark != self.filelist[i]: # find the start marker in the input
-			i+=1
-		self.index=i+1
-		self.source_dir=self.filelist[self.index]
-		DEBUGPRINT(f'{self.source_dir=}')
-		self.source_dir_len=len(self.source_dir)
-		#DEBUGPRINT(f'self.filelist = type({type(self.filelist)})')
-		#DEBUGEXIT(100)
+	def find_data_begin_marker(self)->bool:
+		# if the marker is found the index is on the first full source file path
+		global DATA_BEGIN_MARKER
+		while self.index < self.filelist_len:
+			if self.current() == DATA_BEGIN_MARKER:
+				self.index+=1
+				self.source_dir=self.current()
+				DEBUGPRINT(f'{self.source_dir=}')
+				self.source_dir_len=len(self.source_dir)
+				self.index+=1
+				return True
+			self.index+=1
+		return False
+	
+class BasicSubDir:
+	quali_name=''
+	file_name=''
+	root_path_len=0
+	def __init__(self,root_path_len=0):
+		self.root_path_len=root_path_len
 		
-
+	def set(self,file_path):
+		self.quali_name=file_path[self.root_path_len:]
+		self.file_name=os.path.basename(file_path)
+		
+	def set_source_root_dir_len(self,length):
+		self.root_path_len=length
+		
+	def qualified_name(self)->str:
+		return self.quali_name
+	
+	def make_sub_dir(self):
+		return os.path.dirname(self.quali_name)
+	
+	def show(self):
+		print (f'Qualified Name: "{self.quali_name}"')
+		print (f'file_name     : "{self.file_name}"')
+		print (f'root path len : {self.root_path_len}')
+	
 def explain()->None:
 	with open('README','r') as rm:
 		print (rm.read())
@@ -325,35 +441,48 @@ def kilo_mega(strval)->int:
 		return int(val*KILO)
 	return int(float(strval)*MEGA)
 
-def list_sources()-> int:
-	"""List files to stdout and return the count."""
-	global WorkPath,ok_file,DATA_BEGIN_MARKER,DATA_END_MARKER
-	global args
-	
+def list_sources(postit,list_file='-',append=False)-> int:
+	global WorkPath,DATA_BEGIN_MARKER,DATA_END_MARKER
+	open_mode='w'
+	if append: open_mode='a'
+	DEBUGPRINT(f' list_sources {list_file=} {WorkPath=}')
+	if list_file==sys.stdout or list_file=='-':
+		dest=sys.stdout
+	else:
+		try:
+			dest=open(list_file,open_mode)
+			
+		except IOError as e:
+			print(f'list_sources failed to open "{list_file}')
+			print(f'err {e.errno} "{e.strerror}"')
+			exit(e.errno)
+		
 	max_file_size=MEGA*MEGA
 	min_file_size=-1
 	do_size_check=False
-	if args.lesser:
-		max_file_size=kilo_mega(args.lesser[0])
+	if args.smaller:
+		max_file_size=kilo_mega(args.smaller[0])
 		do_size_check=True
-	if args.greater:
-		min_file_size=kilo_mega(args.greater[0])
+	if args.bigger:
+		min_file_size=kilo_mega(args.bigger[0])
 		do_size_check=True
 		
 	in_re,out_re=create_incl_excl_regs()
 	#DEBUGPRINT(in_re,out_re)
-	if os.path.exists(ok_file):
-		os.remove(ok_file)
-	
+	if os.path.exists(postit+'.ok'):
+		os.remove(postit+'.ok')
 	if not os.path.exists(WorkPath):
 		print(f'"{WorkPath}" does not exist.')
 		exit(1)
 		
 	count = 0
-	
-	print(DATA_BEGIN_MARKER)
-	print(WorkPath)
 	try:
+		#print(f"Arguments count: {len(sys.argv)}")
+		for i, arg in enumerate(sys.argv):
+			dest.write(f" {arg}")
+		dest.write('\n\n\n'+DATA_BEGIN_MARKER+'\n')
+		dest.write(WorkPath+'\n')
+	
 		for dirpath, dirnames, filenames in os.walk(WorkPath):
 			for filename in filenames:
 				fullpath=os.path.join(dirpath,filename)
@@ -374,15 +503,15 @@ def list_sources()-> int:
 					if file_size < min_file_size:
 						continue
 				count+=1
-				print(fullpath)
-				
-	except OSError as err:
-		print(f'OSError : {type(err)} {err.args}')
-		exit(1)
-	except TypeError as err:
-		print(f'TypeError : "did you give a valid source directory?')
-		exit(1)
-	print(DATA_END_MARKER)
+				#DEBUGPRINT(fullpath)
+				dest.write(fullpath+'\n')
+	except OSError as e:
+		print(f'list_sources failed')
+		print(f'OSError : {e.errno} {e.strerror}')
+		exit(e.errno)
+	dest.write(DATA_END_MARKER+'\n')
+	if dest != sys.stdout:
+		dest.close()
 	print (f'{count} files selected.')
 	print (f'Excluding {out_re}')
 	print (f'Including {in_re}')
@@ -549,20 +678,19 @@ def BadFile(nasty,nasty_dest,error):
 	global SourcePath
 	print (f'/nError:{error.errno} "{error.strerror}"')
 	if os.path.exists(nasty_dest):
+		# remove the failed copy
 		os.remove(nasty_dest)
 		print (f'Removed "{nasty_dest}"')
 	
-	if not os.path.exists(bad_file): # if no bad_file write a header so it
-	# later can bee used as an copy.list file
+	if not os.path.exists(bad_file): # if no bad_file write a header to it
+	# so can bee used as an copy.list later
 		with open(bad_file,'w') as bad:
 			bad.write(DATA_BEGIN_MARKER + '\n')
 			bad.write(SourcePath + '\n')
 
 	with open(bad_file,'a') as bad:
 		bad.write(nasty + '\n')
-	if error.errno == 75: #
-		return
-	if error.errno == 27: # Error:27 "File too large"
+	if error.errno == 75: # Error:27 "File too large"
 		return
 	exit_error(error)
 
@@ -619,36 +747,16 @@ def coping_done(count):
 		bad.write(DATA_END_MARKER+'\n')
 	exit(0)
 
-def read_ok_file()->int:
-	global CONTINUE,WorkPath
-	
-	if not os.path.exists(ok_file):
-		return 0
-	# a file with the number of copied
-	# files exists read it
-	with open(ok_file,'r') as f:
-		count_copied=int(f.readline())
-		dst_path=f.readline()
-		dst_path=dst_path[:-1]
-		
-	if args.verbose:
-		print (f'{count_copied} files copied earlier.')
-	if CONTINUE == WorkPath[:-1]:
-		#DEBUGPRINT(f'{WorkPath}')
-		WorkPath=dst_path
-	if args.verbose:
-		print (f'copy to "{WorkPath}"')
-	return count_copied
-	
-def assure_target_dir(target_dir)->None:
-	#checks if the directory exist if not makes it or exit if failes
-	if os.path.exists(target_dir):
+def assure_target_dir(dir):
+	if os.path.exists(dir):
 		return
 	try:
-		os.makedirs(target_dir,0o755)
-	except IOError as e:
-		exit_error(e,f'os.makedirs("{target_dir}", 0o755) FAILED')
-	
+		os.mkdir(dir)
+	except OSError as e:
+		print(f"couldn't mkdir \"{dir}\"")
+		print(f'{e.errno=} {e.strerror=}')
+		exit(e.errno)
+
 def target_file_dir(source_file,source_path_length):
 	global WorkPath
 	base_path = source_file[source_path_length:]
@@ -680,125 +788,111 @@ def file_check_ok(source,target,l)->bool:
 	os.remove(target)
 	return False
 	
-def find_begin_marker()->None:
-	#read until the begin marker is found in the input
-	while True:
-		startmark = input() # look where the list data starts
-		if startmark == DATA_BEGIN_MARKER:
-			return
-	# return never reached input error if marker not found
+# def find_begin_marker()->None:
+# 	#read until the begin marker is found in the input
+# 	while True:
+# 		startmark = input() # look where the list data starts
+# 		if startmark == DATA_BEGIN_MARKER:
+# 			return
+# 	# return never reached input error if marker not found
 	
-def copy_to(target_maker):
-	global WorkPath,ok_file,bad_file,DATA_BEGIN_MARKER,DATA_END_MARKER,processed_file
-	global SourcePath,chunk_size
+def copy_listed_files(listing_file,post_it,dest_maker):
+	# target_maker is a function that generates from a source path a destination path
+	global WorkPath,DATA_BEGIN_MARKER,DATA_END_MARKER,processed_file
+	global chunk_size
 	
-	count_copied = done = read_ok_file()
-	# read how many files are copied before
-	# determ the destination dir = the global WorkPath
-	
+	listing=InputFileIterator(listing_file,post_it) # need to init to set the proper
+	# WorkPath before getting it's device properties
 	target_fs_properties(WorkPath)
 	chunk_size = FsBlockSize
-	find_begin_marker()
-	SourcePath = input()
-	#DEBUGPRINT(f'{source_path}')
-	cutlen=len(SourcePath) # length of the source path
 	
-	source_file=None # if the where files copied check if it went ok
-	while done>0: # read over wath is finished
-		source_file=input() # on the end of the loop it is the last file that was copied
-		done -= 1
+	count=0
+	for file in listing:
+		DEBUGPRINT(file)
+		dest_maker.set(file)
+		print(dest_maker.qualified_name())
+		dest_maker.show_tags()
+		# print()
+		# print(file)
+		# print(dest)
+		listing.save_progress()
+		count+=1
+		#print(f'{count}',end=' ')
 	
-	if source_file:
-		# is the last file copied before beter check on it
-		if  file_check_ok(source_file,target_maker(source_file,cutlen)):
-			# file exists and is the same size
-			# start with the next
-			source_file=None
-		
-	while True:
-		if source_file == None:
-			source_file = input()
-		if DATA_END_MARKER in source_file:
-			coping_done(count_copied)
-			break
-		dest_file,dest_dir = target_maker(source_file,cutlen)
-		if args.verbose:
-			origin_basename = os.path.basename(source_file)
-			origin_dir = os.path.dirname(source_file)
-			target_dir= os.path.dirname(dest_file)
-			print(f'copy:"{origin_basename}"\nfrom:"{origin_dir}"\nto  :'
-				f'"{target_dir}"')
-			
-		if not os.path.exists(dest_file):
-			processed_file=dest_file # save for signal handler
-			start_time=time.time()
-			error = write_chunks_to_file(source_file, dest_file)
-			processed_file=None
-			if error:
-				BadFile(source_file,dest_file,error)
-			end_time=time.time()
-			if args.verbose:
-				print('File copied in: '+ time_delta_str(start_time,end_time) +
-			       f' files now copied: {count_copied+1}.\n')
-		else:
-			if args.verbose:print(f'Existed.')
-		count_copied+=1
-		with open(ok_file, 'w' ) as ok:
-			ok.write(f'{str(count_copied)}\n{WorkPath}\n')
-		source_file=None # clear to copy next
-	exit(0)
-	
-# copying to metadata based destination
-def target_meta_dir(source_file,source_path_length):
+def target_keep_dir(source_file:str,source_path_length:int)->str:
 	global WorkPath
-	base_path = source_file[source_path_length:]
-	target_name= WorkPath + base_path # at least a target if there is no metadata
-	md=meta.do_exiftool(source_file,'json')
-	if meta == {}:
-		return base_path
-	DEBUGPRINT(json.dumps(md,indent=4))
-	exit(0)
-	dest_dir = os.path.dirname(target_name)
-	assure_target_dir(dest_dir)
-	return target_name,dest_dir
-# end copying to metadata based destination
+	basepath=source_file[source_path_length:]
+	target = WorkPath+basepath
+	target_dir=os.path.dirname(target)
+	assure_target_dir(target_dir)
+	return target
+
+class MetaDir:
+	destination_dir=''
+	def __init__(self,source_file,source_path_length):
+		global WorkPath
+		target_basename= basename(source_file)
+		target_subdir=dirname(source_file[source_path_length:])
+		self.xf_data=ExifTags(source_file)
+		if self.xf_data.is_empty(): # no metadata so fallback keep the original subdirs
+			target_dir=WorkPath + target_subdir
+			assure_target_dir(target_dir)
+			self.destination_file=target_dir+target_basename
+			return
+		subdir=self.xf_data.make_sub_dir()
+		target_dir= WorkPath + subdir
+		assure_target_dir(target_dir)
+		self.destination_file = WorkPath + subdir + target_basename
+		
+	def destination(self):
+		return self.destination_file
+
+def define_workpath()->None:
+	global WorkPath,args
+	WorkPath=args.target
+	if WorkPath == CONTINUE: # leave it to InputFileIterator
+		return
+	# I want a slash at the end for aesthetic reason
+	if WorkPath[-1:]!='/':
+		WorkPath=WorkPath+'/'
 
 def main() -> None:
 	global WorkPath,ok_file,bad_file
-	if True: # InputFileIterator test
-		file_iterator=InputFileIterator(tracker_file_stem='itertest',input_file='/home/bob/python/listcopy/tos-pic.list')
-		for file in file_iterator:
-			print(file)
-		exit(0)
-	if args.Path:
-		if args.Path[-1:]=='/':
-			WorkPath=args.Path
-		else:
-			WorkPath=args.Path+'/'
+	# if True: # InputFileIterator test
+	# 	file_iterator=InputFileIterator(tracker_file_stem='itertest',input_file='/home/bob/python/listcopy/tos-pic.list')
+	# 	for file in file_iterator:
+	# 		print(file)
+	# 	exit(0)
 	
-	if args.bookkeeper:
-		bkk=args.bookkeeper
-		ok_file= os.path.expanduser(bkk) + '.ok'
-		bad_file=os.path.expanduser(bkk) + '.bad'
-		DEBUGPRINT(f'{ok_file=}\n{bad_file=}')
+	marker=os.path.expanduser(args.post_it)
+	DEBUGPRINT(f'{marker=}')
 	
+	if args.target:
+		define_workpath()
+		if args.deliver:
+			DEBUGPRINT(f'Read files to copy from "{args.deliver}".')
+			if args.meta:
+				DEBUGPRINT(args.meta)
+				copy_listed_files(marker,args.deliver,meta.ExifTags(format=args.meta))
+				exit(0)
+			copy_listed_files(marker,args.deliver,BasicSubDir())
+			exit(0)
+		 
+		if args.gather:
+			DEBUGPRINT(f'List to {args.gather} appending {args.append}')
+			list_sources(marker,list_file=args.gather,append=args.append)
+			exit(0)
+		
 	if args.usage:
 		explain()
 		exit(0)
 	if args.todo:
 		list_to_do()
 		exit(0)
-	if args.source :
-		count=list_sources()
-		#DEBUGPRINT(f'Files counted {count}', file=sys.stderr)
-		exit(0)
 	
-	if args.meta:
-		copy_to(target_meta_dir)
-		exit(0)
-	if WorkPath:
-		copy_to(target_file_dir)
-		exit(0)
+	# if WorkPath:
+	# 	copy_to(target_file_dir)
+	# 	exit(0)
 	
 	parser.print_help()
 	
