@@ -4,7 +4,7 @@ import re
 import subprocess
 import json
 from collections import deque
-from listcopy import BasicSubDir
+from listutils import InputFileIterator
 
 from geolocate import gps_alpha_to_float
 #from matplotlib.font_manager import json_dump
@@ -116,21 +116,22 @@ HEIF	.heif, .heic	EXIF, XMP
 RAW	Various (e.g., .raw, .cr2, .nef)	EXIF, proprietary formats
 https://imagemagick.org/script/download.php#linux'''
 
-class ExifTags(BasicSubDir):
+_EXIFTAGSFORMAT=['year','camera','gps']
+
+class ExifTags(InputFileIterator):
 	EXIFTAGS = ['date', 'yearmonth', 'year', 'month', 'day', 'camera', 'gps',
 	            'flash', 'light', 'mime'] + [str(x) for x in range(4,-5,-1) if x != 0]
 	#"2024:09:03 10:51:43+02:00"
 	date_split=re.compile(r'(\d+):(\d+):(\d+) (\d+):(\d+):(\d+)(.*)')
 	#'date':["2012","01","25","03","41","57"]
-	path_format=['year','camera','gps']
 	
-	def __init__(self,format='',file_path=''):
-		DEBUGPRINT(f'ExifTags init ({format=} , {file_path=}')
-		if format!='':
-			self.path_format=format
-		if file_path!='':
-			self.set(file_path)
-		
+	def __init__(destination_dir:str,tracker_file_stem,input_file='-'):
+		InputFileIterator.__init__(destination_dir,tracker_file_stem,input_file)
+	
+	def set_format(self,format):
+		global _EXIFTAGSFORMAT
+		_EXIFTAGSFORMAT=format
+	
 	def set(self,file_path):
 		DEBUGPRINT(f'ExifTags set ( {file_path=}')
 		self.file_path=file_path
@@ -1428,34 +1429,6 @@ TAG_PROCESSOR={
  }
 
 def main() -> None:
-	from listcopy import InputFileIterator,DATA_BEGIN_MARKER,DATA_END_MARKER
-	global tagsmet,files_with_meta
-	gps_files=deque()
-	gps_files.append(DATA_BEGIN_MARKER)
-	listing=InputFileIterator( input_file='/home/bob/python/listcopy/tos-pic.list',tracker_file_stem='testlist')
-	exiftags=ExifTags()
-	count=100
-	for file in listing:
-		count-=1
-		if count < 0:
-			print('.',end='')
-			count=100
-		#DEBUGPRINT(file)
-		meta_info=exiftags.collect_exif_from_file(file)
-		if 'gps' in meta_info:
-			print('.',end='')
-			gps_files.append(file)
-	gps_files.append(DATA_END_MARKER)
-	with open('gps_test.list','w') as f:
-		for gpsf in gps_files:
-			f.write(gpsf)
-	for file in gps_files:
-		print(file)
-		#json_str = json.dumps(meta_info, cls=ExifTagsEncoder)
-		#print(json_str)
-		#cooked=process_tags(meta_info)
-		#print(json.dumps(meta_info,indent=4))
-		#print(json.dumps(cooked,indent = 4))
-
+	pass
 if __name__ == '__main__':
 	main()

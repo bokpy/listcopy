@@ -23,8 +23,9 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
-        <option value="Python Script" />
         <option value="Setup Script" />
+        <option value="Python Unit Test" />
+        <option value="Python Script" />
       </list>
     </option>
   </component>
@@ -68,6 +69,7 @@
     &quot;Python.metadata.executor&quot;: &quot;Run&quot;,
     &quot;Python.slowcopy.executor&quot;: &quot;Run&quot;,
     &quot;Python.test_extensions.executor&quot;: &quot;Run&quot;,
+    &quot;Python.testiter.executor&quot;: &quot;Run&quot;,
     &quot;Python.testtime.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;master&quot;,
@@ -93,7 +95,7 @@
       <recent name="$USER_HOME$/mouse_project" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.listcopy ">
+  <component name="RunManager" selected="Python.testiter">
     <configuration name="extensions" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pythonProject" />
       <option name="ENV_FILES" value="" />
@@ -182,7 +184,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="test_extensions" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="testiter" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pythonProject" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -195,7 +197,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test_extensions.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/testiter.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -206,11 +208,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.testiter" />
         <item itemvalue="Python.listcopy " />
         <item itemvalue="Python.metadata" />
         <item itemvalue="Python.geolocate" />
         <item itemvalue="Python.extensions" />
-        <item itemvalue="Python.test_extensions" />
       </list>
     </recent_temporary>
   </component>

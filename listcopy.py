@@ -17,20 +17,18 @@ import time
 import signal
 import extensions as ext
 import metadata as meta
+from listutils import CONTINUE,InputFileIterator,assure_dir
 from metadata import ExifTags
 
 DEBUGPRINT=print
 #DEBUGRETURN=return  return is not a function
 DEBUGEXIT=exit
-TRACKER=os.path.join(os.path.expanduser('~'),'listcopy')
+
 processed_file='/No Such File ' + time.ctime() # for signal handler to fail
 FILTEROUT=['/Cookies/','/Microsoft/','/Windows/','/Cache','#.*#$','\.lnk$',
            '\.tmp$','\.log$','\.err$','~$','/AppData/',
            '\.ini$','/NTUSER.DAT',]
 #skiplist=None
-DATA_BEGIN_MARKER='-------->Data_Begin_Marker-------->'
-DATA_END_MARKER='<--------Data_End_Marker<--------'
-CONTINUE='<CONTINUE>'
 MIN_SECS=60
 HOUR_SECS=3600
 MEGA=1024**2
@@ -175,142 +173,8 @@ parser.add_argument('-p', '--post-it',
 
 args = parser.parse_args()
 
-class InputFileIterator:
-	def __init__(self,tracker_file_stem=TRACKER,input_file='-'):
-		DEBUGPRINT(f'InputFileIterator.__init__({tracker_file_stem=},{input_file=}')
-		if input_file==sys.stdin or input_file=='-':
-			input_file = sys.stdin
-			#DEBUGPRINT('input_file==sys.stdin')
-			if sys.stdin.isatty():
-				print(f"I guess you don't want to type a list by hand.")
-				print('Redirect input from a file or give a previous generated,')
-				print('file with a listing to option -d , --deliver.')
-				exit(1)
-				#DEBUGPRINT('read sys.stdin')
-			self.filelist=sys.stdin.readlines()
-		else: # input from a file
-			try:
-				with open(input_file,'r') as f:
-					self.filelist=f.readlines()
-			except IOError as e:
-				print(f'InputFileIterator could not open "{input_file}"')
-				print(f'error {e.errno} "{e.strerr}"')
-				exit(e.errno)
-		self.filelist_len = len(self.filelist)
-		self.strip_newline()
-		self.ok_file=tracker_file_stem+'.ok'
-		self.bad_file=tracker_file_stem+'.bad'
-		self.read_progress() # sets: self.index,global WorkPath, self.source_dir, self.source_dir_len
-		# DEBUGPRINT(self.filelist[:8])
-		# DEBUGEXIT(0)
-		#DEBUGPRINT(f'{self.filelist[self.index+2:]}')
-		
-		if not DATA_END_MARKER in self.filelist[self.index+2:]:
-			print (f'InputFileIterator:__init__ did not find a "{DATA_BEGIN_MARKER}"')
-			print (f'in "{input_file}"')
-			print (f'or "{self.ok_file}" indicates all has been copied.')
-			print (f'You can edit this file or')
-			print (f'rm "{self.ok_file}"')
-			print (f'to start a new session.')
-			exit (0)
-		
-	def __iter__(self):
-		return self
-		
-	def __next__(self):
-		self.index+=1
-		ret=self.filelist[self.index]
-		if ret == DATA_END_MARKER:
-			if not self.find_data_begin_marker():
-				raise StopIteration
-				return 'InputFileIterator done'
-			ret=self.filelist[self.index]
-		return ret
-	
-	def current(self):
-		return self.filelist[self.index]
-	
-	def save_progress(self):
-		try:
-			with open(self.ok_file,'w') as f:
-				f.write(str(self.index)+'\n')
-				f.write(WorkPath+'\n')
-				f.write(self.current() +'\n')
-		except IOError as e:
-			print('InputFileIterator:save_progress failed')
-			print(f'{e.errno} {e.strerror}')
-			exit(e.errno)
-		
-	def read_progress(self):
-		global WorkPath
-		self.index=0
-		if not os.path.exists(self.ok_file) :
-			if self.find_data_begin_marker():
-				return
-			
-		with open(self.ok_file,'r') as f:
-			data=f.read()
-		data=data.split('\n')
-		self.index=int(data[0])
-		if WorkPath == CONTINUE:
-			WorkPath = data[1]
-		check_file = data[2]
-		if check_file == self.current():
-			return
-		print(f'InputFileIterator:read_progress')
-		print(f'index at {self.index} does point to an other file as before.')
-		print(f'Was :"{check_file}"')
-		print(f'Is  :"{self.current()}"')
-		exit(1)
-	if WorkPath==CONTINUE:
-		print('InputFileIterator found no status ok file.')
-		print("So there is no information where to continue.")
-		exit(1)
-			
-	def strip_newline(self):
-		fl=self.filelist
-		for i in range(len(fl)):
-			fl[i]=fl[i][:-1]
-	
-	def find_data_begin_marker(self)->bool:
-		# if the marker is found the index is on the first full source file path
-		global DATA_BEGIN_MARKER
-		while self.index < self.filelist_len:
-			if self.current() == DATA_BEGIN_MARKER:
-				self.index+=1
-				self.source_dir=self.current()
-				DEBUGPRINT(f'{self.source_dir=}')
-				self.source_dir_len=len(self.source_dir)
-				self.index+=1
-				return True
-			self.index+=1
-		return False
-	
-class BasicSubDir:
-	quali_name=''
-	file_name=''
-	root_path_len=0
-	def __init__(self,root_path_len=0):
-		self.root_path_len=root_path_len
-		
-	def set(self,file_path):
-		self.quali_name=file_path[self.root_path_len:]
-		self.file_name=os.path.basename(file_path)
-		
-	def set_source_root_dir_len(self,length):
-		self.root_path_len=length
-		
-	def qualified_name(self)->str:
-		return self.quali_name
-	
-	def make_sub_dir(self):
-		return os.path.dirname(self.quali_name)
-	
-	def show(self):
-		print (f'Qualified Name: "{self.quali_name}"')
-		print (f'file_name     : "{self.file_name}"')
-		print (f'root path len : {self.root_path_len}')
-	
+
+
 def explain()->None:
 	with open('README','r') as rm:
 		print (rm.read())
@@ -747,25 +611,9 @@ def coping_done(count):
 		bad.write(DATA_END_MARKER+'\n')
 	exit(0)
 
-def assure_target_dir(dir):
-	if os.path.exists(dir):
-		return
-	try:
-		os.mkdir(dir)
-	except OSError as e:
-		print(f"couldn't mkdir \"{dir}\"")
-		print(f'{e.errno=} {e.strerror=}')
-		exit(e.errno)
 
-def target_file_dir(source_file,source_path_length):
-	global WorkPath
-	base_path = source_file[source_path_length:]
-	#file_name = os.path.join(WorkPath,base_path)
-	target_name= WorkPath + base_path
-	dest_dir = os.path.dirname(target_name)
-	#DEBUGPRINT(f'BK:S \n{WorkPath=}\n{base_path=}\n{target_name=}\n{dest_dir=}')
-	assure_target_dir(dest_dir)
-	return target_name,dest_dir
+
+
 
 def file_check_ok(source,target,l)->bool:
 	# if the destination of src exists and the
@@ -796,65 +644,62 @@ def file_check_ok(source,target,l)->bool:
 # 			return
 # 	# return never reached input error if marker not found
 	
-def copy_listed_files(listing_file,post_it,dest_maker):
+def copy_listed_files(target_dir,listing_file,track_and_trace,subdir_format):
 	# target_maker is a function that generates from a source path a destination path
-	global WorkPath,DATA_BEGIN_MARKER,DATA_END_MARKER,processed_file
+	global processed_file
 	global chunk_size
 	
-	listing=InputFileIterator(listing_file,post_it) # need to init to set the proper
-	# WorkPath before getting it's device properties
-	target_fs_properties(WorkPath)
+	if subdir_format=='meta_data':
+		listing=ExifTags(target_dir,listing_file, track_and_trace)
+	else:
+		if subdir_format=='qualified_destination':
+			listing=InputFileIterator(target_dir,listing_file, track_and_trace)
+		else:
+			raise ValueError
+			
+	target_fs_properties(listing.dest_dir)
 	chunk_size = FsBlockSize
 	
 	count=0
-	for file in listing:
-		DEBUGPRINT(file)
-		dest_maker.set(file)
-		print(dest_maker.qualified_name())
-		dest_maker.show_tags()
-		# print()
-		# print(file)
-		# print(dest)
+	for src,dst in listing:
+		DEBUGPRINT(f'<- "{src}')
+		DEBUGPRINT(f'-> "{dst}"')
 		listing.save_progress()
 		count+=1
 		#print(f'{count}',end=' ')
 	
-def target_keep_dir(source_file:str,source_path_length:int)->str:
-	global WorkPath
-	basepath=source_file[source_path_length:]
-	target = WorkPath+basepath
-	target_dir=os.path.dirname(target)
-	assure_target_dir(target_dir)
-	return target
+# def target_keep_dir(source_file:str,source_path_length:int)->str:
+# 	global WorkPath
+# 	basepath=source_file[source_path_length:]
+# 	target = WorkPath+basepath
+# 	target_dir=os.path.dirname(target)
+# 	assure_target_dir(target_dir)
+# 	return target
 
-class MetaDir:
-	destination_dir=''
-	def __init__(self,source_file,source_path_length):
-		global WorkPath
-		target_basename= basename(source_file)
-		target_subdir=dirname(source_file[source_path_length:])
-		self.xf_data=ExifTags(source_file)
-		if self.xf_data.is_empty(): # no metadata so fallback keep the original subdirs
-			target_dir=WorkPath + target_subdir
-			assure_target_dir(target_dir)
-			self.destination_file=target_dir+target_basename
-			return
-		subdir=self.xf_data.make_sub_dir()
-		target_dir= WorkPath + subdir
-		assure_target_dir(target_dir)
-		self.destination_file = WorkPath + subdir + target_basename
+# class MetaDir:
+# 	destination_dir=''
+# 	def __init__(self,source_file,source_path_length):
+# 		global WorkPath
+# 		target_basename= basename(source_file)
+# 		target_subdir=dirname(source_file[source_path_length:])
+# 		self.xf_data=ExifTags(source_file)
+# 		if self.xf_data.is_empty(): # no metadata so fallback keep the original subdirs
+# 			target_dir=WorkPath + target_subdir
+# 			assure_dir(target_dir)
+# 			self.destination_file=target_dir+target_basename
+# 			return
+# 		subdir=self.xf_data.make_sub_dir()
+# 		target_dir= WorkPath + subdir
+# 		assure_dir(target_dir)
+# 		self.destination_file = WorkPath + subdir + target_basename
 		
 	def destination(self):
 		return self.destination_file
-
-def define_workpath()->None:
-	global WorkPath,args
-	WorkPath=args.target
-	if WorkPath == CONTINUE: # leave it to InputFileIterator
-		return
-	# I want a slash at the end for aesthetic reason
-	if WorkPath[-1:]!='/':
-		WorkPath=WorkPath+'/'
+		
+def track_and_trace():
+	if args.post_it:
+		return os.path.join(os.path.expanduser('~'),args.post_it)
+	return os.path.join(os.path.expanduser('~'),'listcopy')
 
 def main() -> None:
 	global WorkPath,ok_file,bad_file
@@ -867,15 +712,20 @@ def main() -> None:
 	marker=os.path.expanduser(args.post_it)
 	DEBUGPRINT(f'{marker=}')
 	
-	if args.target:
-		define_workpath()
+	if args.target: # -T copy the files
+		if args.post_it:
+			tracker= os.path.join(os.path.expanduser('~'),args.post_it)
+		else:
+			tracker= os.path.join(os.path.expanduser('~'),'listcopy')
+			
 		if args.deliver:
 			DEBUGPRINT(f'Read files to copy from "{args.deliver}".')
 			if args.meta:
 				DEBUGPRINT(args.meta)
-				copy_listed_files(marker,args.deliver,meta.ExifTags(format=args.meta))
+				meta.ExifTags.set_format(args.meta)
+				copy_listed_files(args.target,args.deliver,track_and_trace(),'meta_data')
 				exit(0)
-			copy_listed_files(marker,args.deliver,BasicSubDir())
+			copy_listed_files(args.target,args.deliver,track_and_trace(),'qualified_destination')
 			exit(0)
 		 
 		if args.gather:
