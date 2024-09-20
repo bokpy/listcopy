@@ -1,202 +1,42 @@
 #!/usr/bin/python3
-from cgitb import small
 from collections import deque
 
-from shapely import distance
+from numpy.ma.core import append
 
+push=append
 DEBUGPRINT=print
 from geolocate import R_EARTH, LONGI_M_PER_DEG, meters_per_degree
-from geolocate import meters_per_degree as latitude2length
+import json
 from numpy import pi
 
-# class KDTree(object):
-# 	"""
-# 	A super short KD-Tree for points...
-# 	so concise that you can copypasta into your homework
-# 	without arousing suspicion.
-#
-# 	This implementation only supports Euclidean distance.
-#
-# 	The points can be any array-like type, e.g:
-# 		lists, tuples, numpy arrays.
-#
-# 	Usage:
-# 	1. Make the KD-Tree:
-# 		`kd_tree = KDTree(points, dim)`
-# 	2. You can then use `get_knn` for k nearest neighbors or
-# 	   `get_nearest` for the nearest neighbor
-#
-# 	points are be a list of points: [[0, 1, 2], [12.3, 4.5, 2.3], ...]
-# 	"""
-#
-# 	def __init__(self, points, dim, dist_sq_func=None):
-# 		"""Makes the KD-Tree for fast lookup.
-#
-# 		Parameters
-# 		----------
-# 		points : list<point>
-# 			A list of points.
-# 		dim : int
-# 			The dimension of the points.
-# 		dist_sq_func : function(point, point), optional
-# 			A function that returns the squared Euclidean distance
-# 			between the two points.
-# 			If omitted, it uses the default implementation.
-# 		"""
-#
-# 		if dist_sq_func is None:
-# 			dist_sq_func = lambda a, b: sum((x - b[i]) ** 2
-# 			                                for i, x in enumerate(a))
-#
-# 		def make(points, i=0):
-# 			if len(points) > 1:
-# 				points.sort(key=lambda x: x[i])
-# 				i = (i + 1) % dim
-# 				m = len(points) >> 1
-# 				return [make(points[:m], i), make(points[m + 1:], i),
-# 				        points[m]]
-# 			if len(points) == 1:
-# 				return [None, None, points[0]]
-#
-# 		def add_point(node, point, i=0):
-# 			if node is not None:
-# 				dx = node[2][i] - point[i]
-# 				for j, c in ((0, dx >= 0), (1, dx < 0)):
-# 					if c and node[j] is None:
-# 						node[j] = [None, None, point]
-# 					elif c:
-# 						add_point(node[j], point, (i + 1) % dim)
-#
-# 		import heapq
-# 		def get_knn(node, point, k, return_dist_sq, heap, i=0, tiebreaker=1):
-# 			if node is not None:
-# 				dist_sq = dist_sq_func(point, node[2])
-# 				dx = node[2][i] - point[i]
-# 				if len(heap) < k:
-# 					heapq.heappush(heap, (-dist_sq, tiebreaker, node[2]))
-# 				elif dist_sq < -heap[0][0]:
-# 					heapq.heappushpop(heap, (-dist_sq, tiebreaker, node[2]))
-# 				i = (i + 1) % dim
-# 				# Goes into the left branch, then the right branch if needed
-# 				for b in (dx < 0, dx >= 0)[:1 + (dx * dx < -heap[0][0])]:
-# 					get_knn(node[b], point, k, return_dist_sq,
-# 					        heap, i, (tiebreaker << 1) | b)
-# 			if tiebreaker == 1:
-# 				return [(-h[0], h[2]) if return_dist_sq else h[2]
-# 				        for h in sorted(heap)][::-1]
-#
-# 		def walk(node):
-# 			if node is not None:
-# 				for j in 0, 1:
-# 					for x in walk(node[j]):
-# 						yield x
-# 				yield node[2]
-#
-# 		self._add_point = add_point
-# 		self._get_knn = get_knn
-# 		self._root = make(points)
-# 		self._walk = walk
-#
-# 	def __iter__(self):
-# 		return self._walk(self._root)
-#
-# 	def add_point(self, point):
-# 		"""Adds a point to the kd-tree.
-#
-# 		Parameters
-# 		----------
-# 		point : array-like
-# 			The point.
-# 		"""
-# 		if self._root is None:
-# 			self._root = [None, None, point]
-# 		else:
-# 			self._add_point(self._root, point)
-#
-# 	def get_knn(self, point, k, return_dist_sq=True):
-# 		"""Returns k nearest neighbors.
-#
-# 		Parameters
-# 		----------
-# 		point : array-like
-# 			The point.
-# 		k: int
-# 			The number of nearest neighbors.
-# 		return_dist_sq : boolean
-# 			Whether to return the squared Euclidean distances.
-#
-# 		Returns
-# 		-------
-# 		list<array-like>
-# 			The nearest neighbors.
-# 			If `return_dist_sq` is true, the return will be:
-# 				[(dist_sq, point), ...]
-# 			else:
-# 				[point, ...]
-# 		"""
-# 		return self._get_knn(self._root, point, k, return_dist_sq, [])
-#
-# 	def get_nearest(self, point, return_dist_sq=True):
-# 		"""Returns the nearest neighbor.
-#
-# 		Parameters
-# 		----------
-# 		point : array-like
-# 			The point.
-# 		return_dist_sq : boolean
-# 			Whether to return the squared Euclidean distance.
-#
-# 		Returns
-# 		-------
-# 		array-like
-# 			The nearest neighbor.
-# 			If the tree is empty, returns `None`.
-# 			If `return_dist_sq` is true, the return will be:
-# 				(dist_sq, point)
-# 			else:
-# 				point
-# 		"""
-# 		l = self._get_knn(self._root, point, 1, return_dist_sq, [])
-# 		return l[0] if len(l) else None
+# la = short for latitude
+# lo = short for longitude
 class GpsTreeNode:
 	def __init__(self,latitude:float,longitude:float,data:object):
-		self.lati=latitude
-		self.longi=longitude
+		self.la=latitude
+		self.lo=longitude
 		self.less=None
 		self.more=None
 		self.data=data
 		
 	def __str__(self):
-		return f'GpsTN({self.lati:9.4f},{self.longi:9.4f},{self.data})'
+		return f'GpsTN({self.la:9.4f},{self.lo:9.4f},{self.data})'
 	
 	def is_greater(self,other,latitude:bool)->bool:
 		if latitude:
-			return self.lati > other.lati
-		return  self.longi > other.longi
+			return self.la > other.la
+		return  self.lo > other.lo
 		
 	def manhattan(self,other)->float:
-		ret =  (abs(self.lati - other.lati  ) * meters_per_degree(self.longi) +
-		        abs(self.longi- other.longi) * LONGI_M_PER_DEG
+		ret =  (abs(self.la - other.la  ) * meters_per_degree(self.lo) +
+		        abs(self.lo- other.lo) * LONGI_M_PER_DEG
 		        )
-		DEBUGPRINT(f'manh {ret:9.1f} {self} to {other}')
+		#DEBUGPRINT(f'manh {ret:9.1f} {self} to {other}')
 		return ret
-	
-	# def nearest(self,other_node,short_distance:float):
-	# 	"""
-	# 	:param other_GpsTreeNode: calculate the distance between self and an other node
-	# 	:param short_distance: the until now shortest distance found
-	# 	:return: if the distance to other is smaler than short_distance
-	# 	( other, shorter distance) else (self , short_distance)
-	# 	"""
-	# 	dist = self.manhattan(other_node)
-	# 	if dist < short_distance:
-	# 		return other_node,dist
-	# 	return self,short_distance
-
 		
 	def show(self):
-		#print(f'GpsTreeNode:{self.lati:9.4f},{self.longi:9.4f},{type(self.data)}')
-		print(f'GpsTreeNode:{self.lati:9.4f},{self.longi:9.4f},{self.data}')
+		#print(f'GpsTreeNode:{self.la:9.4f},{self.lo:9.4f},{type(self.data)}')
+		print(f'GpsTreeNode:{self.la:9.4f},{self.lo:9.4f},{self.data}')
 		
 class GpsTree:
 	"""
@@ -207,42 +47,61 @@ think simple Manhattan distance will do for this purpose.
 	
 	def __init__(self):
 		self.root=None
-		self.current=None
-		self.iter_list=None
-		
+		# self.current=None
+		# self.iter_list=None
+	   
+	class GpsTreeIterator:
+		def __init__(self, root:GpsTreeNode):
+			self.current = self.root = root
+			self.stack = deque()
+			self.push_less(self.root)
+   
+		def __iter__(self):
+			return self
+	  
+		def __next__(self):
+			#DEBUGPRINT(f'{self.current}')
+			next = self.pop_next()
+			if next == None:
+				raise StopIteration
+			self.current = next
+			return next
+	  
+		def push_less(self,node):
+			while node:
+				self.stack.append(node)
+				node = node.less
+			
+		def pop_next(self):
+			if len(self.stack) == 0:
+				return None
+			ret = self.stack.pop()
+			if ret.more != None:
+				self.push_less(ret.more)
+			return ret
+	  
 	def __iter__(self):
-		if not self.root:
-			raise StopIteration
-		self.iter_list=deque()
-		self.walk()
-		DEBUGPRINT(self.iter_list)
-		return self
-	
-	def __next__(self):
-		try:
-			ret = self.iter_list.pop()
-		except IndexError:
-			raise StopIteration
-		return ret
-	
+		return self.GpsTreeIterator(self.root)
+
 	def _latitude(self,latitude:bool)->str:
 		if latitude :
 			return 'latitude'
 		return 'longitude'
 		
-	def walk(self):
-		self._walk(self.root)
+	def walk(self)->deque:
+		dq=[]
+		return self._walk(self.root,dq)
 		
-	def _walk(self,node:GpsTreeNode):
+	def _walk(self,node:GpsTreeNode,dq):
+		DEBUGPRINT(dq)
 		if not node:
-			return
-		if self.iter_list != None: # list for quick and dirty way of an iterator implementation
-			self.iter_list.append(node)
-		node.show()
-		DEBUGPRINT('<- ',end='')
-		self._walk(node.less)
-		DEBUGPRINT('-> ',end='')
-		self._walk(node.more)
+			return dq
+		dq.append(node)
+		self._walk(node.less,dq)
+		self._walk(node.more,dq)
+	
+	def json(self):
+		pass
 		
 	def show_branche_less(self):
 		if not self.root:
@@ -313,6 +172,21 @@ think simple Manhattan distance will do for this purpose.
 				current=current.less
 				continue
 			return nearest_node,smallest_dist
+			
+class GpsTreeEncoder(json.JSONEncoder):
+	def default(self,obj):
+		if isinstance(obj,GpsTree):
+			return {"GpsTree":obj.walk()}
+		return super().default(obj)
+		
+class GpsTreeDecoder(json.JSONDecoder): # Not tested
+	def __init__(self):
+		super().__init__(object_hook=self._decode_gpstree)
+
+	def _decode_gpstree(self, obj):
+		if 'GpsTree' in obj:
+			return GpsTree(obj['GpsTree'])
+		return obj
 	
 def main() -> None:
 	# some test data courteously supplied by Opera Aria
@@ -371,23 +245,33 @@ def main() -> None:
     (40.4168, -3.7038,  "Valencia"),
     (43.6532, -79.3832  , "Ottawa")
 ]
+	check_len=len(BigCities)
 	gps_tree=GpsTree()
 	for lati,longi,city in BigCities:
 		node = GpsTreeNode(lati,longi,city)
 		gps_tree.add(node)
+	
+	count=0
+	for point in gps_tree:
+		point.show()
+		count += 1
+		#print(f'{count=}')
 		
-	# for point in gps_tree:
-	# 	point.show()
-		
+	print(f'{count=} {check_len=}')
+	
+	return
 	London=GpsTreeNode(51.5074, -0.1278,  "London")
 	Cairo =GpsTreeNode(30.0444, 31.2357,  "Cairo")
 	city,dist=gps_tree.nearest(Cairo)
 	print(f'{dist} {city}')
 	
 	#gps_tree.walk()
-	print()
-	gps_tree.show_branche_less()
-	print()
-	gps_tree.show_branche_more()
+	print(gps_tree.walk())
+	# gps_tree.show_branche_less()
+	# print()
+	# gps_tree.show_branche_more()
+	# print(json.dumps(gps_tree,indent=4))
+	
+	
 if __name__ == '__main__':
 	main()

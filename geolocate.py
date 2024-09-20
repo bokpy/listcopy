@@ -6,7 +6,7 @@ import requests
 import overpass
 import math
 import re
-from gpstree import GpsTreeNode,GpsTree
+#from gpstree import GpsTreeNode,GpsTree
 # import osmnx
 # from os import eventfd_read
 # import geopandas as gpd
