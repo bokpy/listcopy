@@ -4,18 +4,20 @@ import re
 import subprocess
 import json
 import time
+from codecs import namereplace_errors
+
 #from datetime import datetime
 #from collections import deque
-import datetime
-
 #import pandas as pd
 
 from listutils import InputFileIterator,timestamp2epouch
 from geolocate import gps_alpha_to_float,overpass_around_query
-from gpstree import GpsDataKDTree
+from gpstree import GpsTree,GpsTreeNode
 
-GpsPointsSeen=None # GpsDataKDTree initiate with the first point or read saved data from disk
+OvpInf=GpsTree() # Save GPS overpass info a lot of pictures will be from places very close to each other
+OPS_SAVE_COUNT=10 # number of additions to OvpInf to trigger a dump
 OVERPASS_NEAR=6
+OVERPASS_FARE=OVERPASS_NEAR + 5
 #from matplotlib.font_manager import json_dump
 # 'Wed Sep 18 07:37:25 2024'
 
@@ -198,11 +200,14 @@ class ExifTags(InputFileIterator):
 	
 	def __init__(self,destination_dir:str,input_file,tracker_file_stem):
 		global _EXIFTAGSFORMAT
+		
 		InputFileIterator.__init__(self,destination_dir,input_file,tracker_file_stem)
 		self.path_format=_EXIFTAGSFORMAT
 		self.tags={}
 		self.translate_day={}
 		self.translate_mount={}
+		self.ovpi_file = None
+		self.new_points_count=OPS_SAVE_COUNT
 	
 	def set(self,file_path):
 		DEBUGPRINT(f'ExifTags set ( {file_path=}')
@@ -212,6 +217,26 @@ class ExifTags(InputFileIterator):
 		self.early=time.time()+4e9 # don't expect to get foto's from more then 100 years in the future
 		self._collect_exif_from_file()
 		self._process()
+		
+	def add_gps_point(self,node):
+		global OvpInf,OPS_SAVE_COUNT
+		OvpInf.add(node)
+		if self.ovpi_file == None:
+			return
+		self.new_points_count-=1
+		if self.new_points_count > 0:
+			return
+		self.new_points_count = OPS_SAVE_COUNT
+		OvpInf.dump_json(self.ovpi_file)
+	
+	def load_info(self,file:str):
+		global OvpInf
+		self.ovpi_file=file
+		OvpInf.load_json(file)
+		
+	def dump_info(self,file):
+		global OvpInf
+		OvpInf.dump_json(file)
 		
 	def set_format(self,format):
 		global _EXIFTAGSFORMAT
@@ -403,26 +428,27 @@ class ExifTags(InputFileIterator):
 				action(self,tag,meta_key,self.json_tags[meta_key])
 	
 	def extract_gps(self):
-		global GpsPointsSeen
+		global OvpInf
 		# /home/bob/temp/Users/Sander/Desktop/Foto's/2013/12 december/
 		if not 'gps' in self.tags:
 			return 'gps ' + UNKNOWN
 		DEBUGPRINT(f"{self.tags['gps']=}")
-		lati =self.tags['gps']['GPSLatitude']
-		longi=self.tags['gps']['GPSLongitude']
-		if not GpsPointsSeen:
-			GpsPointsSeen=GpsDataKDTree([[lati,longi]])
-		else:
-			dist_sq, point=GpsPointsSeen.get_nearest((lati,longi))
-			
-			
-		geo_data=overpass_around_query(lati,longi,OVERPASS_NEAR)
-	
-		print(json.dumps(geo_data,indent=4))
-		return f"{lati},{longi}"
-		return 'gps ' + UNKNOWN
-	
-	
+		la =self.tags['gps']['GPSLatitude']
+		lo =self.tags['gps']['GPSLongitude']
+		gpsnode=GpsTreeNode(la,lo,None)
+		nearnode,distance = OvpInf.nearest(gpsnode)
+		if distance < 0:
+			gpsnode.data=overpass_around_query(la,lo,OVERPASS_NEAR)
+			OvpInf.add(gpsnode)
+			return str(gpsnode)
+		if distance < OVERPASS_FARE:
+			DEBUGPRINT(f'{gpsnode} NEAR {nearnode} {distance=}')
+			gpsnode.data=nearnode.data
+			return str(gpsnode)
+		
+		gpsnode.data=overpass_around_query(la,lo,OVERPASS_NEAR)
+		self.add_gps_point(gpsnode)
+		return str(gpsnode)
 	
 	def extract_camera_long(self):
 		if not 'camera' in self.tags:
@@ -463,17 +489,6 @@ class ExifTags(InputFileIterator):
 				ret = ret + ' ' + tag
 				cam_tag_set.remove(tag)
 		return ret[1:]  # remove leading space1
-	
-	# def oldest_datum(self,datum):
-	# 	# DEBUGPRINT(self.early)
-	# 	# DEBUGPRINT(datum)
-	# 	# DEBUGPRINT()
-	# 	for i in range(0,len(datum)):
-	# 		if self.early[i] < datum[i]:
-	# 			return self.early
-	# 		if self.early[i] > datum[i]:
-	# 			return datum
-	# 	return datum
 	
 	def store_none(self,store_key,meta_key,meta_value):
 		pass
@@ -523,9 +538,9 @@ class ExifTags(InputFileIterator):
 			return
 		
 		if meta_key=='GPSPosition': #meta_value='52 deg 57\' 27.00" N, 5 deg 56\' 10.20" E'
-			lati,longi=meta_value.split(',')
-			#DEBUGPRINT(f'{lati=} {longi=}')
-			self.store_gps(store_key,'GPSLatitude',lati)
+			la,longi=meta_value.split(',')
+			#DEBUGPRINT(f'{la=} {longi=}')
+			self.store_gps(store_key,'GPSLatitude',la)
 			self.store_gps(store_key,'GPSLongitude',longi)
 			return
 		#DEBUGPRINT (f'Not used key {store_key=} {meta_key=} {meta_value}')

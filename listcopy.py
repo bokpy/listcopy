@@ -1,13 +1,6 @@
 #!/usr/bin/python3
-import json
 import os
-from os.path import basename, dirname
 import shutil
-#from distutils.command.check import check
-from sys import stdin, stdout
-
-#from importlib.metadata
-
 import psutil
 import argparse
 import sys
@@ -21,7 +14,7 @@ from listutils import CONTINUE,InputFileIterator,LANGUAGES,assure_dir
 from metadata import ExifTags
 
 DEBUGPRINT=print
-#DEBUGRETURN=return  return is not a function
+#DEBUGRETURN=return  return is not a function. This stops the script here.
 DEBUGEXIT=exit
 
 processed_file='/No Such File ' + time.ctime() # for signal handler to fail
@@ -164,13 +157,12 @@ parser.add_argument('-M', '--meta',
                     )
 #l l l l l l l l l l l l l l l l
 parser.add_argument('-l', '--language',
-                    help=f'Language for days and monthse {LANGUAGES}',
+                    help=f'Language for days and months {LANGUAGES}',
                     choices=LANGUAGES,
                     nargs='?',
                     metavar='',
                     action='store'
                     )
-
 #p p p p p p p p p p p p p p p p
 parser.add_argument('-p', '--post-it',
                     help='File stam for post-it files stem.ok and stem.bad default "~/listcopy"',
@@ -179,10 +171,14 @@ parser.add_argument('-p', '--post-it',
                     metavar='',
                     nargs='?'
                     )
-
+#i i i i i i i i i i i i i i i i i i
+parser.add_argument('-i', '--gps-info',
+                    help='File to read saved GPS data from and to write this data.',
+                    action='store',
+                    metavar='',
+                    nargs='?'
+                    )
 args = parser.parse_args()
-
-
 
 def explain()->None:
 	with open('README','r') as rm:
@@ -656,9 +652,11 @@ def copy_listed_files(target_dir,listing_file,track_and_trace,subdir_format):
 			listing=InputFileIterator(target_dir,listing_file, track_and_trace)
 		else:
 			raise ValueError
-		
-	listing.set_language('Nl')
-			
+	
+	if args.language:
+		listing.set_language(args.language)
+	if args.gps_info:
+		listing.load_info(args.gps_info)
 	target_fs_properties(listing.dest_dir)
 	chunk_size = FsBlockSize
 	
@@ -670,6 +668,8 @@ def copy_listed_files(target_dir,listing_file,track_and_trace,subdir_format):
 		#time.sleep(1)
 		#listing.save_progress()
 		count+=1
+	if args.gps_info:
+		listing.dump_info(args.gps_info)
 		
 	def destination(self):
 		return self.destination_file

@@ -122,6 +122,12 @@ class InputFileIterator:
 	def set_language(self,language): # Virtual
 		pass
 	
+	def load_info(self,file:str): # Virtual
+		pass
+		
+	def dump_info(self,file:str): # Virtual
+		pass
+	
 	def destination(self)->str:
 		dst=self.current()
 		dst=dst[self.source_dir_len:]

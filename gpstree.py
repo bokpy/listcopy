@@ -1,13 +1,11 @@
 #!/usr/bin/python3
 from collections import deque
-
-from numpy.ma.core import append
-
-push=append
-DEBUGPRINT=print
-from geolocate import R_EARTH, LONGI_M_PER_DEG, meters_per_degree
+from geolocate import LONGI_M_PER_DEG, meters_per_degree
 import json
-from numpy import pi
+
+GPSTREENAME="GpsTree"
+
+DEBUGPRINT=print
 
 # la = short for latitude
 # lo = short for longitude
@@ -33,10 +31,32 @@ class GpsTreeNode:
 		        )
 		#DEBUGPRINT(f'manh {ret:9.1f} {self} to {other}')
 		return ret
+	
+	def unpack(self):
+		return self.la,self.lo,self.data
 		
 	def show(self):
 		#print(f'GpsTreeNode:{self.la:9.4f},{self.lo:9.4f},{type(self.data)}')
 		print(f'GpsTreeNode:{self.la:9.4f},{self.lo:9.4f},{self.data}')
+		
+class GpsTreeNodeEncoder(json.JSONEncoder):
+	"""
+	Not tried because of frustration.
+	"""
+	def default(self,obj):
+		if isinstance(obj,GpsTreeNode):
+			return {"GpsTree":(obj.la,obj.lo,obj.data)}
+		return super().default(obj)
+		
+class GpsTreeNodeDecoder(json.JSONDecoder): # Not tested
+	def __init__(self):
+		super().__init__(object_hook=self._decode_gpstreenode)
+
+	def _decode_gpstreenode(self, obj):
+		if 'GpsTreeNode' in obj:
+			return GpsTree(obj['GpsTreeNode'])
+		return obj
+	
 		
 class GpsTree:
 	"""
@@ -47,6 +67,7 @@ think simple Manhattan distance will do for this purpose.
 	
 	def __init__(self):
 		self.root=None
+		self.hallo='Ik ben GpsTree data'
 		# self.current=None
 		# self.iter_list=None
 	   
@@ -100,9 +121,33 @@ think simple Manhattan distance will do for this purpose.
 		self._walk(node.less,dq)
 		self._walk(node.more,dq)
 	
-	def json(self):
-		pass
+	def json(self)->dict:
+		if self.root == None:
+			return {GPSTREENAME:(None,None,None)}
+		dt = [X.unpack() for X in self]
+		#dt={"data" : [X.unpack() for X in self]}
+		return {GPSTREENAME:dt}
 		
+	def dump_json(self,name):
+		with open(name,'w') as f:
+			json.dump(self.json(),f,indent=4)
+	
+	def load_json(self,name):
+		try:
+			with open(name,'r') as f:
+				dt=json.load(f)
+		except IOError as e:
+			print(f'Loading GpsTree data from "{name}" failed.')
+			print(f'Starting with an empty tree.')
+			return
+		# dt=json.dumps(json_data)
+		if not GPSTREENAME in dt.keys():
+			print(f'Looks like "{name}" is not a {GPSTREENAME} file.')
+			print(f'Starting with an empty tree.')
+			return
+		for node in dt[GPSTREENAME]:
+			self.add(GpsTreeNode(node[0],node[1],json.dumps(node[1])))
+			
 	def show_branche_less(self):
 		if not self.root:
 			print(f'empty tree')
@@ -173,22 +218,36 @@ think simple Manhattan distance will do for this purpose.
 				continue
 			return nearest_node,smallest_dist
 			
-class GpsTreeEncoder(json.JSONEncoder):
-	def default(self,obj):
-		if isinstance(obj,GpsTree):
-			return {"GpsTree":obj.walk()}
-		return super().default(obj)
+# class GpsTreeEncoder(json.JSONEncoder):
+# 	"""
+# 	https://pynative.com/python-json-dumps-and-dump-for-json-encoding/
+# 	No luck does not work
+# 	"""
+# 	def default(self,obj):
+# 		if isinstance(obj,GpsTree):
+# 			DEBUGPRINT(f'GpsTreeEncoder {obj.hallo}')
+# 			#return {"GpsTree":obj.json()}
+# 			return obj.json()
+#
+# 		return super().default(obj)
 		
-class GpsTreeDecoder(json.JSONDecoder): # Not tested
+class GpsTreeDecoder(json.JSONDecoder):
+	"""
+	No luck does not work
+	"""
 	def __init__(self):
 		super().__init__(object_hook=self._decode_gpstree)
 
 	def _decode_gpstree(self, obj):
+		"""
+		No luck does not work
+		"""
 		if 'GpsTree' in obj:
 			return GpsTree(obj['GpsTree'])
 		return obj
 	
 def main() -> None:
+	DEBUGEXIT=exit
 	# some test data courteously supplied by Opera Aria
 	BigCities = [
     (40.7128, -74.0060, "New York City"),
@@ -250,7 +309,12 @@ def main() -> None:
 	for lati,longi,city in BigCities:
 		node = GpsTreeNode(lati,longi,city)
 		gps_tree.add(node)
+		
+	#gps_tree.dump_json('TestGps.json')
+	gps_tree.load_json('TestGps.json')
+	print(json.dumps(gps_tree.json(),indent=4))
 	
+	DEBUGEXIT(0)
 	count=0
 	for point in gps_tree:
 		point.show()
@@ -258,8 +322,8 @@ def main() -> None:
 		#print(f'{count=}')
 		
 	print(f'{count=} {check_len=}')
-	
-	return
+	print(gps_tree.json())
+
 	London=GpsTreeNode(51.5074, -0.1278,  "London")
 	Cairo =GpsTreeNode(30.0444, 31.2357,  "Cairo")
 	city,dist=gps_tree.nearest(Cairo)
@@ -270,7 +334,8 @@ def main() -> None:
 	# gps_tree.show_branche_less()
 	# print()
 	# gps_tree.show_branche_more()
-	# print(json.dumps(gps_tree,indent=4))
+	print(json.dumps(gps_tree.json(),indent=4))
+	print(gps_tree.json())
 	
 	
 if __name__ == '__main__':
