@@ -3,14 +3,82 @@ import os.path
 import re
 import subprocess
 import json
-from collections import deque
-from listutils import InputFileIterator
+import time
+#from datetime import datetime
+#from collections import deque
+import datetime
 
-from geolocate import gps_alpha_to_float
+#import pandas as pd
+
+from listutils import InputFileIterator,timestamp2epouch
+from geolocate import gps_alpha_to_float,overpass_around_query
+from gpstree import GpsDataKDTree
+
+GpsPointsSeen=None # GpsDataKDTree initiate with the first point or read saved data from disk
+OVERPASS_NEAR=6
 #from matplotlib.font_manager import json_dump
+# 'Wed Sep 18 07:37:25 2024'
+
+CT_WEEKDAY=0
+CT_MONTH=1
+CT_MONTHDAY= 2
+CT_TIME=3
+CT_YEAR=4
+
+NL_MAAND= {
+    "Jan": "Jan",
+    "Feb": "Feb",
+    "Mar": "Mar",
+    "Apr": "Apr",
+    "May": "Mei",
+    "Jun": "Jun",
+    "Jul": "Jul",
+    "Aug": "Aug",
+    "Sep": "Sep",
+    "Oct": "Okt",
+    "Nov": "Nov",
+    "Dec": "Dec"
+}
+NL_DAG={
+    "Mon": "Ma",
+    "Tue": "Di",
+    "Wed": "Wo",
+    "Thu": "Do",
+    "Fri": "Vr",
+    "Sat": "Za",
+    "Sun": "Zo"
+}
+FRIS_MONTHS = {
+    'Jan': 'Jan',
+    'Feb': 'Feb',
+    'Mar': 'Mrt',
+    'Apr': 'Apr',
+    'May': 'Mai',
+    'Jun': 'Jun',
+    'Jul': 'Jul',
+    'Aug': 'Aug',
+    'Sep': 'Sep',
+    'Oct': 'Okt',
+    'Nov': 'Nov',
+    'Dec': 'Des'
+}
+FRIS_DAYS = {
+    'Mon': 'Mo',
+    'Tue': 'Ti',
+    'Wed': 'Wo',
+    'Thu': 'Do',
+    'Fri': 'Fr',
+    'Sat': 'Sa',
+    'Sun': 'So'
+}
 
 DEBUGPRINT=print
 UNKNOWN='unknown'
+
+CAMERA_TAGS={'CameraID':0,'Make':1,'Model':2,'CameraType2':3,
+             'EquipmentVersion':4,'BodyFirmwareVersion':5,'DeviceType':6,
+             'CameraTemperature':7,'temp':8}
+
 count_spaces = re.compile(r'^\s*')
 
 def count_and_split(string):
@@ -117,6 +185,9 @@ RAW	Various (e.g., .raw, .cr2, .nef)	EXIF, proprietary formats
 https://imagemagick.org/script/download.php#linux'''
 
 _EXIFTAGSFORMAT=['year','camera','gps']
+def set_exiftags_format(format):
+	global _EXIFTAGSFORMAT
+	_EXIFTAGSFORMAT=format
 
 class ExifTags(InputFileIterator):
 	EXIFTAGS = ['date', 'yearmonth', 'year', 'month', 'day', 'camera', 'gps',
@@ -125,26 +196,98 @@ class ExifTags(InputFileIterator):
 	date_split=re.compile(r'(\d+):(\d+):(\d+) (\d+):(\d+):(\d+)(.*)')
 	#'date':["2012","01","25","03","41","57"]
 	
-	def __init__(destination_dir:str,tracker_file_stem,input_file='-'):
-		InputFileIterator.__init__(destination_dir,tracker_file_stem,input_file)
-	
-	def set_format(self,format):
+	def __init__(self,destination_dir:str,input_file,tracker_file_stem):
 		global _EXIFTAGSFORMAT
-		_EXIFTAGSFORMAT=format
+		InputFileIterator.__init__(self,destination_dir,input_file,tracker_file_stem)
+		self.path_format=_EXIFTAGSFORMAT
+		self.tags={}
+		self.translate_day={}
+		self.translate_mount={}
 	
 	def set(self,file_path):
 		DEBUGPRINT(f'ExifTags set ( {file_path=}')
 		self.file_path=file_path
 		self.json_tags={}
 		self.tags={}
-		self.early=("3000","12","31", "00", "00","00","+00:00")
+		self.early=time.time()+4e9 # don't expect to get foto's from more then 100 years in the future
 		self._collect_exif_from_file()
 		self._process()
+		
+	def set_format(self,format):
+		global _EXIFTAGSFORMAT
+		_EXIFTAGSFORMAT=format
+	
+	def _split_early(self):
+		if not 'date' in self.tags:
+			return False,''
+		ct=time.ctime(self.early).split(' ')
+		if self.translate_day:
+			ct[CT_WEEKDAY]=self.translate_day[ct[CT_WEEKDAY]]
+			ct[CT_MONTH]  =self.translate_mount[ct[CT_MONTH]]
+		return True,ct
+		
+	def extract_date(self):
+		valid,dtm = self._split_early()
+		if not valid:
+			return 'date '+UNKNOWN
+		return f'{dtm[CT_MONTHDAY]}-{dtm[CT_MONTH]}-{dtm[CT_YEAR]}'
+	
+	def extract_month_year(self):
+		valid,dtm = self._split_early()
+		if not valid:
+			return 'date '+UNKNOWN
+		return f'{dtm[CT_MONTH]}-{dtm[CT_YEAR]}'
+		
+	def extract_month(self):
+		valid,dtm = self._split_early()
+		if not valid:
+			return 'date '+UNKNOWN
+		return f'{dtm[CT_MONTH]}'
+	
+	def extract_year(self):
+		valid,dtm = self._split_early()
+		if not valid:
+			return 'date '+UNKNOWN
+		return f'{dtm[CT_YEAR]}'
+		
+	def extract_day(self):
+		valid,dtm = self._split_early()
+		if not valid:
+			return 'date '+UNKNOWN
+		return f'{dtm[CT_MONTHDAY]}'
+
+	def set_language(self,language):
+		if language.upper()=='NL':
+			self.translate_day=NL_DAG
+			self.translate_mount=NL_MAAND
+			return
+		if language.upper()=='FY':
+			self.translate_day=FRIS_DAYS
+			self.translate_mount=FRIS_MONTHS
+			return
+		raise ValueError( f'"{language}" not supported (yet).')
+		
+	def destination(self)->str:
+		self.set(self.current())
+		subdir = self.make_sub_dir()
+		DEBUGPRINT(subdir)
+		return subdir + os.path.basename(self.current())
+		dst=self.current()
+		dst=dst[self.source_dir_len:]
+		dst=self.dest_dir+dst
+		#return self.dest_dir + self.current()[self.source_dir_len:]
+		return dst
 	
 	def qualified_name(self)->str:
 		return self.make_sub_dir()+os.path.basename(self.file_path)
 	
+	# def simple_subdir_from_tag(self, tag):
+	# 	if tag in self.tags:
+	# 		return tag + self.tags[tag] + '/'
+	# 	return tag + UNKNOWN  + '/'
+	#
 	def make_sub_dir(self)->str:
+		
 		dir=''
 		for tag in self.path_format:
 			if tag == 'date':
@@ -153,8 +296,7 @@ class ExifTags(InputFileIterator):
 				
 			if tag == 'yearmonth':
 				if 'date' in self.tags:
-					date=self.tags['date']
-					dir = dir + date[0] + '-' + date[1] + '/'
+					dir = dir + self.extract_month_year() + '/'
 					continue
 				dir= dir + UNKNOWN  + '/'
 				continue
@@ -162,15 +304,15 @@ class ExifTags(InputFileIterator):
 			if tag == 'year':
 				if 'date' in self.tags:
 					date=self.tags['date']
-					dir = dir + date[0] + '/'
+					dir = dir + self.extract_year() + '/'
 					continue
-				dir= dir + UNKNOWN  + '/'
+				dir= dir + 'year ' + UNKNOWN  + '/'
 				continue
 				
 			if tag == 'month':
 				if 'date' in self.tags:
 					date=self.tags['date']
-					dir = dir + date[1] + '/'
+					dir = dir + self.extract_month() + '/'
 					continue
 				dir= dir + UNKNOWN  + '/'
 				continue
@@ -178,7 +320,7 @@ class ExifTags(InputFileIterator):
 			if tag == 'day':
 				if 'date' in self.tags:
 					date=self.tags['date']
-					dir = dir + date[2] + '/'
+					dir = dir + self.extract_d + '/'
 					continue
 				dir= dir + UNKNOWN  + '/'
 				continue
@@ -188,10 +330,7 @@ class ExifTags(InputFileIterator):
 				continue
 			
 			if tag == 'gps':
-				if 'gps' in self.tags:
-					dir = dir + 'HAS-----GPS-------DATA' + '/'
-					continue
-				dir= dir + 'gps ' + UNKNOWN  + '/'
+				dir = dir +  self.extract_gps() + '/'
 				continue
 				
 			if tag == 'flash':
@@ -262,22 +401,28 @@ class ExifTags(InputFileIterator):
 				#DEBUGPRINT(meta[meta_key])
 				tag,action=TAG_PROCESSOR[meta_key]
 				action(self,tag,meta_key,self.json_tags[meta_key])
-		
-	def extract_datum(self):
-		if 'date' in self.tags:
-			d=self.tags['date']
-			return f'{d[2]}-{d[1]}-{d[0]}'
-		return UNKNOWN
 	
-	def exstract_gps(self):
+	def extract_gps(self):
+		global GpsPointsSeen
 		# /home/bob/temp/Users/Sander/Desktop/Foto's/2013/12 december/
-		pass
+		if not 'gps' in self.tags:
+			return 'gps ' + UNKNOWN
+		DEBUGPRINT(f"{self.tags['gps']=}")
+		lati =self.tags['gps']['GPSLatitude']
+		longi=self.tags['gps']['GPSLongitude']
+		if not GpsPointsSeen:
+			GpsPointsSeen=GpsDataKDTree([[lati,longi]])
+		else:
+			dist_sq, point=GpsPointsSeen.get_nearest((lati,longi))
+			
+			
+		geo_data=overpass_around_query(lati,longi,OVERPASS_NEAR)
 	
-	def extract_year(self):
-		if 'date' in self.tags:
-			d=self.tags['date']
-			return f'{d[0]}'
-		return UNKNOWN
+		print(json.dumps(geo_data,indent=4))
+		return f"{lati},{longi}"
+		return 'gps ' + UNKNOWN
+	
+	
 	
 	def extract_camera_long(self):
 		if not 'camera' in self.tags:
@@ -319,24 +464,16 @@ class ExifTags(InputFileIterator):
 				cam_tag_set.remove(tag)
 		return ret[1:]  # remove leading space1
 	
-	def oldest_datum(self,datum):
-		# DEBUGPRINT(self.early)
-		# DEBUGPRINT(datum)
-		# DEBUGPRINT()
-		if self.early[0] < datum[0]: # year
-			return self.early
-		if self.early[0] > datum[0]:
-			return datum
-		if self.early[1] < datum[1]: # month
-			return self.early
-		if self.early[1] > datum[1]:
-			return datum
-		if self.early[2] < datum[2]: # day
-			return self.early
-		if self.early[2] > datum[2]:
-			return datum
-		return datum # don't care for time now
-	
+	# def oldest_datum(self,datum):
+	# 	# DEBUGPRINT(self.early)
+	# 	# DEBUGPRINT(datum)
+	# 	# DEBUGPRINT()
+	# 	for i in range(0,len(datum)):
+	# 		if self.early[i] < datum[i]:
+	# 			return self.early
+	# 		if self.early[i] > datum[i]:
+	# 			return datum
+	# 	return datum
 	
 	def store_none(self,store_key,meta_key,meta_value):
 		pass
@@ -355,67 +492,29 @@ class ExifTags(InputFileIterator):
 		self.tags.setdefault(store_key,{meta_key:meta_value})
 		
 	def store_camera(self,store_key,meta_key,meta_value):
+		global CAMERA_TAGS
 		str_meta_value=str(meta_value).strip()
 		if not store_key in self.tags:
 			self.tags[store_key]=['' for _ in range(10)]
 		cam_tag=self.tags[store_key]
-		i=0
-		if meta_key=='CameraID':
-			cam_tag[i]=str_meta_value
-			return
-		i+=1
-		if meta_key=='Make':
-			cam_tag[i]=str_meta_value
-			return
-		i+=1
-		if meta_key=='Model':
-			cam_tag[i]=str_meta_value
-			return
-		i+=1
-		if meta_key=='CameraType2':
-			cam_tag[i]=str_meta_value
-			return
-		i+=1
-		if meta_key=='EquipmentVersion':
-			cam_tag[i]=str_meta_value
-			return
-		i+=1
-		if meta_key=='BodyFirmwareVersion':
-			cam_tag[i]=str_meta_value
-			return
-		i+=1
-		if meta_key=='DeviceType':
-			cam_tag[i]=str_meta_value
-			return
-		if meta_key=='CameraTemperature':
-			self.tags['temp']=str_meta_value
-			return
-		i+=1
-		cam_tag[i]=f'{meta_key}:{meta_value}'
+		if meta_key in CAMERA_TAGS:
+			cam_tag[CAMERA_TAGS[meta_key]]=str_meta_value
+		#cam_tag[i]=f'{meta_key}:{meta_value}'
 		
 	def store_value(self,store_key,meta_key,meta_value):
 		self.tags[store_key]=meta_value
 	
 	def store_date(self,store_key,meta_key,meta_value):
-		#"2024:09:03 10:51:43+02:00"
-		if type(meta_value) != str:
+		#"2024:09:03 10:51:43+02:00"# Your timestamp string
+		if (type(meta_value) != str):
 			print(f'ExifTags.store_date expects a string like:')
 			print('"2024:09:03 10:51:43+02:00"')
 			print(f'got: {meta_value} type: {type(meta_value)}')
 			return
-		#DEBUGPRINT(f'store_date {store_key=},{meta_key=},{meta_value=}')
-		date_time=self.date_split.match(meta_value)
-		if not date_time:
-			print(f'ExifTags.store_date')
-			print('Unexpected format')
-			print(f'got: {meta_value}')
-			return
-		#'date':["2012","01","25","03","41","57"]
-		datum=date_time.groups()
-		#DEBUGPRINT(datum)
-		self.early=self.oldest_datum(datum)
-		self.tags[store_key]=self.early
-		
+		dt = timestamp2epouch(meta_value)
+		if self.early > dt:
+			self.early = self.tags[store_key] = dt
+			
 	def store_gps(self,store_key,meta_key,meta_value):
 		if not store_key in self.tags:
 			self.tags[store_key]={'GPSLatitude':1000,'GPSLongitude':1000}
@@ -425,11 +524,11 @@ class ExifTags(InputFileIterator):
 		
 		if meta_key=='GPSPosition': #meta_value='52 deg 57\' 27.00" N, 5 deg 56\' 10.20" E'
 			lati,longi=meta_value.split(',')
-			DEBUGPRINT(f'{lati=} {longi=}')
+			#DEBUGPRINT(f'{lati=} {longi=}')
 			self.store_gps(store_key,'GPSLatitude',lati)
 			self.store_gps(store_key,'GPSLongitude',longi)
 			return
-		print (f'Not used key {store_key=} {meta_key=} {meta_value}')
+		#DEBUGPRINT (f'Not used key {store_key=} {meta_key=} {meta_value}')
 		
 	def store_flash(self,store_key,meta_key,meta_value):
 		if type(meta_value) != str:

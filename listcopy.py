@@ -17,7 +17,7 @@ import time
 import signal
 import extensions as ext
 import metadata as meta
-from listutils import CONTINUE,InputFileIterator,assure_dir
+from listutils import CONTINUE,InputFileIterator,LANGUAGES,assure_dir
 from metadata import ExifTags
 
 DEBUGPRINT=print
@@ -162,6 +162,15 @@ parser.add_argument('-M', '--meta',
                     metavar='',
                     action='store'
                     )
+#l l l l l l l l l l l l l l l l
+parser.add_argument('-l', '--language',
+                    help=f'Language for days and monthse {LANGUAGES}',
+                    choices=LANGUAGES,
+                    nargs='?',
+                    metavar='',
+                    action='store'
+                    )
+
 #p p p p p p p p p p p p p p p p
 parser.add_argument('-p', '--post-it',
                     help='File stam for post-it files stem.ok and stem.bad default "~/listcopy"',
@@ -636,16 +645,7 @@ def file_check_ok(source,target,l)->bool:
 	os.remove(target)
 	return False
 	
-# def find_begin_marker()->None:
-# 	#read until the begin marker is found in the input
-# 	while True:
-# 		startmark = input() # look where the list data starts
-# 		if startmark == DATA_BEGIN_MARKER:
-# 			return
-# 	# return never reached input error if marker not found
-	
 def copy_listed_files(target_dir,listing_file,track_and_trace,subdir_format):
-	# target_maker is a function that generates from a source path a destination path
 	global processed_file
 	global chunk_size
 	
@@ -656,42 +656,20 @@ def copy_listed_files(target_dir,listing_file,track_and_trace,subdir_format):
 			listing=InputFileIterator(target_dir,listing_file, track_and_trace)
 		else:
 			raise ValueError
+		
+	listing.set_language('Nl')
 			
 	target_fs_properties(listing.dest_dir)
 	chunk_size = FsBlockSize
 	
 	count=0
 	for src,dst in listing:
+		processed_file=dst
 		DEBUGPRINT(f'<- "{src}')
 		DEBUGPRINT(f'-> "{dst}"')
-		listing.save_progress()
+		#time.sleep(1)
+		#listing.save_progress()
 		count+=1
-		#print(f'{count}',end=' ')
-	
-# def target_keep_dir(source_file:str,source_path_length:int)->str:
-# 	global WorkPath
-# 	basepath=source_file[source_path_length:]
-# 	target = WorkPath+basepath
-# 	target_dir=os.path.dirname(target)
-# 	assure_target_dir(target_dir)
-# 	return target
-
-# class MetaDir:
-# 	destination_dir=''
-# 	def __init__(self,source_file,source_path_length):
-# 		global WorkPath
-# 		target_basename= basename(source_file)
-# 		target_subdir=dirname(source_file[source_path_length:])
-# 		self.xf_data=ExifTags(source_file)
-# 		if self.xf_data.is_empty(): # no metadata so fallback keep the original subdirs
-# 			target_dir=WorkPath + target_subdir
-# 			assure_dir(target_dir)
-# 			self.destination_file=target_dir+target_basename
-# 			return
-# 		subdir=self.xf_data.make_sub_dir()
-# 		target_dir= WorkPath + subdir
-# 		assure_dir(target_dir)
-# 		self.destination_file = WorkPath + subdir + target_basename
 		
 	def destination(self):
 		return self.destination_file
@@ -722,7 +700,7 @@ def main() -> None:
 			DEBUGPRINT(f'Read files to copy from "{args.deliver}".')
 			if args.meta:
 				DEBUGPRINT(args.meta)
-				meta.ExifTags.set_format(args.meta)
+				meta.set_exiftags_format(args.meta)
 				copy_listed_files(args.target,args.deliver,track_and_trace(),'meta_data')
 				exit(0)
 			copy_listed_files(args.target,args.deliver,track_and_trace(),'qualified_destination')

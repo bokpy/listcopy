@@ -1,11 +1,16 @@
 #!/usr/bin/python3
+import time
+import datetime
 import os
 import sys
+import re
 
 DATA_BEGIN_MARKER='-------->Data_Begin_Marker-------->'
 DATA_END_MARKER='<--------Data_End_Marker<--------'
 CONTINUE='<CONTINUE>'
 DEBUGPRINT=print
+
+LANGUAGES=['nl','fy']
 
 def assure_dir(dir):
 	if os.path.exists(dir):
@@ -21,17 +26,31 @@ def end_slash(directory:str)->str:
 	if directory[-1:]=='/':
 		return directory
 	return directory + '/'
+	
+# "2024:09:03 10:51:43+02:00" -> epoch time
+TIMESTAMP_RE=re.compile(r'(\d+):(\d+):(\d+) (\d+):(\d+):(\d+).*')
+def timestamp2epouch(tmstmp):
+	ts=TIMESTAMP_RE.match(tmstmp)
+	if not ts:
+		return 0.0
+	tsg=ts.group
+	dt = datetime.datetime(int(tsg(1)),int(tsg(2)),int(tsg(3)),int(tsg(4)),int(tsg(5)))
+	return time.mktime(dt.timetuple())
 
 class InputFileIterator:
 	def __init__(self,destination_dir:str,input_file,tracker_file_stem):
-		
+		self.continue_dir=False
 		self.dest_dir=end_slash(destination_dir)
-		assure_dir(self.dest_dir)
-		DEBUGPRINT(f'\nInputFileIterator.__init__(')
-		DEBUGPRINT(f'{destination_dir=}')
-		DEBUGPRINT(f'{input_file=}')
-		DEBUGPRINT(f'{tracker_file_stem=}')
-		DEBUGPRINT(')\n')
+		if destination_dir == CONTINUE:
+			self.dest_dir=''
+			self.continue_dir=True
+		#assure_dir(self.dest_dir)
+		#DEBUGPRINT(f'\nInputFileIterator.__init__(')
+		#DEBUGPRINT(f'{destination_dir=}')
+		#DEBUGPRINT(f'{input_file=}')
+		#DEBUGPRINT(f'{tracker_file_stem=}')
+		#DEBUGPRINT(')\n')
+		self.source_dir=''
 		if input_file==sys.stdin or input_file=='-' or input_file=='':
 			input_file = sys.stdin
 			#DEBUGPRINT('input_file==sys.stdin')
@@ -54,26 +73,34 @@ class InputFileIterator:
 		self.strip_newline()
 		self.ok_file=tracker_file_stem+'.ok'
 		self.bad_file=tracker_file_stem+'.bad'
-		self.read_progress() # sets: self.dest_dir , self.source_dir, self.source_dir_len
-		self.index=0
-		# DEBUGPRINT(self.filelist[:8])
-		# DEBUGEXIT(0)
-		#DEBUGPRINT(f'{self.filelist[self.index+2:]}')
-		
-		if not DATA_END_MARKER in self.filelist[self.index+2:]:
-			print (f'InputFileIterator:__init__ did not find a "{DATA_BEGIN_MARKER}"')
-			print (f'in "{input_file}"')
-			print (f'or "{self.ok_file}" indicates all has been copied.')
-			print (f'You can edit this file or')
-			print (f'rm "{self.ok_file}"')
-			print (f'to start a new session.')
-			exit (0)
+		self.skip=self.read_progress()
+		self.index=-1
 		
 	def __iter__(self):
 		return self
 		
 	def __next__(self):
-		if self._next():
+		if not self._kick_index():
+			self.index-=1
+			DEBUGPRINT(f'Should not happen!!!')
+			return
+		while self.index < self.skip:
+			if self.current() == DATA_BEGIN_MARKER:
+				self._data_begin_marker_found()
+			if self.current() == DATA_END_MARKER:
+				self.source_dir=''
+				self.source_dir_len=0
+			self._kick_index()
+		while not self.source_dir:
+			if self.current() == DATA_BEGIN_MARKER:
+				self._data_begin_marker_found()
+			self._kick_index()
+		if self.current()==DATA_END_MARKER:
+			self.source_dir=''
+			self._kick_index()
+		DEBUGPRINT(f'{self.source_dir=}')
+		if self.source_dir:
+			DEBUGPRINT(f'{self.source_dir}')
 			return self.current(),self.destination()
 	
 	def _kick_index(self):
@@ -81,42 +108,26 @@ class InputFileIterator:
 		if self.index < self.filelist_len:
 			return True
 		self.index-=1
-		self.save_progress()
+		self._save_progress(-1,self.dest_dir,'Done')
+		DEBUGPRINT('FIRE STOPITERATION FIRE STOPITERATION FIRE STOPITERATION FIRE STOPITERATION FIRE STOPITERATION ')
 		raise StopIteration
 		return False
 		
 	def _data_begin_marker_found(self):
 		self._kick_index()
-		self.source_dir = self.filelist[self.index]
+		self.source_dir = self.current()
 		self.source_dir_len=len(self.source_dir)
+		DEBUGPRINT(f'_data_begin_marker_found "{self.source_dir}"')
 		
-	def _next(self)->bool:
-		DEBUGPRINT(f'{self.skip=} {self.index=}')
-		if self.skip < 0 : # try to find next DATA_BEGIN_MARKER
-			self.index-=1
-			while self._kick_index():
-				if self.current() == DATA_BEGIN_MARKER:
-					self._data_begin_marker_found()
-					self.skip=0
-					break
-				self._kick_index()
-				
-		while self.index <= self.skip:
-			DEBUGPRINT(f'({self.index},{self.skip} "{self.current()}"')
-			if self.current() == DATA_BEGIN_MARKER:
-				self._data_begin_marker_found()
-				return self._kick_index()
-			self._kick_index()
-		
-		if not self._kick_index():
-			return False
-		if self.current() == DATA_END_MARKER:
-			self.skip=-1
-			return self._next()
-		return True
-		
+	def set_language(self,language): # Virtual
+		pass
+	
 	def destination(self)->str:
-		return self.dest_dir + self.current()[-self.source_dir_len:]
+		dst=self.current()
+		dst=dst[self.source_dir_len:]
+		dst=self.dest_dir+dst
+		#return self.dest_dir + self.current()[self.source_dir_len:]
+		return dst
 	
 	def current(self):
 		return self.filelist[self.index]
@@ -124,57 +135,43 @@ class InputFileIterator:
 	def source_path_length(self):
 		return self.source_dir_len
 	
-	def save_progress(self):
-		DEBUGPRINT(f'save_progres({self.index} "{self.current()}"')
-		# if self.index>= self.filelist_len:
-		# 	try:
-		# 		with open(self.ok_file,'w') as f:
-		# 			f.write('-1\n')
-		# 			f.write(self.source_dir +'\n')
-		# 			f.write('Done' +'\n')
-		# 	except IOError as e:
-		# 		print('InputFileIterator:save_progress failed')
-		# 		print(f'{e.errno} {e.strerror}')
-		# 		exit(e.errno)
-		# 	return
+	def _save_progress(self,index,dir,source):
 		try:
 			with open(self.ok_file,'w') as f:
-				f.write(str(self.index) +'\n')
-				f.write(self.source_dir +'\n')
-				f.write(self.current()  +'\n')
+				f.write(str(index) + '\n')
+				f.write(dir +'\n')
+				f.write(source +'\n')
 		except IOError as e:
 			print('InputFileIterator:save_progress failed')
 			print(f'{e.errno} {e.strerror}')
 			exit(e.errno)
-			
-	def set_destination_dir(self,directory):
-		self.dest_dir=end_slash(directory)
-		assure_dir(self.dest_dir)
-		
-	def read_progress(self)->None:
-		self.index=0
-		self.skip=-1 # make self.next search until DATA_BEGIN_MARKER is found
-		DEBUGPRINT(f'{self.ok_file}')
-		if not os.path.exists(self.ok_file): # new session start from the beginning
+		return
+	
+	def save_progress(self):
+		#DEBUGPRINT(f'save_progres({self.index} "{self.current()}"')
+		if not self.source_dir:
+			self._save_progress(-1,'Done','Done')
 			return
+		self._save_progress(self.index,self.source_dir,self.current())
+		
+	def read_progress(self)->int:
+		if not os.path.exists(self.ok_file): # new session start from the beginning
+			return 0
 		with open(self.ok_file,'r') as f:
 			data=f.read()
 		data=data.split('\n')
-		self.skip=int(data[0]) # self.next find DATA_BEGIN_MARKER('s)
-								# and continue reading until self.index==self.skip
-				
-		if self.dest_dir == CONTINUE:
-			self.set_destination_dir(data[1])
-		else:
-			self.set_destination_dir(self.dest_dir)
-		# if self.skip<0:
-		# 	print(f'All is done a in previous session.')
-		# 	print(f'files were copied to "{self.dest_dir}"')
-		# 	print(f'rm "{self.ok_file}" to repeat.')
-		# 	exit(0)
+		self.skip=int(data[0])
+		if (self.skip<0):
+			print(f'''Looks like all work was done.
+files where copied to "{self.dest_dir}"
+rm "{self.ok_file}" to do it again.
+''')
+			exit(0)
+		if self.dest_dir == CONTINUE[:-1]:
+			self.dest_dir=data[1]
 		check_file = data[2]
 		if check_file == self.filelist[self.skip]:
-			return
+			return self.skip
 		print(f'InputFileIterator:read_progress')
 		print(f'index at {self.skip} does point to an other file as before.')
 		print(f'Was :"{check_file}"')
@@ -186,20 +183,6 @@ class InputFileIterator:
 		for i in range(len(fl)):
 			fl[i]=fl[i][:-1]
 	
-	# def find_data_begin_marker(self)->bool:
-	# 	# if the marker is found the index is on the first full source file path
-	# 	global DATA_BEGIN_MARKER
-	# 	while self.index < self.filelist_len:
-	# 		if self.current() == DATA_BEGIN_MARKER:
-	# 			self._kick_index()
-	# 			self.source_dir=self.current()
-	# 			DEBUGPRINT(f'DATA_BEGIN_MARKER {self.source_dir=}')
-	# 			self.source_dir_len=len(self.source_dir)
-	# 			DEBUGPRINT(f'{self.source_dir_len=}')
-	# 			self._kick_index()
-	# 			return True
-	# 		self._kick_index()
-	# 	return False
 	
 def main() -> None:
 	print ('No Main')

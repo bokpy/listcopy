@@ -6,6 +6,7 @@ import requests
 import overpass
 import math
 import re
+from gpstree import GpsTreeNode,GpsTree
 # import osmnx
 # from os import eventfd_read
 # import geopandas as gpd
@@ -47,7 +48,7 @@ HTTP_STATUS_CODES = {
 }
 
 def meters_per_degree(longitude:float)->float:
-	global PI,R_EARTH
+	global R_EARTH
 	l=abs(longitude)
 	r_at_lat=R_EARTH * math.cos(math.radians(longitude))
 	circum_lat=2*math.pi*r_at_lat
@@ -177,44 +178,28 @@ def overpass_find_nearby_landmarks(lat, lon):
     return landmarks
 
 #gps_re=re.compile(r"\d+ deg \d+' \d+\.\d+\" [NESW]")
-gps_re=re.compile(r'\s*(\d+) deg (\d+)\' (\d+\.\d+)" ([NSEW])')
+#gps_re=re.compile(r'\s*(\d+) deg (\d+)\' (\d+\.\d+)" ([NSEW])') # worked
+gps_re=re.compile(r'\s*(\d+)\D+(\d+)\D+(\d+\.\d+)[^NSEW]+([NSEW])')
+
 def gps_alpha_to_float(gps_string:str)->float:
 	'''convert a string like "52 deg 57' 12.63" N" to 52.970175
 	thanks Aria of Opera
 	'''
-	DEBUGPRINT(f'gps_alpha_to_float_re "{gps_string}"')
+	#DEBUGPRINT(f'gps_alpha_to_float_re "{gps_string}"')
 	if type(gps_string) != str:
 		#DEBUGPRINT(f'gps_alpha_to_float expect string return 0')
 		return False
 	match=gps_re.match(gps_string)
 	if not match:
-		DEBUGPRINT(f"gps_alpha_to_float can't handle this format return 0")
+		#DEBUGPRINT(f"gps_alpha_to_float can't handle this format return 0")
 		return False
 	ret  = float(match.group(1))
 	ret += float(match.group(2))/60
 	ret += float(match.group(3))/3600
-	if match.group(4) == 'S' or match.group(4) == 'W':
+	NESW=match.group(4)
+	if NESW == 'S' or NESW == 'W':
 		return -ret
 	return ret
-	
-	# parts = gps_string.split()
-	# DEBUGPRINT(parts)
-	# # Extract degrees, minutes, seconds, and direction
-	# # ['52', 'deg', "57'", '12.63"', 'N']
-	# degrees = float(parts[0])  # "52"
-	# minutes = float(parts[2][:-1])   # "57"
-	# DEBUGPRINT(f'120 >{parts[3][:-1]}<')
-	# seconds = float(parts[3][:-1])    # "12.63"
-	# direction = parts[4]         # "N"
-	#
-	# # Convert to decimal degrees
-	# decimal_degrees = degrees + (minutes / 60) + (seconds / 3600)
-	#
-	# # Adjust for southern hemisphere
-	# if direction == 'S':
-	# 	decimal_degrees = -decimal_degrees
-	#
-	# return decimal_degrees
 
 if __name__ == '__main__':
 	joure_coords=(52.963041973818754, 5.8111289020720855)
