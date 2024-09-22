@@ -1,9 +1,11 @@
 #!/usr/bin/python3
 from collections import deque
-from geolocate import LONGI_M_PER_DEG, meters_per_degree
+#from geolocate import LONGI_M_PER_DEG, meters_per_degree
 import json
+from haversine import haversine, Unit
 
 GPSTREENAME="GpsTree"
+TRESHOLD=0.0001 # consider points the same as the ??? is smaller
 
 DEBUGPRINT=print
 
@@ -18,12 +20,22 @@ class GpsTreeNode:
 		self.data=data
 		
 	def __str__(self):
-		return f'GpsTN({self.la:9.4f},{self.lo:9.4f},{self.data})'
+		format='10.6f'
+		return f'GpsTN({self.la:{format}},{self.lo:{format}},{self.data})'
 	
 	def is_greater(self,other,latitude:bool)->bool:
 		if latitude:
 			return self.la > other.la
 		return  self.lo > other.lo
+		
+	def within_tollerance(self,other)->bool:
+		global TRESHOLD
+		dla=abs(self.la-other.la)
+		dlo=abs(self.lo-other.lo)
+		return TRESHOLD < (dla + dlo)
+	
+	def lati_longi(self):
+		return self.la,self.lo
 		
 	def manhattan(self,other)->float:
 		ret =  (abs(self.la - other.la  ) * meters_per_degree(self.lo) +
@@ -32,6 +44,9 @@ class GpsTreeNode:
 		#DEBUGPRINT(f'manh {ret:9.1f} {self} to {other}')
 		return ret
 	
+	def haversine_meters(self,other):
+		return haversine(self.lati_longi(),other.lati_longi(),unit='m')
+
 	def unpack(self):
 		return self.la,self.lo,self.data
 		
@@ -56,7 +71,6 @@ class GpsTreeNodeDecoder(json.JSONDecoder): # Not tested
 		if 'GpsTreeNode' in obj:
 			return GpsTree(obj['GpsTreeNode'])
 		return obj
-	
 		
 class GpsTree:
 	"""
@@ -67,7 +81,7 @@ think simple Manhattan distance will do for this purpose.
 	
 	def __init__(self):
 		self.root=None
-		self.hallo='Ik ben GpsTree data'
+		#self.hallo='Ik ben GpsTree data'
 		# self.current=None
 		# self.iter_list=None
 	   
@@ -173,6 +187,8 @@ think simple Manhattan distance will do for this purpose.
 		current = self.root
 		compare_la = False
 		while current:
+			if current.within_tollerance(node):
+				return
 			compare_la = not compare_la
 			greater = node.is_greater(current,compare_la)
 			if greater:
@@ -192,16 +208,17 @@ think simple Manhattan distance will do for this purpose.
 	def nearest(self,node:GpsTreeNode)->(GpsTreeNode,float):
 		"""
 		:param node: the node to search the nearest node in the tree
-		:return: the nearest node and the manhattan distance in meters
+		:return: nearest GpsTreeNode, haversine distance in meters
+		:return: None,-1.0 if the tree is empty
 		"""
 		if not self.root:
 			return None,-1.0
 		#DEBUGPRINT(f'nearest : {node}')
 		current = nearest_node = self.root
-		smallest_dist = node.manhattan(current)
+		smallest_dist = node.haversine_meters(current)
 		compare_la = False
 		while current:
-			dist = node.manhattan(current)
+			dist = node.haversine_meters(current)
 			if dist < smallest_dist:
 				smallest_dist = dist
 				nearest_node = current
@@ -314,7 +331,7 @@ def main() -> None:
 	gps_tree.load_json('TestGps.json')
 	print(json.dumps(gps_tree.json(),indent=4))
 	
-	DEBUGEXIT(0)
+#	DEBUGEXIT(0)
 	count=0
 	for point in gps_tree:
 		point.show()
@@ -326,9 +343,6 @@ def main() -> None:
 
 	London=GpsTreeNode(51.5074, -0.1278,  "London")
 	Cairo =GpsTreeNode(30.0444, 31.2357,  "Cairo")
-	city,dist=gps_tree.nearest(Cairo)
-	print(f'{dist} {city}')
-	
 	#gps_tree.walk()
 	print(gps_tree.walk())
 	# gps_tree.show_branche_less()
@@ -336,6 +350,9 @@ def main() -> None:
 	# gps_tree.show_branche_more()
 	print(json.dumps(gps_tree.json(),indent=4))
 	print(gps_tree.json())
+	
+	city,dist=gps_tree.nearest(Cairo)
+	print(f'{dist} {city}')
 	
 	
 if __name__ == '__main__':

@@ -16,9 +16,9 @@ def assure_dir(dir):
 	if os.path.exists(dir):
 		return
 	try:
-		os.mkdir(dir)
+		os.makedirs(dir)
 	except OSError as e:
-		print(f"couldn't mkdir \"{dir}\"")
+		print(f"couldn't makedirs \"{dir}\"")
 		print(f'{e.errno=} {e.strerror=}')
 		exit(e.errno)
 		
@@ -82,7 +82,7 @@ class InputFileIterator:
 	def __next__(self):
 		if not self._kick_index():
 			self.index-=1
-			DEBUGPRINT(f'Should not happen!!!')
+			#DEBUGPRINT(f'Should not happen!!!')
 			return
 		while self.index < self.skip:
 			if self.current() == DATA_BEGIN_MARKER:
@@ -98,9 +98,9 @@ class InputFileIterator:
 		if self.current()==DATA_END_MARKER:
 			self.source_dir=''
 			self._kick_index()
-		DEBUGPRINT(f'{self.source_dir=}')
+		#DEBUGPRINT(f'{self.source_dir=}')
 		if self.source_dir:
-			DEBUGPRINT(f'{self.source_dir}')
+			#DEBUGPRINT(f'{self.source_dir}')
 			return self.current(),self.destination()
 	
 	def _kick_index(self):
@@ -109,7 +109,7 @@ class InputFileIterator:
 			return True
 		self.index-=1
 		self._save_progress(-1,self.dest_dir,'Done')
-		DEBUGPRINT('FIRE STOPITERATION FIRE STOPITERATION FIRE STOPITERATION FIRE STOPITERATION FIRE STOPITERATION ')
+		#DEBUGPRINT('FIRE STOPITERATION FIRE STOPITERATION FIRE STOPITERATION FIRE STOPITERATION FIRE STOPITERATION ')
 		raise StopIteration
 		return False
 		
@@ -117,7 +117,7 @@ class InputFileIterator:
 		self._kick_index()
 		self.source_dir = self.current()
 		self.source_dir_len=len(self.source_dir)
-		DEBUGPRINT(f'_data_begin_marker_found "{self.source_dir}"')
+		#DEBUGPRINT(f'_data_begin_marker_found "{self.source_dir}"')
 		
 	def set_language(self,language): # Virtual
 		pass

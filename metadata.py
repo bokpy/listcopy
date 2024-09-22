@@ -4,14 +4,13 @@ import re
 import subprocess
 import json
 import time
-from codecs import namereplace_errors
-
+#from codecs import namereplace_errors
 #from datetime import datetime
 #from collections import deque
 #import pandas as pd
 
-from listutils import InputFileIterator,timestamp2epouch
-from geolocate import gps_alpha_to_float,overpass_around_query
+from listutils import InputFileIterator,timestamp2epouch,end_slash
+from geolocate import gps_alpha_to_float, ovp_near_query, ovp_box_query
 from gpstree import GpsTree,GpsTreeNode
 
 OvpInf=GpsTree() # Save GPS overpass info a lot of pictures will be from places very close to each other
@@ -26,7 +25,13 @@ CT_MONTH=1
 CT_MONTHDAY= 2
 CT_TIME=3
 CT_YEAR=4
-
+# maandag	moandei
+# dinsdag	tiisdei
+# woensdag	woansdei
+# donderdag	tongersdei
+# vrijdag	freed
+# zaterdag	sneon
+# zondag	snein
 NL_MAAND= {
     "Jan": "Jan",
     "Feb": "Feb",
@@ -50,28 +55,43 @@ NL_DAG={
     "Sat": "Za",
     "Sun": "Zo"
 }
+#FRIS_MONTHS = {
+#     'Jan': 'Jan',
+#     'Feb': 'Feb',
+#     'Mar': 'Mrt',
+#     'Apr': 'Apr',
+#     'May': 'Mai',
+#     'Jun': 'Jun',
+#     'Jul': 'Jul',
+#     'Aug': 'Aug',
+#     'Sep': 'Sep',
+#     'Oct': 'Okt',
+#     'Nov': 'Nov',
+#     'Dec': 'Des'
+# }
+
 FRIS_MONTHS = {
-    'Jan': 'Jan',
-    'Feb': 'Feb',
-    'Mar': 'Mrt',
-    'Apr': 'Apr',
-    'May': 'Mai',
-    'Jun': 'Jun',
-    'Jul': 'Jul',
-    'Aug': 'Aug',
-    'Sep': 'Sep',
-    'Oct': 'Okt',
-    'Nov': 'Nov',
-    'Dec': 'Des'
+'Jan':'jannewaris',
+'Feb':'febrewaris',
+'Mar':'maart',
+'Apr':'april',
+'May':'maaie',
+'Jun':'juny',
+'Jul':'july',
+'Aug':'augustus',
+'Sep':'septimber',
+'Oct':'oktober',
+'Nov':'novimber',
+'Dec':'desimber'
 }
 FRIS_DAYS = {
-    'Mon': 'Mo',
-    'Tue': 'Ti',
-    'Wed': 'Wo',
-    'Thu': 'Do',
-    'Fri': 'Fr',
-    'Sat': 'Sa',
-    'Sun': 'So'
+    'Mon': 'moandei',
+    'Tue': 'tiisdei',
+    'Wed': 'woansdei',
+    'Thu': 'tongersdei',
+    'Fri': 'freed',
+    'Sat': 'sneon',
+    'Sun': 'snein'
 }
 
 DEBUGPRINT=print
@@ -192,7 +212,7 @@ def set_exiftags_format(format):
 	_EXIFTAGSFORMAT=format
 
 class ExifTags(InputFileIterator):
-	EXIFTAGS = ['date', 'yearmonth', 'year', 'month', 'day', 'camera', 'gps',
+	EXIFTAGS = ['date', 'yearmonth', 'year', 'month', 'day', 'weekday','camera', 'gps',
 	            'flash', 'light', 'mime'] + [str(x) for x in range(4,-5,-1) if x != 0]
 	#"2024:09:03 10:51:43+02:00"
 	date_split=re.compile(r'(\d+):(\d+):(\d+) (\d+):(\d+):(\d+)(.*)')
@@ -206,11 +226,12 @@ class ExifTags(InputFileIterator):
 		self.tags={}
 		self.translate_day={}
 		self.translate_mount={}
+		self.dest_dir = end_slash(destination_dir)
 		self.ovpi_file = None
 		self.new_points_count=OPS_SAVE_COUNT
 	
 	def set(self,file_path):
-		DEBUGPRINT(f'ExifTags set ( {file_path=}')
+		#DEBUGPRINT(f'ExifTags set ( {file_path=}')
 		self.file_path=file_path
 		self.json_tags={}
 		self.tags={}
@@ -280,7 +301,13 @@ class ExifTags(InputFileIterator):
 		if not valid:
 			return 'date '+UNKNOWN
 		return f'{dtm[CT_MONTHDAY]}'
-
+		
+	def extract_weekday(self):
+		valid,dtm = self._split_early()
+		if not valid:
+			return 'weekday '+UNKNOWN
+		return f'{dtm[CT_WEEKDAY]}'
+		
 	def set_language(self,language):
 		if language.upper()=='NL':
 			self.translate_day=NL_DAG
@@ -295,13 +322,8 @@ class ExifTags(InputFileIterator):
 	def destination(self)->str:
 		self.set(self.current())
 		subdir = self.make_sub_dir()
-		DEBUGPRINT(subdir)
-		return subdir + os.path.basename(self.current())
-		dst=self.current()
-		dst=dst[self.source_dir_len:]
-		dst=self.dest_dir+dst
-		#return self.dest_dir + self.current()[self.source_dir_len:]
-		return dst
+		#DEBUGPRINT(subdir)
+		return self.dest_dir + subdir + os.path.basename(self.current())
 	
 	def qualified_name(self)->str:
 		return self.make_sub_dir()+os.path.basename(self.file_path)
@@ -342,10 +364,18 @@ class ExifTags(InputFileIterator):
 				dir= dir + UNKNOWN  + '/'
 				continue
 				
+			if tag == 'weekday':
+				if 'date' in self.tags:
+					date=self.tags['date']
+					dir = dir + self.extract_weekday() + '/'
+					continue
+				dir= dir + UNKNOWN  + '/'
+				continue
+				
 			if tag == 'day':
 				if 'date' in self.tags:
 					date=self.tags['date']
-					dir = dir + self.extract_d + '/'
+					dir = dir + self.extract_day() + '/'
 					continue
 				dir= dir + UNKNOWN  + '/'
 				continue
@@ -386,9 +416,9 @@ class ExifTags(InputFileIterator):
 	def sub_dir(self,index)->str:
 		i=int(index)
 		split_path=self.file_path.split('/')
-		DEBUGPRINT(split_path)
+		#DEBUGPRINT(split_path)
 		split_path=split_path[:-1]
-		DEBUGPRINT(split_path)
+		#DEBUGPRINT(split_path)
 		len_split_path=len(split_path)
 		if abs(i)>=len_split_path:
 			return ''
@@ -432,21 +462,21 @@ class ExifTags(InputFileIterator):
 		# /home/bob/temp/Users/Sander/Desktop/Foto's/2013/12 december/
 		if not 'gps' in self.tags:
 			return 'gps ' + UNKNOWN
-		DEBUGPRINT(f"{self.tags['gps']=}")
+		#DEBUGPRINT(f"{self.tags['gps']=}")
 		la =self.tags['gps']['GPSLatitude']
 		lo =self.tags['gps']['GPSLongitude']
 		gpsnode=GpsTreeNode(la,lo,None)
 		nearnode,distance = OvpInf.nearest(gpsnode)
 		if distance < 0:
-			gpsnode.data=overpass_around_query(la,lo,OVERPASS_NEAR)
+			gpsnode.data=ovp_box_query(la,lo,OVERPASS_NEAR)
 			OvpInf.add(gpsnode)
 			return str(gpsnode)
 		if distance < OVERPASS_FARE:
-			DEBUGPRINT(f'{gpsnode} NEAR {nearnode} {distance=}')
+			#DEBUGPRINT(f'{gpsnode} NEAR {nearnode} {distance=}')
 			gpsnode.data=nearnode.data
 			return str(gpsnode)
 		
-		gpsnode.data=overpass_around_query(la,lo,OVERPASS_NEAR)
+		gpsnode.data=ovp_box_query(la,lo,OVERPASS_NEAR)
 		self.add_gps_point(gpsnode)
 		return str(gpsnode)
 	

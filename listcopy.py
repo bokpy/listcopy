@@ -10,7 +10,7 @@ import time
 import signal
 import extensions as ext
 import metadata as meta
-from listutils import CONTINUE,InputFileIterator,LANGUAGES,assure_dir
+from listutils import CONTINUE, InputFileIterator, LANGUAGES, assure_dir, end_slash
 from metadata import ExifTags
 
 DEBUGPRINT=print
@@ -177,6 +177,11 @@ parser.add_argument('-i', '--gps-info',
                     action='store',
                     metavar='',
                     nargs='?'
+                    )
+#r r r r r r r r r r r r r r r r r r r
+parser.add_argument('-r', '--dry-run',
+                    help='Just print the source and destination files.',
+                    action='store_true'
                     )
 args = parser.parse_args()
 
@@ -534,15 +539,6 @@ def write_chunks_to_file(input_file_path, output_file_path ):
 	if args.verbose:print()
 	return None
 
-# def ShutilCopyFile(source_file,dest_file):
-# 	try:
-# 		shutil.copyfile(source_file,dest_file,follow_symlinks=False)
-# 		#DEBUGPRINT ('os.sync()',end=' ')
-# 		os.sync()
-# 	except IOError as e:
-# 		return e
-# 	return None
-
 def BadFile(nasty,nasty_dest,error):
 	global SourcePath
 	print (f'/nError:{error.errno} "{error.strerror}"')
@@ -616,10 +612,6 @@ def coping_done(count):
 		bad.write(DATA_END_MARKER+'\n')
 	exit(0)
 
-
-
-
-
 def file_check_ok(source,target,l)->bool:
 	# if the destination of src exists and the
 	# sizes are the same it wil be ok and return is True
@@ -644,7 +636,7 @@ def file_check_ok(source,target,l)->bool:
 def copy_listed_files(target_dir,listing_file,track_and_trace,subdir_format):
 	global processed_file
 	global chunk_size
-	
+	target_dir=end_slash(target_dir)
 	if subdir_format=='meta_data':
 		listing=ExifTags(target_dir,listing_file, track_and_trace)
 	else:
@@ -663,10 +655,16 @@ def copy_listed_files(target_dir,listing_file,track_and_trace,subdir_format):
 	count=0
 	for src,dst in listing:
 		processed_file=dst
-		DEBUGPRINT(f'<- "{src}')
-		DEBUGPRINT(f'-> "{dst}"')
+		if args.dry_run:
+			print(f'"{src}"')
+			print(f'"{dst}"')
+			print()
+			continue
+		
+		assure_dir(os.path.dirname(dst))
+		#write_chunks_to_file(src,dst)
 		#time.sleep(1)
-		#listing.save_progress()
+		listing.save_progress()
 		count+=1
 	if args.gps_info:
 		listing.dump_info(args.gps_info)
