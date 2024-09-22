@@ -236,8 +236,39 @@ class OsmGpsInfo(GpsTree):
 		self.file_name=file_name
 		self.near_enough=near_enough
 		self.query_box_side=query_box_side
+		self.id2lalo={}
 		if file_name != '':
 			self.load_json(file_name)
+			
+	def collect_id_lalo(self,data)->None:
+		"""
+		stores the locations of the id's in self.id2lola = {id:(latitude,longitude),...}
+		:param data: data collected from OSM
+		:return: None
+		"""
+		for node in data:
+			if node['type']=='node':
+				self.id2lalo[node['id']]=(node['lat'],node['lon'])
+	def distance_to_id(self,latitude:float,longitude,id):
+		la,lo=self.id2lalo(id)
+		return haversine(la,lo,latitude,longitude, unit = 'm')
+	
+		#DEBUGPRINT(f'{json.dumps(self.id2lalo,indent=2)}')
+	
+	def store_nearest_waypoint(self,latitude:float,longitude:float,node):
+		#DEBUGPRINT(f'store_nearest_waypoint({latitude},{longitude},{node["tags"]}')
+		#DEBUGPRINT(f'{json.dumps(node["tags"],indent=2)}')
+		near=1e6
+		near_la=-1
+		near_lo=-1
+		for id in node['nodes']:
+			dist = haversine(self.id2lalo[id],(latitude,longitude), unit='m')
+			if dist < near:
+				near = dist
+				near_la,near_lo=self.id2lalo[id]
+		new_way_point=GpsTreeNode(near_la,near_lo,node['tags'])
+		#DEBUGPRINT(f' store_nearest_waypoint {new_way_point}')
+		self.add(new_way_point)
 	
 	def lookup(self,latitude:float,longitude:float=360.0)->GpsTreeNode:
 		"""
@@ -252,33 +283,25 @@ class OsmGpsInfo(GpsTree):
 		search_node=GpsTreeNode(latitude,longitude,{'empty':'lookup'})
 		near_node,near_dist=self.nearest(search_node)
 		if near_dist > 0 and near_dist < self.near_enough:
+			#DEBUGPRINT(f'A return {near_dist=} {near_node=}')
+			# found a node in the tree that's close enough
 			return near_node
-			
+		#DEBUGPRINT(f'{latitude},{longitude} Not In Tree')
 		ovp_data=self.ovp_box_query(latitude,longitude)
-		
-		near_node=None
-		near_dist=0
+		self.collect_id_lalo(ovp_data)
 		for node in ovp_data:
-			# if len(node) < 4:
-			# 	print(f'expect at least: {{\n"type": "node",\n"id": int ,\n"lat": float,\n"lon": float\n}}')
-			# 	print(f'got: {node}')
-			# 	print(f'did you edit the self.ovp_box_query?')
-			# 	raise ValueError ('Unexpected node size')
+			#DEBUGPRINT (node)
+			if node['type'] == "way" and "tags" in node:
+				self.store_nearest_waypoint(latitude,longitude,node)
+				continue
 				
-			if len(node) < 5:
+			if 'tags' in node:
+				if 'lat' in node:
+					new_node=GpsTreeNode(node['lat'],node['lon'],node['tags'])
+					self.add(new_node)
 				continue
-			if not 'tags' in node:
-				continue
-			gtn=GpsTreeNode(node['lat'],node["lon"],node['tags'])
-			self.add(gtn)
-			dist=gtn.haversine_meters(search_node)
-			if near_node == None:
-				near_node=gtn
-				near_dist=dist
-			else:
-				if dist < near_dist:
-					near_dist=dist
-					near_node=gtn
+		near_node,near_dist=self.nearest(search_node)
+		#DEBUGPRINT(f'B return {near_dist=} {near_node=}')
 		return near_node
 	
 	def ovp_box_query(self,la,lo):
@@ -309,7 +332,6 @@ out body;
 			if not 'tags' in node:
 				continue
 			DEBUGPRINT(node['tags'])
-		
 
 if __name__ == '__main__':
 	joure_coords=(52.963041973818754, 5.8111289020720855)
@@ -318,8 +340,10 @@ if __name__ == '__main__':
 	suri_coords=(5.822541730620219, -55.25871342154263)
 	if True: # Test class OsmGpsInfo
 		ogi=OsmGpsInfo(near_enough=5,query_box_side=100)
-		gdat=ogi.lookup(gron_coords)
-		print(gdat)
+		#gdat=ogi.lookup(gron_coords)
+		#print(gdat.string_data_tags(('addr:street','addr:housenumber','addr:city')))
+		gdat=ogi.lookup(suri_coords)
+		print(gdat.string_data_tags(('addr:street','addr:housenumber','addr:city')))
 		exit(0)
 	la,lo=joure_coords
 	joure_bbx=OsmBoundingBox(la,lo,20)

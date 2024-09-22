@@ -12,16 +12,40 @@ DEBUGPRINT=print
 # la = short for latitude
 # lo = short for longitude
 class GpsTreeNode:
-	def __init__(self,latitude:float,longitude:float,data:object):
+	def __init__(self,latitude:float,longitude:float,data:dict):
 		self.la=latitude
 		self.lo=longitude
 		self.less=None
 		self.more=None
 		self.data=data
-		
+
 	def __str__(self):
 		format='10.6f'
 		return f'GpsTN({self.la:{format}},{self.lo:{format}},{self.data})'
+	
+	def copy(self,other):
+		self.la = other.la
+		self.lo = other.lo
+		self.less = other.less
+		self.more = other.more
+		for tag in other.data:
+			other_value=other.data[tag]
+			DEBUGPRINT(f'Copy: {tag}: {other_value}')
+			self.data[tag]=other.data[tag]
+	
+	def string_data_tags(self,tags,max:int=100)->str:
+		DEBUGPRINT(f'string_data_tags({json.dumps(tags,indent=2)}')
+		DEBUGPRINT(f'{json.dumps(self.data,indent=2)}')
+		count=0
+		tag_str=''
+		for tag in tags:
+			DEBUGPRINT(f'{tag=} {count=}')
+			if count > max:
+				return tag_str.strip()
+			if tag in self.data:
+				count+=1
+				tag_str+= (self.data[tag] + ' ')
+		return tag_str.strip()
 	
 	def is_greater(self,other,latitude:bool)->bool:
 		if latitude:
@@ -37,12 +61,12 @@ class GpsTreeNode:
 	def lati_longi(self):
 		return self.la,self.lo
 		
-	def manhattan(self,other)->float:
-		ret =  (abs(self.la - other.la  ) * meters_per_degree(self.lo) +
-		        abs(self.lo- other.lo) * LONGI_M_PER_DEG
-		        )
-		#DEBUGPRINT(f'manh {ret:9.1f} {self} to {other}')
-		return ret
+	# def manhattan(self,other)->float:
+	# 	ret =  (abs(self.la - other.la  ) * meters_per_degree(self.lo) +
+	# 	        abs(self.lo- other.lo) * LONGI_M_PER_DEG
+	# 	        )
+	# 	#DEBUGPRINT(f'manh {ret:9.1f} {self} to {other}')
+	# 	return ret
 	
 	def haversine_meters(self,other):
 		return haversine(self.lati_longi(),other.lati_longi(),unit='m')
@@ -214,14 +238,16 @@ think simple Manhattan distance will do for this purpose.
 		if not self.root:
 			return None,-1.0
 		#DEBUGPRINT(f'nearest : {node}')
-		current = nearest_node = self.root
+		current = self.root
+		nearest_node = GpsTreeNode(0,0, {})
+		nearest_node.copy(current)
 		smallest_dist = node.haversine_meters(current)
 		compare_la = False
 		while current:
 			dist = node.haversine_meters(current)
 			if dist < smallest_dist:
 				smallest_dist = dist
-				nearest_node = current
+				nearest_node.copy(current)
 			compare_la = not compare_la
 			greater = node.is_greater(current,compare_la)
 			if greater:
