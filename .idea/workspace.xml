@@ -13,9 +13,6 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/geolocate.py" beforeDir="false" afterPath="$PROJECT_DIR$/geolocate.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/gpstree.py" beforeDir="false" afterPath="$PROJECT_DIR$/gpstree.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/listcopy.py" beforeDir="false" afterPath="$PROJECT_DIR$/listcopy.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/listutils.py" beforeDir="false" afterPath="$PROJECT_DIR$/listutils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/metadata.py" beforeDir="false" afterPath="$PROJECT_DIR$/metadata.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -224,7 +221,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-98f27166c754-ba05f1cad1b1-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-242.21829.153" />
+        <option value="bundled-python-sdk-884f5ed5d46b-c546a90a8094-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-242.22855.92" />
       </set>
     </attachedChunks>
   </component>
