@@ -138,9 +138,9 @@ nwr;
 (._;>;);
 out body;
 '''
-	DEBUGPRINT(query)
+	#DEBUGPRINT(query)
 	response = do_request(OVERPASS_URL,{'data':query})
-	DEBUGPRINT(response)
+	#DEBUGPRINT(response)
 	#DEBUGEXIT(0) #########################################################################
 	if response:
 		return json.loads(response)

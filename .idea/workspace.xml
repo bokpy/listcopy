@@ -13,6 +13,7 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/geolocate.py" beforeDir="false" afterPath="$PROJECT_DIR$/geolocate.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/gpstree.py" beforeDir="false" afterPath="$PROJECT_DIR$/gpstree.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/listcopy.py" beforeDir="false" afterPath="$PROJECT_DIR$/listcopy.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -44,7 +45,8 @@
   }
 }</component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="file://$PROJECT_DIR$/slowcopy.py" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file:///usr/lib/python3.10/json/__init__.py" root0="SKIP_INSPECTION" />
+    <setting file="file:///usr/lib/python3.10/json/decoder.py" root0="SKIP_INSPECTION" />
   </component>
   <component name="ProblemsViewState">
     <option name="selectedTabId" value="CurrentFile" />
@@ -77,7 +79,7 @@
     &quot;git-widget-placeholder&quot;: &quot;master&quot;,
     &quot;last_opened_file_path&quot;: &quot;/home/bob/python/listcopy&quot;,
     &quot;run.code.analysis.last.selected.profile&quot;: &quot;aDefault&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settingsdialog.IDE.editor.colors.Python&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settingsdialog.IDE.editor.colors.Console Colors&quot;,
     &quot;settings.editor.splitter.proportion&quot;: &quot;0.3207547&quot;
   },
   &quot;keyToStringList&quot;: {
@@ -97,7 +99,7 @@
       <recent name="$USER_HOME$/mouse_project" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.geolocate">
+  <component name="RunManager" selected="Python.gpstree">
     <configuration name="geolocate" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pythonProject" />
       <option name="ENV_FILES" value="" />
@@ -210,8 +212,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.geolocate" />
         <item itemvalue="Python.gpstree" />
+        <item itemvalue="Python.geolocate" />
         <item itemvalue="Python.testiter" />
         <item itemvalue="Python.listcopy " />
         <item itemvalue="Python.metadata" />

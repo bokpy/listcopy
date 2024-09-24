@@ -21,7 +21,12 @@ class GpsTreeNode:
 		self.less=None
 		self.more=None
 		if parse_data:
-			self.data = self.grab_near_tags(osm_data)
+			#DEBUGPRINT(f'{len(osm_data)}')
+			if "elements" in osm_data:
+				#DEBUGPRINT('############# elements')
+				self.data = self.grab_near_tags(osm_data["elements"])
+			else:
+				self.data = self.grab_near_tags(osm_data)
 		else:
 			self.data = osm_data
 			
@@ -40,19 +45,50 @@ class GpsTreeNode:
 			self.data[tag]=other.data[tag]
 	
 	def string_data_tags(self,tags,max:int=100)->str:
-		DEBUGPRINT(f'string_data_tags({json.dumps(tags,indent=2)}')
-		DEBUGPRINT(f'{json.dumps(self.data,indent=2)}')
+		#DEBUGPRINT(f'string_data_tags({json.dumps(tags,indent=2)}')
+		#DEBUGPRINT(f'{json.dumps(self.data,indent=2)}')
 		count=0
 		tag_str=''
 		for tag in tags:
-			DEBUGPRINT(f'{tag=} {count=}')
+			#DEBUGPRINT(f'{tag=} {count=}')
 			if count > max:
 				return tag_str.strip()
 			if tag in self.data:
 				count+=1
-				tag_str+= (self.data[tag] + ' ')
+				# dt = self.data[tag]
+				# DEBUGPRINT(f'{type(dt)} "{dt}"')
+				tag_str += (self.data[tag] + ' ')
 		return tag_str.strip()
-	
+	'''
+node = {
+        "type": "way",
+        "id": 847007869,
+hit ->  "nodes": [
+A           7903653899,
+A           7903653900,
+A           7903653901,
+A           7903653902,
+A           7903653899
+        ],
+hit ->  "tags": {
+          "building": "yes"
+        }
+    },
+    {
+            "type": "node",
+            "id": 4258021133,
+B           "lat": 52.9592582,
+B           "lon": 5.957699,
+hit ->          "tags": {
+                "addr:city": "Heerenveen",
+                "addr:housenumber": "36",
+                "addr:postcode": "8448VD",
+                "addr:street": "Regentesselaan",
+                "source": "BAG",
+                "source:date": "2016-06-22"
+            }
+        },
+	'''
 	def grab_near_tags(self,nodes:dict)->dict:
 		"""
 		Find all different tags closed to the gps coordinates
@@ -62,7 +98,7 @@ class GpsTreeNode:
 		# id2gps = lookup {id:(latitude,longitude),...}
 		id2gps={node['id']:(node['lat'],node['lon']) for node in nodes if  node['type']=='node'}
 		tags_found={} # {tag_name:(value,distance to self),...}
-		DEBUGPRINT(f'{json.dumps(nodes)}')
+		#DEBUGPRINT(f'{json.dumps(nodes)}')
 		def show_tags_found():
 			for i in tags_found:
 				print(f'"{i}":{tags_found[i]}')
@@ -74,64 +110,36 @@ class GpsTreeNode:
 			:return: distance to self in meters
 			"""
 			return haversine(id2gps[id],(self.la,self.lo),unit='m')
-		
-		def process_way_tag_node(node:dict)->None:
-			"""
-			store new tags and update older if a simular tag closer is found
-			:param node: example below is type
-			:return: None, updates: 'tags_found'
-			"""			'''
-node = {
-hit ->  "type": "way",
-        "id": 847007869,
-hit ->  "nodes": [
-A           7903653899,
-A           7903653900,
-A           7903653901,
-A           7903653902,
-A           7903653899
-        ],
-hit ->  "tags": {
-B          "building": "yes"
-        }
-    },'''
-	
-			# A find mode id closest to self
+
+		def process_tags(node):
+			# A find nearest tags
 			near_dist = 1e6
-			for id in node["nodes"]:
-				dist = _dist_to_node(id)
-				if dist < near_dist:
-					near_dist = dist
-			# B store new tags and update older if a simular tag closer is found
-			for tag,value in node["tags"].items():
-				DEBUGPRINT(f'Loop {tag=} {value=}')
+			if "nodes" in node: # Type A
+				for id in node["nodes"]:
+					dist = _dist_to_node(id)
+					if dist < near_dist:
+						near_dist = dist
+			
+			if "lat" in node: # Type B
+				near_dist = haversine((node["lat"],node["lon"]),(self.la,self.lo),unit='m')
+			# store new tags and update older if a simular tag closer is found
+			# for tag,value in node["tags"].items(): use of items() is not always save with iterable value
+			tags=node["tags"]
+			for tag in tags:
+				#DEBUGPRINT(f'Loop {tag=} {tags[tag]=}')
 				if not tag in tags_found:
-					tags_found[tag] = (value,near_dist)
+					tags_found[tag] = (tags[tag],near_dist)
 					continue
 				if tags_found[tag][1] > near_dist:
-					tags_found[tag] = (value,near_dist)
+					tags_found[tag] = (tags[tag],near_dist)
 		
 		for node in nodes:
-			if node["type"]=="way" and "tags" in node and "nodes" in node:
-				process_way_tag_node(node)
-				continue
-			if node["type"]=="node" and "tags" in node:
-				process_tag_node(node)
+			if "tags" in node:
+				process_tags(node)
 				
-		# stripping the distance
-		show_tags_found()
+		#show_tags_found()
 		return {tag:tags_found[tag][0] for tag in tags_found }
 		#return {tag:value for tag,value in tags_found.values()}
-
-	def collect_id_lalo(self,data)->None:
-		"""
-		stores the locations of the id's in self.id2lola = {id:(latitude,longitude),...}
-		:param data: data collected from OSM
-		:return: None
-		"""
-		for node in data:
-			if node['type']=='node':
-				self.id2lalo[node['id']]=(node['lat'],node['lon'])
 				
 	def is_greater(self,other,compare_latitude:bool)->bool:
 		if compare_latitude:
@@ -249,7 +257,7 @@ think simple Manhattan distance will do for this purpose.
 		return self._walk(self.root,dq)
 		
 	def _walk(self,node:GpsTreeNode,dq):
-		DEBUGPRINT(dq)
+		#DEBUGPRINT(dq)
 		if not node:
 			return dq
 		dq.append(node)
@@ -482,13 +490,19 @@ def test_GpsTreeNode_init():
 	hveen_coords=(52.95841726530616, 5.958291851243422 )
 	gron_coords=(53.23738, 6.560770)
 	suri_coords=(5.822541730620219, -55.25871342154263)
-	with open("suri.test",'r') as f:
+	#with open("suri.test",'r') as f:
+	with open("hveen.test", 'r') as f:
 		test_data=json.load(f)
+		#test_data= f.read()
 		#print(json.dumps(test_data,indent=4))
-	la,lo=suri_coords
-	test_node=GpsTreeNode(la,lo,test_data)
-	test_node.show_json()
-	
+	#print(test_data)
+	#td=json.loads(test_data)
+	#la,lo=suri_coords
+	la,lo=hveen_coords
+	#test_node=GpsTreeNode(la,lo,td,True)
+	test_node = GpsTreeNode(la, lo,test_data, True)
+	#test_node.show_json()
+	print(f'"addr:city","addr:street" , "addr:housenumber" , "leisure"\n {test_node.string_data_tags(("addr:city","addr:street" , "addr:housenumber" , "leisure"))}')
 if __name__ == '__main__':
 	test_GpsTreeNode_init()
 	#main()

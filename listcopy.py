@@ -18,6 +18,7 @@ DEBUGPRINT=print
 DEBUGEXIT=exit
 
 processed_file='/No Such File ' + time.ctime() # for signal handler to fail
+LISTSOURCES='listsources'
 FILTEROUT=['/Cookies/','/Microsoft/','/Windows/','/Cache','#.*#$','\.lnk$',
            '\.tmp$','\.log$','\.err$','~$','/AppData/',
            '\.ini$','/NTUSER.DAT',]
@@ -47,142 +48,164 @@ def handler(signum, frame):
 signal.signal(signal.SIGINT, handler)
 
 ##################  Argument parsing  ###################
-parser = argparse.ArgumentParser(
-	prog='listcopy.py',
-	description='Create a list of files matching some criteria.'
-	            ' Then the files can be copied using this list.'
-	            ' Copying can be interrupted and restarted with the same or an other destination '
-	            'directory',
+
+call_name = os.path.basename(__file__)
+
+if call_name==LISTSOURCES:
+	parser = argparse.ArgumentParser(
+	prog=call_name,
+	description='Create a list of files matching some criteria. '
+	            'This listing is to be used to copy this files with listcopy.py. '
+	            'You can edit this file further as long copying was not started. '
+	            'There after the bookkeeping would become out of sink. ',
 	epilog='Have Fun'
-)
+	)
+else:
+	parser = argparse.ArgumentParser(
+	prog=call_name,
+	description=f'Copy a with "{LISTSOURCES}" created list of files to -T directory. '
+	            f'Picture files with exif data can be placed in subdirectories named based on this data. '
+	            f'Copying can be interrupted at any moment with CTRL+C or a program error. '
+	            f'The copying can be restarted where it left off to the same or an other destination. ',
+	
+	epilog='Have Fun'
+	)
 # 'u u u u u u u u u u u u u u u u '
 parser.add_argument('-u', '--usage',
                     help='How to use.',
                     action='store_true'
                     )
-#v v v v v v v v v v v v v v v v
-parser.add_argument('-v', '--verbose',
-                    help='Verbose output.',
-                    action='store_true'
-                    )
-#d d d d d d d d d d d d d d d d
-parser.add_argument('-d', '--deliver',
-                    help='Read files from a file ( "-" = stdin ) and copy to Path.',
-                    action='store',
-                    metavar='',
-                   # default='Non',
-                    nargs='?'
-                    )
-#g g g g g g g g g g g g g g g g
-parser.add_argument('-g', '--gather',
-                    help='Gather files to copy in a file ( "-" = stdout ) from Path.',
-                    action='store',
-                    metavar='',
-                   # default='Non',
-                    nargs='?'
-                    )
+if call_name != LISTSOURCES:
+	#v v v v v v v v v v v v v v v v
+	parser.add_argument('-v', '--verbose',
+	                    help='Verbose output.',
+	                    action='store_true'
+	                    )
+	#d d d d d d d d d d d d d d d d
+	parser.add_argument('-d', '--deliver',
+	                    help='Read files from a file ( "-" = stdin ) and copy to -T , --target. ',
+	                    action='store',
+	                    metavar='',
+	                   # default='Non',
+	                    nargs='?'
+	                    )
+if call_name == LISTSOURCES:
+	#g g g g g g g g g g g g g g g g
+	parser.add_argument('-g', '--gather',
+	                    help='File ( "-" = stdout ) to save a listing of files gathered from the -T,--target directory.',
+	                    action='store',
+	                    metavar='',
+	                   # default='Non',
+	                    nargs='?'
+	                    )
+if call_name==LISTSOURCES:
+	_help = 'Directory to scan for files to copy.'
+else:
+	_help = f'Destination directory for copy or {CONTINUE} '
+	f'to continue after an interrupted session.'
 #T T T T T T T T T T T T T T T T T T T T T
 parser.add_argument('-T','--target' ,
-                    help = f'with option -d the target directory or {CONTINUE} '
-                           f'to continue an interrupted session.\n'
-		                   f'with option -g the directory to scan',
+                    help = _help,
                     action='store',
                     metavar='',
                     nargs='?'
                     )
+if call_name==LISTSOURCES:
 #a a a a a a a a a a a a a a a a
-parser.add_argument('-a', '--append',
-                    help='Append a file listing to --gather file from Path.',
-                    action='store_true',
-                    default=False
-                    )
-#f f f f f f f f f f f f f f f f
-parser.add_argument('-f', '--filter',
-                    help=f'don\'t copy {FILTEROUT}',
-                    action='store_true'
-                    )
-#S S S S S S S S S S S S S S S S
-parser.add_argument('-S','--skip',
-                    nargs='*',
-                    help='filepaths containing a '
-                         'match with one of these '
-                         'regular expressions are skipped',
-					metavar='',
-                    )
-#m m m m m m m m m m m m m m m m
-parser.add_argument('-m', '--match',
-                    help='Only filenames matching one of the regular expressions are listed.',
-                    action='store',
-                    metavar='',
-                    nargs='*'
-                    )
-#b b b b b b b b b b b b b b b b
-parser.add_argument('-b', '--bigger',
-                    help='Only files bigger than this in mega bytes or use K for Kilo bytes like 32.8K',
-                    action='store',
-                    metavar='',
-                    nargs=1
-                    )
-#s s s s s s s s s s s s s s s s
-parser.add_argument('-s', '--smaller',
-                    help='Only files smaller than this in mega bytes or use K for Kilo bytes like 32.8K',
-                    action='store',
-                    metavar='',
-                    nargs=1
-                    )
-#x x x x x x x x x x x x x x x x
-exts=[str(K) for K in ext.ext_classes.keys()]
-extss=",".join(exts)
-parser.add_argument('-x','--extension',
-                    help='select files by one or more types: ' + extss,
-                    choices=ext.ext_classes.keys(),
-                    nargs='*',
-                    metavar='',
-                    action='store'
-                    )
+	parser.add_argument('-a', '--append',
+	                    help='Append a file listing to --gather file from --target.',
+	                    action='store_true',
+	                    default=False
+	                    )
+	#f f f f f f f f f f f f f f f f
+	parser.add_argument('-f', '--filter',
+	                    help=f'don\'t copy {FILTEROUT}.',
+	                    action='store_true'
+	                    )
+	#S S S S S S S S S S S S S S S S
+	parser.add_argument('-S','--skip',
+	                    nargs='*',
+	                    help='filepaths containing a '
+	                         'match with one of these '
+	                         'regular expressions are skipped.',
+						metavar='',
+	                    )
+	#m m m m m m m m m m m m m m m m
+	parser.add_argument('-m', '--match',
+	                    help='Only filenames matching one of the regular expressions are listed.',
+	                    action='store',
+	                    metavar='',
+	                    nargs='*'
+	                    )
+	#b b b b b b b b b b b b b b b b
+	parser.add_argument('-b', '--bigger',
+	                    help='Only files bigger than this in mega bytes or use K for Kilo bytes like 32.8K.',
+	                    action='store',
+	                    metavar='',
+	                    nargs=1
+	                    )
+	#s s s s s s s s s s s s s s s s
+	parser.add_argument('-s', '--smaller',
+	                    help='Only files smaller than this in mega bytes or use K for Kilo bytes like 32.8K.',
+	                    action='store',
+	                    metavar='',
+	                    nargs=1
+	                    )
+	#x x x x x x x x x x x x x x x x
+	exts=[str(K) for K in ext.ext_classes.keys()]
+	extss=",".join(exts)
+	parser.add_argument('-x','--extension',
+	                    help='select files by one or more types: ' + extss,
+	                    choices=ext.ext_classes.keys(),
+	                    nargs='*',
+	                    metavar='',
+	                    action='store'
+	                    )
 #t t t t t t t t t t t t t t t t
 parser.add_argument('-t', '--todo',
                     help='print the files that still need to bee copied of the file-list-file.',
                     action='store_true'
                     )
-#M M M M M M M M M M M M M M M M
-parser.add_argument('-M', '--meta',
-                    help=f'Copy to an on exif tags based dir "{meta.ExifTags.EXIFTAGS}"'
-                         f' a positif number is a subdir above the source root'
-                         f' negatief a subdir under the basename.',
-                    choices=meta.ExifTags.EXIFTAGS,
-                    nargs='*',
-                    metavar='',
-                    action='store'
-                    )
-#l l l l l l l l l l l l l l l l
-parser.add_argument('-l', '--language',
-                    help=f'Language for days and months {LANGUAGES}',
-                    choices=LANGUAGES,
-                    nargs='?',
-                    metavar='',
-                    action='store'
-                    )
-#p p p p p p p p p p p p p p p p
-parser.add_argument('-p', '--post-it',
-                    help='File stam for post-it files stem.ok and stem.bad default "~/listcopy"',
-                    action='store',
-                    default='~/listcopy',
-                    metavar='',
-                    nargs='?'
-                    )
-#i i i i i i i i i i i i i i i i i i
-parser.add_argument('-i', '--gps-info',
-                    help='File to read saved GPS data from and to write this data.',
-                    action='store',
-                    metavar='',
-                    nargs='?'
-                    )
-#r r r r r r r r r r r r r r r r r r r
-parser.add_argument('-r', '--dry-run',
-                    help='Just print the source and destination files.',
-                    action='store_true'
-                    )
+if call_name!=LISTSOURCES:
+	#M M M M M M M M M M M M M M M M
+	parser.add_argument('-M', '--meta',
+	                    help=f'Copy to an on exif tags based dir "{meta.ExifTags.EXIFTAGS}"'
+	                         f' a positif number is a subdir above the source root'
+	                         f' negatief a subdir under the basename.',
+	                    choices=meta.ExifTags.EXIFTAGS,
+	                    nargs='*',
+	                    metavar='',
+	                    action='store'
+	                    )
+	#l l l l l l l l l l l l l l l l
+	parser.add_argument('-l', '--language',
+	                    help=f'Language for days and months {LANGUAGES}.',
+	                    choices=LANGUAGES,
+	                    nargs='?',
+	                    metavar='',
+	                    action='store'
+	                    )
+	#p p p p p p p p p p p p p p p p
+	parser.add_argument('-p', '--post-it',
+	                    help='File stam for post-it files stem.ok and stem.bad default "~/listcopy". '
+	                         'Delete these files to start to copy from the beginning again. ',
+	                    action='store',
+	                    default='~/listcopy',
+	                    metavar='',
+	                    nargs='?'
+	                    )
+	#i i i i i i i i i i i i i i i i i i
+	parser.add_argument('-i', '--gps-info',
+	                    help='File to read and write GPS, "OpenStreetMap, Overpass" data.',
+	                    action='store',
+	                    metavar='',
+	                    nargs='?'
+	                    )
+	#r r r r r r r r r r r r r r r r r r r
+	parser.add_argument('-r', '--dry-run',
+	                    help='Just print the source and destination files.',
+	                    action='store_true'
+	                    )
 args = parser.parse_args()
 
 def explain()->None:
@@ -685,10 +708,12 @@ def main() -> None:
 	# 		print(file)
 	# 	exit(0)
 	
-	marker=os.path.expanduser(args.post_it)
-	DEBUGPRINT(f'{marker=}')
-	
+	# marker=os.path.expanduser(args.post_it)
+	# DEBUGPRINT(f'{marker=}')
+	#
 	if args.target: # -T copy the files
+		marker=os.path.expanduser(args.post_it)
+		DEBUGPRINT(f'{marker=}')
 		if args.post_it:
 			tracker= os.path.join(os.path.expanduser('~'),args.post_it)
 		else:
