@@ -11,9 +11,8 @@
   <component name="ChangeListManager">
     <list default="true" id="7d47a416-3b1c-466e-a851-3e5a458f6704" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/geolocate.py" beforeDir="false" afterPath="$PROJECT_DIR$/geolocate.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/gpstree.py" beforeDir="false" afterPath="$PROJECT_DIR$/gpstree.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/listcopy.py" beforeDir="false" afterPath="$PROJECT_DIR$/listcopy.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/listutils.py" beforeDir="false" afterPath="$PROJECT_DIR$/listutils.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -73,6 +72,7 @@
     &quot;Python.metadata.executor&quot;: &quot;Run&quot;,
     &quot;Python.slowcopy.executor&quot;: &quot;Run&quot;,
     &quot;Python.test_extensions.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test_listdir.executor&quot;: &quot;Run&quot;,
     &quot;Python.testiter.executor&quot;: &quot;Run&quot;,
     &quot;Python.testtime.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
@@ -99,7 +99,7 @@
       <recent name="$USER_HOME$/mouse_project" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.gpstree">
+  <component name="RunManager" selected="Python.test_listdir">
     <configuration name="geolocate" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pythonProject" />
       <option name="ENV_FILES" value="" />
@@ -166,7 +166,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="metadata" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="test_listdir" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pythonProject" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -179,7 +179,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/metadata.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test_listdir.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -212,11 +212,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.test_listdir" />
         <item itemvalue="Python.gpstree" />
         <item itemvalue="Python.geolocate" />
         <item itemvalue="Python.testiter" />
         <item itemvalue="Python.listcopy " />
-        <item itemvalue="Python.metadata" />
       </list>
     </recent_temporary>
   </component>

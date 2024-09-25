@@ -1,9 +1,12 @@
 #!/usr/bin/python3
 import time
 import datetime
+from collections import deque
 import os
 import sys
 import re
+import string
+#from copy import deepcopy
 
 DATA_BEGIN_MARKER='-------->Data_Begin_Marker-------->'
 DATA_END_MARKER='<--------Data_End_Marker<--------'
@@ -11,6 +14,13 @@ CONTINUE='<CONTINUE>'
 DEBUGPRINT=print
 
 LANGUAGES=['nl','fy']
+
+def printerr(message:str)->None:
+	if isinstance(message,bytes):
+		sys.stderr.write(message.decode('ascii',errors='ignore'))
+	else:
+		sys.stderr.write(message)
+	sys.stderr.write('\n' )
 
 def assure_dir(dir):
 	if os.path.exists(dir):
@@ -37,6 +47,83 @@ def timestamp2epouch(tmstmp):
 	dt = datetime.datetime(int(tsg(1)),int(tsg(2)),int(tsg(3)),int(tsg(4)),int(tsg(5)))
 	return time.mktime(dt.timetuple())
 
+# # Original byte string
+# original_bytes = b"Hello, World!"
+#
+# # Part to replace
+# to_replace = b"World"
+#
+# # New part to insert
+# new_part = b"Python"
+#
+# # Find the start and end index of the part to replace
+# start_index = original_bytes.find(to_replace)
+# end_index = start_index + len(to_replace)
+#
+# # Replace the part
+# if start_index != -1:  # Check if the part exists
+#     modified_bytes = original_bytes[:start_index] + new_part + original_bytes[end_index:]
+# else:
+#     modified_bytes = original_bytes  # No change if part not found
+#
+# print(modified_bytes)  # Output: b'Hello, Python!'
+
+def rename_unicode_error_file(bad:bytes,e)->str:
+	"""
+	Function to remove non-ASCII characters from a filename
+	:param bad: filename with Unicode problems
+	:param e: the UnicodeEncodeError
+	:return: the name of an ascii filename of the renamed file
+	:return: '' empty string if failed.
+	"""
+
+# for file_name in os.listdir(src_dir):
+#     new_file_name = ''.join(c for c in file_name if c in string.printable)
+#     os.rename(os.path.join(src_dir,file_name), os.path.join(src_dir, new_file_name))
+
+	stub = bytes('#'*(e.end-e.start),'ascii')
+	good = bad[:e.start] + stub + bad[e.end:]
+	DEBUGPRINT(f'{bad  =}')
+	DEBUGPRINT(f'{good =}')
+	if bad != good:
+		try:
+			os.replace(bad, good)
+			printerr(f'File renamed to: "{good}"')
+			return good.decode(errors='ignore')
+		except OSError as e:
+			printerr(f"{e.errno} {e.strerror}")
+			return ''
+	return bad # because it was good
+
+def directory_walker(directory):
+	"""
+	Scanning for files visiting all subdirectories yielding byte strings
+	to prevent unicode problems
+	:param directory: root directory to scan
+	:return: yielding files
+	"""
+	dir_stack=deque()
+	push=dir_stack.append
+	pop=dir_stack.pop
+	if not type(directory) == bytes:
+		push(bytes(directory, 'utf-8'))
+	else:
+		push( directory )
+	
+	def empty():
+		return len(dir_stack) == 0
+	while not empty():
+		cur_dir=pop()
+		for entry in os.listdir(cur_dir):
+			path_file = os.path.join(cur_dir,entry)
+			if os.path.islink(path_file): # following of links
+				continue
+			if os.path.isdir(path_file):
+				push(path_file)
+			else:
+				#print(path_file)
+				yield (path_file)
+				
 class InputFileIterator:
 	def __init__(self,destination_dir:str,input_file,tracker_file_stem):
 		self.continue_dir=False

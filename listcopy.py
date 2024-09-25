@@ -10,10 +10,14 @@ import time
 import signal
 import extensions as ext
 import metadata as meta
-from listutils import CONTINUE, InputFileIterator, LANGUAGES, assure_dir, end_slash
+from listutils import InputFileIterator, LANGUAGES, assure_dir, end_slash,printerr
+from listutils import rename_unicode_error_file,directory_walker
+from listutils import DATA_BEGIN_MARKER,DATA_END_MARKER,CONTINUE
 from metadata import ExifTags
 
 DEBUGPRINT=print
+
+	
 #DEBUGRETURN=return  return is not a function. This stops the script here.
 DEBUGEXIT=exit
 
@@ -166,6 +170,15 @@ parser.add_argument('-t', '--todo',
                     help='print the files that still need to bee copied of the file-list-file.',
                     action='store_true'
                     )
+#p p p p p p p p p p p p p p p p
+parser.add_argument('-p', '--post-it',
+                    help='File stam for post-it files stem.ok and stem.bad default "~/listcopy". '
+                         'Delete these files to start to copy from the beginning again. ',
+                    action='store',
+                    default='~/listcopy',
+                    metavar='',
+                    nargs='?'
+	)
 if call_name!=LISTSOURCES:
 	#M M M M M M M M M M M M M M M M
 	parser.add_argument('-M', '--meta',
@@ -185,15 +198,7 @@ if call_name!=LISTSOURCES:
 	                    metavar='',
 	                    action='store'
 	                    )
-	#p p p p p p p p p p p p p p p p
-	parser.add_argument('-p', '--post-it',
-	                    help='File stam for post-it files stem.ok and stem.bad default "~/listcopy". '
-	                         'Delete these files to start to copy from the beginning again. ',
-	                    action='store',
-	                    default='~/listcopy',
-	                    metavar='',
-	                    nargs='?'
-	                    )
+	
 	#i i i i i i i i i i i i i i i i i i
 	parser.add_argument('-i', '--gps-info',
 	                    help='File to read and write GPS, "OpenStreetMap, Overpass" data.',
@@ -380,28 +385,38 @@ def list_sources(postit,list_file='-',append=False)-> int:
 		dest.write('\n\n\n'+DATA_BEGIN_MARKER+'\n')
 		dest.write(WorkPath+'\n')
 	
-		for dirpath, dirnames, filenames in os.walk(WorkPath):
-			for filename in filenames:
-				fullpath=os.path.join(dirpath,filename)
-				if pathlib.Path(fullpath).is_symlink():
+		for fullpath in directory_walker(WorkPath):
+			#DEBUGPRINT(fullpath)
+			try:
+				str_path = fullpath.decode('ascii')
+			#except UnicodeDecodeError as e:
+			except UnicodeError as e:
+				printerr(' ')
+				str_path = rename_unicode_error_file(fullpath,e)
+				if str_path == '':
+					printerr(fullpath)
+					printerr(f'UnicodeDecodeError {e.reason}')
+					printerr('File Skipped')
 					continue
-				if out_re:
-					if out_re.search(fullpath):# skip it
-						continue
-				if in_re:
-					if not in_re.search(fullpath):
-						continue
-				if do_size_check:
-					st=os.stat(fullpath)
-					file_size=st.st_size
-					#DEBUGPRINT(f'[{format_bytesize(file_size,8)}] ',end='')
-					if file_size>max_file_size:
-						continue
-					if file_size < min_file_size:
-						continue
-				count+=1
-				#DEBUGPRINT(fullpath)
-				dest.write(fullpath+'\n')
+				
+			if out_re:
+				if out_re.search(str_path):# skip it
+					continue
+			if in_re:
+				if not in_re.search(str_path):
+					continue
+			if do_size_check:
+				st=os.stat(fullpath)
+				file_size=st.st_size
+				#DEBUGPRINT(f'[{format_bytesize(file_size,8)}] ',end='')
+				if file_size>max_file_size:
+					continue
+				if file_size < min_file_size:
+					continue
+			
+			dest.write(str_path +'\n')
+			count+=1
+
 	except OSError as e:
 		print(f'list_sources failed')
 		print(f'OSError : {e.errno} {e.strerror}')
@@ -702,41 +717,34 @@ def track_and_trace():
 
 def main() -> None:
 	global WorkPath,ok_file,bad_file
-	# if True: # InputFileIterator test
-	# 	file_iterator=InputFileIterator(tracker_file_stem='itertest',input_file='/home/bob/python/listcopy/tos-pic.list')
-	# 	for file in file_iterator:
-	# 		print(file)
-	# 	exit(0)
+	if args.target:
+		WorkPath = end_slash(args.target)
+	marker=os.path.expanduser(args.post_it)
 	
-	# marker=os.path.expanduser(args.post_it)
-	# DEBUGPRINT(f'{marker=}')
-	#
-	if args.target: # -T copy the files
-		marker=os.path.expanduser(args.post_it)
-		DEBUGPRINT(f'{marker=}')
-		if args.post_it:
-			tracker= os.path.join(os.path.expanduser('~'),args.post_it)
-		else:
-			tracker= os.path.join(os.path.expanduser('~'),'listcopy')
-			
-		if args.deliver:
-			DEBUGPRINT(f'Read files to copy from "{args.deliver}".')
-			if args.meta:
-				DEBUGPRINT(args.meta)
-				meta.set_exiftags_format(args.meta)
-				copy_listed_files(args.target,args.deliver,track_and_trace(),'meta_data')
-				exit(0)
-			copy_listed_files(args.target,args.deliver,track_and_trace(),'qualified_destination')
+	if args.post_it:
+		tracker= os.path.join(os.path.expanduser('~'),args.post_it)
+	else:
+		tracker= os.path.join(os.path.expanduser('~'),'listcopy')
+		
+	if not call_name == LISTSOURCES: # -T copy the files
+		DEBUGPRINT(f'Read files to copy from "{args.deliver}".')
+		if args.meta:
+			DEBUGPRINT(args.meta)
+			meta.set_exiftags_format(args.meta)
+			copy_listed_files(args.target,args.deliver,track_and_trace(),'meta_data')
 			exit(0)
+		copy_listed_files(args.target,args.deliver,track_and_trace(),'qualified_destination')
+		exit(0)
 		 
-		if args.gather:
-			DEBUGPRINT(f'List to {args.gather} appending {args.append}')
-			list_sources(marker,list_file=args.gather,append=args.append)
-			exit(0)
+	if args.gather:
+		DEBUGPRINT(f'List to {args.gather} appending {args.append}')
+		list_sources(marker,list_file=args.gather,append=args.append)
+		exit(0)
 		
 	if args.usage:
 		explain()
 		exit(0)
+	
 	if args.todo:
 		list_to_do()
 		exit(0)
