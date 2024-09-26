@@ -5,7 +5,9 @@ from collections import deque
 import os
 import sys
 import re
+import unicodedata
 import string
+
 #from copy import deepcopy
 
 DATA_BEGIN_MARKER='-------->Data_Begin_Marker-------->'
@@ -68,39 +70,49 @@ def timestamp2epouch(tmstmp):
 #
 # print(modified_bytes)  # Output: b'Hello, Python!'
 
-def rename_unicode_error_file(bad:bytes,e)->str:
+def unicode_check(ford:bytes)->str:
 	"""
 	Function to remove non-ASCII characters from a filename
-	:param bad: filename with Unicode problems
+	:param ford: file or directory to check
 	:param e: the UnicodeEncodeError
 	:return: the name of an ascii filename of the renamed file
 	:return: '' empty string if failed.
 	"""
-
-# for file_name in os.listdir(src_dir):
-#     new_file_name = ''.join(c for c in file_name if c in string.printable)
-#     os.rename(os.path.join(src_dir,file_name), os.path.join(src_dir, new_file_name))
-
-	stub = bytes('#'*(e.end-e.start),'ascii')
-	good = bad[:e.start] + stub + bad[e.end:]
-	DEBUGPRINT(f'{bad  =}')
+	DEBUGPRINT()
+	
+	try:
+		string=ford.decode('utf8')
+		return string
+	except UnicodeError as e:
+		err=e
+	
+	stub = bytes('#'*(err.end-err.start),'ascii')
+	good = ford[:err.start] + stub + ford[err.end:]
+	DEBUGPRINT(f'{ford  =}')
 	DEBUGPRINT(f'{good =}')
-	if bad != good:
+	try:
+		good=good.decode('utf8')
+	except UnicodeError as e:
+		printerr('unicode_check failed to cleanup.')
+		return ''
+	
+	if ford != good:
 		try:
-			os.replace(bad, good)
+			os.replace(ford, good)
 			printerr(f'File renamed to: "{good}"')
-			return good.decode(errors='ignore')
+			return good
 		except OSError as e:
-			printerr(f"{e.errno} {e.strerror}")
+			printerr(f"{err.errno} {err.strerror}")
 			return ''
-	return bad # because it was good
+	return ford # because it was good
 
-def directory_walker(directory):
+def directory_walker(directory,rename_unicode=False):
 	"""
 	Scanning for files visiting all subdirectories yielding byte strings
 	to prevent unicode problems
 	:param directory: root directory to scan
-	:return: yielding files
+	:param rename_unicode try to rename directories and files with problematic unicode characters
+	:return: yielding directory,filename
 	"""
 	dir_stack=deque()
 	push=dir_stack.append
@@ -119,11 +131,20 @@ def directory_walker(directory):
 			if os.path.islink(path_file): # following of links
 				continue
 			if os.path.isdir(path_file):
-				push(path_file)
+				if rename_unicode:
+					ret = unicode_check(path_file)
+					if ret != '':
+						push(ret)
+				else:
+					push(path_file)
 			else:
-				#print(path_file)
-				yield (path_file)
-				
+				if rename_unicode:
+					ret = unicode_check(path_file)
+					if ret != '':
+						yield (cur_dir,ret )
+				else:
+					yield (cur_dir,entry)
+
 class InputFileIterator:
 	def __init__(self,destination_dir:str,input_file,tracker_file_stem):
 		self.continue_dir=False

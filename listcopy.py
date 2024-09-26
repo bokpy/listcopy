@@ -11,7 +11,7 @@ import signal
 import extensions as ext
 import metadata as meta
 from listutils import InputFileIterator, LANGUAGES, assure_dir, end_slash,printerr
-from listutils import rename_unicode_error_file,directory_walker
+from listutils import directory_walker,rename_problematic_files
 from listutils import DATA_BEGIN_MARKER,DATA_END_MARKER,CONTINUE
 from metadata import ExifTags
 
@@ -385,20 +385,12 @@ def list_sources(postit,list_file='-',append=False)-> int:
 		dest.write('\n\n\n'+DATA_BEGIN_MARKER+'\n')
 		dest.write(WorkPath+'\n')
 	
-		for fullpath in directory_walker(WorkPath):
-			#DEBUGPRINT(fullpath)
-			try:
-				str_path = fullpath.decode('ascii')
-			#except UnicodeDecodeError as e:
-			except UnicodeError as e:
-				printerr(' ')
-				str_path = rename_unicode_error_file(fullpath,e)
-				if str_path == '':
-					printerr(fullpath)
-					printerr(f'UnicodeDecodeError {e.reason}')
-					printerr('File Skipped')
-					continue
-				
+		for dir,name in directory_walker(WorkPath,True):
+			DEBUGPRINT(f'{dir=}\n{name=}')
+			if name == '':
+				printerr('Skipping a file')
+				continue
+			str_path=os.path.join(dir,name)
 			if out_re:
 				if out_re.search(str_path):# skip it
 					continue
@@ -406,7 +398,7 @@ def list_sources(postit,list_file='-',append=False)-> int:
 				if not in_re.search(str_path):
 					continue
 			if do_size_check:
-				st=os.stat(fullpath)
+				st=os.stat(str_path)
 				file_size=st.st_size
 				#DEBUGPRINT(f'[{format_bytesize(file_size,8)}] ',end='')
 				if file_size>max_file_size:
