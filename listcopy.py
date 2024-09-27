@@ -4,17 +4,12 @@ import shutil
 import psutil
 import argparse
 import sys
-import re
 import pathlib
 import time
 import signal
-import extensions as ext
-import metadata as meta
-from listutils import InputFileIterator, LANGUAGES, assure_dir, end_slash,printerr
-from listutils import directory_walker,rename_problematic_files
-from listutils import DATA_BEGIN_MARKER,DATA_END_MARKER,CONTINUE
+import listutils as lu
 from metadata import ExifTags
-
+import metadata as meta
 DEBUGPRINT=print
 
 	
@@ -23,9 +18,7 @@ DEBUGEXIT=exit
 
 processed_file='/No Such File ' + time.ctime() # for signal handler to fail
 LISTSOURCES='listsources'
-FILTEROUT=['/Cookies/','/Microsoft/','/Windows/','/Cache','#.*#$','\.lnk$',
-           '\.tmp$','\.log$','\.err$','~$','/AppData/',
-           '\.ini$','/NTUSER.DAT',]
+
 #skiplist=None
 MIN_SECS=60
 HOUR_SECS=3600
@@ -102,14 +95,11 @@ if call_name == LISTSOURCES:
 	                   # default='Non',
 	                    nargs='?'
 	                    )
-if call_name==LISTSOURCES:
-	_help = 'Directory to scan for files to copy.'
-else:
-	_help = f'Destination directory for copy or {CONTINUE} '
-	f'to continue after an interrupted session.'
+
 #T T T T T T T T T T T T T T T T T T T T T
 parser.add_argument('-T','--target' ,
-                    help = _help,
+                    help = f'Destination directory for copy or {lu.CONTINUE} '
+	f'to continue after an interrupted session.',
                     action='store',
                     metavar='',
                     nargs='?'
@@ -121,50 +111,8 @@ if call_name==LISTSOURCES:
 	                    action='store_true',
 	                    default=False
 	                    )
-	#f f f f f f f f f f f f f f f f
-	parser.add_argument('-f', '--filter',
-	                    help=f'don\'t copy {FILTEROUT}.',
-	                    action='store_true'
-	                    )
-	#S S S S S S S S S S S S S S S S
-	parser.add_argument('-S','--skip',
-	                    nargs='*',
-	                    help='filepaths containing a '
-	                         'match with one of these '
-	                         'regular expressions are skipped.',
-						metavar='',
-	                    )
-	#m m m m m m m m m m m m m m m m
-	parser.add_argument('-m', '--match',
-	                    help='Only filenames matching one of the regular expressions are listed.',
-	                    action='store',
-	                    metavar='',
-	                    nargs='*'
-	                    )
-	#b b b b b b b b b b b b b b b b
-	parser.add_argument('-b', '--bigger',
-	                    help='Only files bigger than this in mega bytes or use K for Kilo bytes like 32.8K.',
-	                    action='store',
-	                    metavar='',
-	                    nargs=1
-	                    )
-	#s s s s s s s s s s s s s s s s
-	parser.add_argument('-s', '--smaller',
-	                    help='Only files smaller than this in mega bytes or use K for Kilo bytes like 32.8K.',
-	                    action='store',
-	                    metavar='',
-	                    nargs=1
-	                    )
-	#x x x x x x x x x x x x x x x x
-	exts=[str(K) for K in ext.ext_classes.keys()]
-	extss=",".join(exts)
-	parser.add_argument('-x','--extension',
-	                    help='select files by one or more types: ' + extss,
-	                    choices=ext.ext_classes.keys(),
-	                    nargs='*',
-	                    metavar='',
-	                    action='store'
-	                    )
+	
+	
 #t t t t t t t t t t t t t t t t
 parser.add_argument('-t', '--todo',
                     help='print the files that still need to bee copied of the file-list-file.',
@@ -192,8 +140,8 @@ if call_name!=LISTSOURCES:
 	                    )
 	#l l l l l l l l l l l l l l l l
 	parser.add_argument('-l', '--language',
-	                    help=f'Language for days and months {LANGUAGES}.',
-	                    choices=LANGUAGES,
+	                    help=f'Language for days and months {lu.LANGUAGES}.',
+	                    choices=lu.LANGUAGES,
 	                    nargs='?',
 	                    metavar='',
 	                    action='store'
@@ -288,141 +236,6 @@ def list_to_do():
 		os.renames(ok_file,f'{ok_file}.{int(time.time()) // 60}')
 	return 0
 
-def create_incl_excl_regs():
-	global INCLUDE_RE,EXCLUDE_RE,FILTEROUT
-	excl_str=''
-	skip_str=''
-	filter_str=''
-	incl_str=''
-	ext_str=''
-	match_str=''
-	incl_list=[]
-	if args.filter:
-		filter_str="|".join(FILTEROUT)
-	if args.skip:
-		skip_str="|".join(args.skip)
-	
-	if filter_str and skip_str:
-		excl_str=skip_str + '|' + filter_str
-	else:
-		excl_str=skip_str + filter_str
-	if len(excl_str)>0:
-		EXCLUDE_RE=re.compile(excl_str)
-	else:
-		EXCLUDE_RE=None
-	if args.extension:
-		#DEBUGPRINT(args.extension)
-		for key in args.extension:
-			#DEBUGPRINT(ext.ext_classes[key])
-			incl_list=incl_list + ext.ext_classes[key]
-		ext_str=r'\.(' + ext.string_extensions(incl_list)+ r')$'
-		#DEBUGPRINT (ext_str)
-		#DEBUGPRINT(incl_list)
-	if args.match:
-		#DEBUGPRINT (f'{args.match}')
-		match_str="|".join(args.match)
-		#DEBUGPRINT (f'{match_str=}')
-		
-	if ext_str and match_str:
-		incl_str= match_str + '|' + ext_str
-	else:
-		if match_str:
-			incl_str=match_str
-		else:
-			incl_str=ext_str
-	if len(incl_str)>0:
-		INCLUDE_RE=re.compile(incl_str,flags=re.IGNORECASE)
-	else:
-		INCLUDE_RE=None
-	return INCLUDE_RE,EXCLUDE_RE
-	
-def kilo_mega(strval)->int:
-	global KILO,MEGA
-	if strval[-1:].upper() == 'K':
-		val=float(strval[:-1])
-		return int(val*KILO)
-	return int(float(strval)*MEGA)
-
-def list_sources(postit,list_file='-',append=False)-> int:
-	global WorkPath,DATA_BEGIN_MARKER,DATA_END_MARKER
-	open_mode='w'
-	if append: open_mode='a'
-	DEBUGPRINT(f' list_sources {list_file=} {WorkPath=}')
-	if list_file==sys.stdout or list_file=='-':
-		dest=sys.stdout
-	else:
-		try:
-			dest=open(list_file,open_mode)
-			
-		except IOError as e:
-			print(f'list_sources failed to open "{list_file}')
-			print(f'err {e.errno} "{e.strerror}"')
-			exit(e.errno)
-		
-	max_file_size=MEGA*MEGA
-	min_file_size=-1
-	do_size_check=False
-	if args.smaller:
-		max_file_size=kilo_mega(args.smaller[0])
-		do_size_check=True
-	if args.bigger:
-		min_file_size=kilo_mega(args.bigger[0])
-		do_size_check=True
-		
-	in_re,out_re=create_incl_excl_regs()
-	#DEBUGPRINT(in_re,out_re)
-	if os.path.exists(postit+'.ok'):
-		os.remove(postit+'.ok')
-	if not os.path.exists(WorkPath):
-		print(f'"{WorkPath}" does not exist.')
-		exit(1)
-		
-	count = 0
-	try:
-		#print(f"Arguments count: {len(sys.argv)}")
-		for i, arg in enumerate(sys.argv):
-			dest.write(f" {arg}")
-		dest.write('\n\n\n'+DATA_BEGIN_MARKER+'\n')
-		dest.write(WorkPath+'\n')
-	
-		for dir,name in directory_walker(WorkPath,True):
-			DEBUGPRINT(f'{dir=}\n{name=}')
-			if name == '':
-				printerr('Skipping a file')
-				continue
-			str_path=os.path.join(dir,name)
-			if out_re:
-				if out_re.search(str_path):# skip it
-					continue
-			if in_re:
-				if not in_re.search(str_path):
-					continue
-			if do_size_check:
-				st=os.stat(str_path)
-				file_size=st.st_size
-				#DEBUGPRINT(f'[{format_bytesize(file_size,8)}] ',end='')
-				if file_size>max_file_size:
-					continue
-				if file_size < min_file_size:
-					continue
-			
-			dest.write(str_path +'\n')
-			count+=1
-
-	except OSError as e:
-		print(f'list_sources failed')
-		print(f'OSError : {e.errno} {e.strerror}')
-		exit(e.errno)
-	dest.write(DATA_END_MARKER+'\n')
-	if dest != sys.stdout:
-		dest.close()
-	print (f'{count} files selected.')
-	print (f'Excluding {out_re}')
-	print (f'Including {in_re}')
-	print(f'{max_file_size=}')
-	print(f'{min_file_size=}')
-	return count
-	
 def exit_error(e,message=None)->None:
 	print(f"I/O error ({e.errno}): {e.strerror}")
 	if message:
@@ -666,12 +479,12 @@ def file_check_ok(source,target,l)->bool:
 def copy_listed_files(target_dir,listing_file,track_and_trace,subdir_format):
 	global processed_file
 	global chunk_size
-	target_dir=end_slash(target_dir)
+	target_dir=lu.end_slash(target_dir)
 	if subdir_format=='meta_data':
 		listing=ExifTags(target_dir,listing_file, track_and_trace)
 	else:
 		if subdir_format=='qualified_destination':
-			listing=InputFileIterator(target_dir,listing_file, track_and_trace)
+			listing=lu.InputFileIterator(target_dir,listing_file, track_and_trace)
 		else:
 			raise ValueError
 	
@@ -691,7 +504,7 @@ def copy_listed_files(target_dir,listing_file,track_and_trace,subdir_format):
 			print()
 			continue
 		
-		assure_dir(os.path.dirname(dst))
+		lu.assure_dir(os.path.dirname(dst))
 		#write_chunks_to_file(src,dst)
 		#time.sleep(1)
 		listing.save_progress()
@@ -710,7 +523,7 @@ def track_and_trace():
 def main() -> None:
 	global WorkPath,ok_file,bad_file
 	if args.target:
-		WorkPath = end_slash(args.target)
+		WorkPath = lu.end_slash(args.target)
 	marker=os.path.expanduser(args.post_it)
 	
 	if args.post_it:
@@ -728,11 +541,6 @@ def main() -> None:
 		copy_listed_files(args.target,args.deliver,track_and_trace(),'qualified_destination')
 		exit(0)
 		 
-	if args.gather:
-		DEBUGPRINT(f'List to {args.gather} appending {args.append}')
-		list_sources(marker,list_file=args.gather,append=args.append)
-		exit(0)
-		
 	if args.usage:
 		explain()
 		exit(0)

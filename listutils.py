@@ -5,17 +5,15 @@ from collections import deque
 import os
 import sys
 import re
-import unicodedata
-import string
-
-#from copy import deepcopy
 
 DATA_BEGIN_MARKER='-------->Data_Begin_Marker-------->'
 DATA_END_MARKER='<--------Data_End_Marker<--------'
 CONTINUE='<CONTINUE>'
-DEBUGPRINT=print
-
+FILTEROUT=['/Cookies/','/Microsoft/','/Windows/','/Cache','#.*#$','\.lnk$',
+           '\.tmp$','\.log$','\.err$','~$','/AppData/',
+           '\.ini$','/NTUSER.DAT',]
 LANGUAGES=['nl','fy']
+DEBUGPRINT=print
 
 def printerr(message:str)->None:
 	if isinstance(message,bytes):
@@ -298,8 +296,64 @@ rm "{self.ok_file}" to do it again.
 			fl[i]=fl[i][:-1]
 	
 	
+def kilo_mega(strval)->int:
+	"""
+	Translate a string to Kilo, Mega or Giga if it ends with [kKmMgG]
+	else return the value in megabytes.
+	:param strval: 'number' or 'number K'
+	:return: multiplied integer value
+	"""
+	# strval=strval.strip()
+	# print(f'{strval=}')
+	try:
+		val = float(strval)
+		return val
+	except ValueError as e:
+		pass
+	val=strval.strip()
+	C=val[-1:].upper()
+	val=float(val[:-1])
+	if C=='K': return int(val*1024)
+	if C=='M': return int(val*1024*1024)
+	if C=='G': return int(val*1024*1024*1024)
+	if C=='T': return int(val*1024*1024*1024*1024)
+	raise ValueError (f'"{strval}" {C} not valid' )
+
+
+def time_delta_str(start, end) -> str:
+	"""
+	Translate a time period in an human friendly represented approximation.
+	:param start: start time
+	:param end: end time
+	:return: nice string
+	"""
+	global MIN_SECS, HOUR_SECS
+	i_start = int(start)
+	i_end = int(end)
+	ret = ''
+	# #DEBUGPRINT(f'{start=} {end=} {end - start}')
+	
+	if i_start == i_end:
+		delta = (end - start) * 1000
+		return f'{int(delta)}ms'
+	# #DEBUGPRINT (f'{delta=}')
+	delta = i_end - i_start
+	if delta > HOUR_SECS:
+		ret = f'{delta // HOUR_SECS}:'
+		delta = delta % HOUR_SECS
+	if delta > MIN_SECS:
+		ret = ret + f'{delta // MIN_SECS}"'
+		delta = delta % MIN_SECS
+	ret = ret + f"{delta}'"
+	return ret
+
+
 def main() -> None:
-	print ('No Main')
+	print (f'200.123 {kilo_mega("200.123 ")}')
+	print (f'200.123 M {kilo_mega(" 200.123 M ")}')
+	print (f'200.123 K {kilo_mega(" 200.123 K")}')
+	print (f'200.123G {kilo_mega("200.123G")}')
+	print (f'128k {kilo_mega("128k")}')
 	pass
 
 if __name__ == '__main__':
