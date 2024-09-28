@@ -8,6 +8,8 @@ import subprocess
 import json
 from collections import deque
 
+from geolocate import DEBUGPRINT
+
 # noinspection SpellCheckingInspection
 VIDEO_EXT = [
     "\.STR",          # YouTube Livestream Recording
@@ -741,18 +743,16 @@ ext_classes={'video':VIDEO_EXT,
              'cad':CAD_FILE_EXT
              }
 
-
-def string_extensions(reg_list)->str:
-    """forms a string from a list from extensions."""
-    no_slash=[x[2:] for x in reg_list]
-    glued="|".join(no_slash)
-    return glued
-    
-def create_regular_expression(reg_str:str,re_flags=re.IGNORECASE):
+def create_regular_expression(mime_list,re_flags=re.IGNORECASE):
     """create_regular_expression from a extension list
     parameter re_flags: a combination with operator '|' of re.ASCII re.DEBUG
     re.DOTALL re.IGNORECASE re.LOCALE  re.MULTILINE re.TEMPLATE  re.UNICODE
     re.VERBOSE"""
+    #DEBUGPRINT(mime_list)
+    exts = [ext for mime in mime_list for ext in ext_classes[mime] ]
+    reg_str='|'.join(exts)
+    #DEBUGPRINT(reg_str)
+    DEBUGPRINT(r'\.(' + reg_str + r')$')
     return re.compile(r'\.(' + reg_str + r')$',flags=re_flags)
 
 if __name__ == '__main__':

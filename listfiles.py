@@ -6,7 +6,7 @@ from collections import deque
 
 import listutils as lu
 import extensions as ext
-
+from geolocate import DEBUGPRINT
 
 FILTEROUT=['/Cookies/','/Microsoft/','/Windows/','/Cache','#.*#$','\.lnk$',
            '\.tmp$','\.log$','\.err$','~$','/AppData/',
@@ -104,22 +104,27 @@ class FileListing:
         self.outp   =output_file
         self.args   = args
         if not self.initiated:
-            self.create_incl_excl_regs()
+            self.make_filters()
             self.initiated=True
         self.current_entry=None
+        self.string_path=None
         self.write(lu.DATA_BEGIN_MARKER)
         self.write(directory)
         self.walk()
         self.write(lu.DATA_END_MARKER)
         
-    def write(self,string):
+    def write(self,data=None):
+        if not data:
+            data=self.string_path
+        data+='\n'
         try:
-            self.outp.write(string+'\n')
+            self.outp.write(data)
         except OSError as e:
+            print(f'Writing: "{data}" failed.')
             print(f'errno {e.errno} "{e.strerror}"')
             exit(e.errno)
     
-    def create_incl_excl_regs(self):
+    def make_filters(self):
         """
         compose and compile regular expressions to filter path's in or out
         :return: side effects self.(excl_re,incl_re,ext_re,bigger,smaller)
@@ -141,10 +146,7 @@ class FileListing:
         
         # construct the regular expression that selects on extensions
         if sa.extension:
-            for key in sa.extension:
-                 incl_list=incl_list + ext.ext_classes[key]
-            #ext_str=r'\.(' + ext.string_extensions(incl_list)+ r')$'
-            self.ext_re=ext.create_regular_expression(incl_list)
+            self.ext_re=ext.create_regular_expression(sa.extension)
             
         # construct the regular expression that filters for paths with a matching substring
         if sa.match:
@@ -172,24 +174,49 @@ class FileListing:
                 if entry.is_symlink():
                     continue
                 if entry.is_dir():
+                    #DEBUGPRINT(f'Push: "{entry.path}"')
                     push(entry.path)
                     continue
                 self.current_entry=entry
-                self.filter()
+                if self.filter():
+                    self.write() # writes self.string_path
 
-    def filter(self):
+    def filter(self)->bool:
+        """
+        test the entry <DirEntry> against the selection criteria.
+        :return: True if all tests are passed with success.
+        """
         cur=self.current_entry
         if self.check_size:
             size=cur.stat().st_size
             if size < self.bigger or size > self.smaller:
-                return
+                return False
+        if isinstance(cur.path,bytes):
+            try:
+                path = cur.path.decode(encoding ='utf-8', errors = 'ignore')
+            except UnicodeDecodeError as e:
+                print(f'UnicodeDecodeError {e}')
+                print(f'May be "unicode_broom.py" can solve the problem.')
+                print(f'Bee careful with your data always backup in time.')
+                exit(1)
+        else:
+            path=cur.path
+        
         if self.excl_re:
-            if self.excl_re.search(cur.path):
-                return
-        
-        
-
-
+            if self.excl_re.search(path):
+                DEBUGPRINT(f'excl_re fired: "{path}"')
+                return False
+        if self.ext_re:
+            if not self.ext_re.search(path):
+                #DEBUGPRINT(f'not ext_re fired: "{path}"')
+                return False
+        if self.incl_re:
+            if not self.incl_re.search(path):
+                DEBUGPRINT(f'not incl_re fired: "{path}"')
+                return False
+        self.string_path=path
+        return True
+ 
 def main() -> None:
     if not args.scandir:
         parser.print_help()
@@ -214,9 +241,9 @@ def main() -> None:
             print (f'Write to: "{output_file}"')
         else:
            print (f'Append to: "{output_file}')
-        open_mode='a'
         with open(output_file,open_mode) as f:
             FileListing(args,catalogue,f)
+        open_mode='a'
             
 if __name__ == '__main__':
     main()

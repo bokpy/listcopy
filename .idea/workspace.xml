@@ -76,6 +76,7 @@
     "Python.listutils.executor": "Run",
     "Python.metadata.executor": "Run",
     "Python.slowcopy.executor": "Run",
+    "Python.test_Comprehensions.executor": "Run",
     "Python.test_extensions.executor": "Run",
     "Python.test_listdir.executor": "Run",
     "Python.testiter.executor": "Run",
@@ -84,7 +85,7 @@
     "git-widget-placeholder": "master",
     "last_opened_file_path": "/home/bob/python/listcopy/listfiles.old",
     "run.code.analysis.last.selected.profile": "aDefault",
-    "settings.editor.selected.configurable": "reference.settingsdialog.IDE.editor.colors.Python",
+    "settings.editor.selected.configurable": "preferences.keymap",
     "settings.editor.splitter.proportion": "0.3207547"
   },
   "keyToStringList": {
@@ -104,29 +105,7 @@
       <recent name="$USER_HOME$/mouse_project" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.listutils">
-    <configuration name="geolocate" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="pythonProject" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/geolocate.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
+  <component name="RunManager" selected="Python.test_Comprehensions">
     <configuration name="gpstree" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pythonProject" />
       <option name="ENV_FILES" value="" />
@@ -193,6 +172,28 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="test_Comprehensions" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="pythonProject" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test_Comprehensions.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="test_listdir" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pythonProject" />
       <option name="ENV_FILES" value="" />
@@ -217,11 +218,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.test_Comprehensions" />
         <item itemvalue="Python.listutils" />
         <item itemvalue="Python.listfiles" />
         <item itemvalue="Python.test_listdir" />
         <item itemvalue="Python.gpstree" />
-        <item itemvalue="Python.geolocate" />
       </list>
     </recent_temporary>
   </component>
