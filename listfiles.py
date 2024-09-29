@@ -6,7 +6,7 @@ from collections import deque
 
 import listutils as lu
 import extensions as ext
-from geolocate import DEBUGPRINT
+
 
 FILTEROUT=['/Cookies/','/Microsoft/','/Windows/','/Cache','#.*#$','\.lnk$',
            '\.tmp$','\.log$','\.err$','~$','/AppData/',
@@ -30,7 +30,15 @@ parser.add_argument('scandir',
 exts=[str(K) for K in ext.ext_classes.keys()]
 extss=",".join(exts)
 parser.add_argument('-x','--extension',
-                    help='select files by one or more types: ' + extss,
+                    help='select files on extensions of or more types: ' + extss,
+                    choices=ext.ext_classes.keys(),
+                    nargs='*',
+                    metavar='',
+                    action='store'
+                    )
+#M M M M M M M M M M M M M M M M M
+parser.add_argument('-M','--mime-type',
+                    help='select files by a list of mime types the "file -i" command knows.',
                     choices=ext.ext_classes.keys(),
                     nargs='*',
                     metavar='',
@@ -84,6 +92,11 @@ parser.add_argument('-s', '--smaller',
                     metavar='',
                     nargs=1
                     )
+#show-mime show-mime show-mime show-mime
+parser.add_argument('--show-mime',
+                    help=f'Show the basic mime types in "{ext.MAGIC_FILE}" ',
+                    action='store_true',
+                    )
 args = parser.parse_args()
 
 class FileListing:
@@ -94,6 +107,7 @@ class FileListing:
     check_size=False
     bigger =1e8
     smaller=0
+    magic=None
     def __init__(self,args,directory,output_file):
         """
         List filtered files to the output file.
@@ -146,12 +160,18 @@ class FileListing:
         
         # construct the regular expression that selects on extensions
         if sa.extension:
+            self.magic=ext.MagicMime(sa.extension)
             self.ext_re=ext.create_regular_expression(sa.extension)
             
         # construct the regular expression that filters for paths with a matching substring
         if sa.match:
             match_str="|".join(sa.match)
             self.incl_re=re.compile(match_str,flags=re.IGNORECASE)
+        
+        # selection on mime type
+        if sa.mime_type:
+            self.magic=ext.MagicMime(sa.mime_type)
+            
         # if size matters
         if sa.bigger:
             self.bigger=lu.kilo_mega(sa.bigger)
@@ -201,24 +221,35 @@ class FileListing:
                 exit(1)
         else:
             path=cur.path
+            
+            
         
         if self.excl_re:
             if self.excl_re.search(path):
-                DEBUGPRINT(f'excl_re fired: "{path}"')
+                #DEBUGPRINT(f'excl_re fired: "{path}"')
                 return False
+   
         if self.ext_re:
             if not self.ext_re.search(path):
                 #DEBUGPRINT(f'not ext_re fired: "{path}"')
                 return False
+        
+        if self.magic:
+            if not self.magic.check(path):
+                return False
+            
         if self.incl_re:
             if not self.incl_re.search(path):
-                DEBUGPRINT(f'not incl_re fired: "{path}"')
+                #DEBUGPRINT(f'not incl_re fired: "{path}"')
                 return False
         self.string_path=path
         return True
  
 def main() -> None:
-    if not args.scandir:
+    
+    if args.show_mime:
+        ext.show_mime_types()
+    elif not args.scandir:
         parser.print_help()
         return
      

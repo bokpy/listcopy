@@ -10,12 +10,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7d47a416-3b1c-466e-a851-3e5a458f6704" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/listfiles.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/listcopy.py" beforeDir="false" afterPath="$PROJECT_DIR$/listcopy.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/listsources" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/extensions.py" beforeDir="false" afterPath="$PROJECT_DIR$/extensions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/listfiles.py" beforeDir="false" afterPath="$PROJECT_DIR$/listfiles.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/listutils.py" beforeDir="false" afterPath="$PROJECT_DIR$/listutils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/unicode_broom.py" beforeDir="false" afterPath="$PROJECT_DIR$/unicode_broom.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -49,6 +47,7 @@
   <component name="HighlightingSettingsPerFile">
     <setting file="file:///usr/lib/python3.10/json/__init__.py" root0="SKIP_INSPECTION" />
     <setting file="file:///usr/lib/python3.10/json/decoder.py" root0="SKIP_INSPECTION" />
+    <setting file="file:///usr/lib/python3/dist-packages/IPython/core/magic.py" root0="SKIP_INSPECTION" />
   </component>
   <component name="ProblemsViewState">
     <option name="selectedTabId" value="CurrentFile" />
@@ -81,11 +80,12 @@
     "Python.test_listdir.executor": "Run",
     "Python.testiter.executor": "Run",
     "Python.testtime.executor": "Run",
+    "Python.update_extensions.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "git-widget-placeholder": "master",
-    "last_opened_file_path": "/home/bob/python/listcopy/listfiles.old",
+    "last_opened_file_path": "/usr/lib/python3/dist-packages/IPython/core/magic.py",
     "run.code.analysis.last.selected.profile": "aDefault",
-    "settings.editor.selected.configurable": "preferences.keymap",
+    "settings.editor.selected.configurable": "reference.settingsdialog.IDE.editor.colors.Python",
     "settings.editor.splitter.proportion": "0.3207547"
   },
   "keyToStringList": {
@@ -105,29 +105,7 @@
       <recent name="$USER_HOME$/mouse_project" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.test_Comprehensions">
-    <configuration name="gpstree" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="pythonProject" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/gpstree.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
+  <component name="RunManager" selected="Python.update_extensions">
     <configuration name="listfiles" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pythonProject" />
       <option name="ENV_FILES" value="" />
@@ -216,13 +194,35 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="update_extensions" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="pythonProject" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/update_extensions.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.update_extensions" />
         <item itemvalue="Python.test_Comprehensions" />
         <item itemvalue="Python.listutils" />
         <item itemvalue="Python.listfiles" />
         <item itemvalue="Python.test_listdir" />
-        <item itemvalue="Python.gpstree" />
       </list>
     </recent_temporary>
   </component>

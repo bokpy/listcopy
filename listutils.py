@@ -5,6 +5,7 @@ from collections import deque
 import os
 import sys
 import re
+from idlelib.iomenu import errors
 
 DATA_BEGIN_MARKER='-------->Data_Begin_Marker-------->'
 DATA_END_MARKER='<--------Data_End_Marker<--------'
@@ -346,6 +347,11 @@ def time_delta_str(start, end) -> str:
 		delta = delta % MIN_SECS
 	ret = ret + f"{delta}'"
 	return ret
+
+def bytes_to_utf8(string):
+	if isinstance(string,str):
+		return string
+	return string.decode('utf8',errors='ignore')
 
 
 def main() -> None:
