@@ -1,808 +1,832 @@
 #!/bin/python3
-#Extendions found at https://fileinfo.com/filetypes/common
-#the lists where made with the help of Opera Aria A.I.
+# Extendions found at https://fileinfo.com/filetypes/common
+# the lists where made with "update_extensions.py" > "extensionsets.py"
+
 import os.path
 import re
 import subprocess
 import listutils as lu
 import extensionsets
-#import exiftool as xftl ,did not work for me. Will use subprocess
-#import json
-#from collections import deque
-#import magic
+from extensionsets import extension_dict
+from listutils import end_slash
 
 DEBUGPRINT=print
+DEBUGEXIT=exit
 
 # noinspection SpellCheckingInspection
-VIDEO_EXT = [
-		"AVI", # was missing strange
-		"MOV", # was missing strange
-    "STR",          # YouTube Livestream Recording
-    "TTML",         # Timed Text Markup Language Subtitles File
-    "RXR",          # RecordXR Recording
-    "SWF",          # Shockwave Flash Movie
-    "AEP",          # After Effects Project
-    "MKV",          # Matroska Video
-    "PZ",           # Panzoid Video Project
-    "PLOT",         # Plotagon Studio Project
-    "KINE",         # KineMaster Project File
-    "PRPROJ",       # Premiere Pro Project
-    "PIV",          # Pivot Animator Animation
-    "SFD",          # Sofdec Dreamcast Movie
-    "PSV",          # Pluralsight Video File
-    "AV1",          # AV1 Video
-    "PLOTDOC",      # Plotagon Project File
-    "ANM",          # DeluxePaint Animation
-    "DREAM",        # Procreate Dreams Project
-    "OBJECTION",    # Objection.lol Project
-    "NTP",          # Natron Project File
-    "VEG",          # VEGAS Video Project
-    "MSDVD",        # Windows DVD Maker Project File
-    "KMPROJECT",    # KineMaster Project
-    "WLMP",         # Windows Live Movie Maker Project
-    "DRP",          # DaVinci Resolve Project
-    "AEC",          # Cinema 4D After Effects Composition
-    "DCR",          # Digital Court Recorder Video File
-    "AMC",          # AMC Video File
-    "BIK",          # Bink Video File
-    "MSWMM",        # Windows Movie Maker Project
-    "PAC",          # PAC Subtitles File
-    "MSE",          # MediaShow Slideshow Project File
-    "WEBM",         # WebM Video
-    "KDENLIVE",     # Kdenlive Project
-    "DIR",          # Adobe Director Movie
-    "SER",          # Astronomical Capture Video File
-    "CINE",         # Phantom Digital Video File
-    "SCM",          # ScreenCam Screen Recording
-    "SUB",          # MicroDVD Subtitle File
-    "FBR",          # FlashBack Recording
-    "FCP",          # Final Cut Project
-    "EVO",          # SeeVogh Player Video Recording
-    "VPJ",          # VideoPad Video Editor Project File
-    "WPL",          # Windows Media Player Playlist
-    "DCR",          # Liberty Video Recording File
-    "MP4",          # MPEG-4 Video
-    "RMVB",         # RealMedia Variable Bit Rate File
-    "VOB",          # DVD Video Object File
-    "FLC",          # FLIC Animation
-    "CLPI",         # Blu-ray Clip Information File
-    "SBT",          # SBT Subtitle File
-    "SRT",          # SubRip Subtitle File
-    "DMX",          # Source Filmmaker Project
-    "M4S",          # MPEG-DASH Video Segment
-    "IFO",          # DVD-Video Disc Information File
-    "INP",          # Sony Camcorder Image Management File
-    "VP6",          # TrueMotion VP6 Video File
-    "3GP",          # 3GPP Multimedia File
-    "DMSM",         # VideoWave Movie Project File
-    "MXF",          # Material Exchange Format
-    "VSP",          # VideoStudio Project
-    "CPVC",         # Adobe Captivate Video Composition
-    "META",         # RealPlayer Metafile
-    "CAMPROJ",      # Camtasia Studio Project
-    "MVD",          # Movie Studio Movie
-    "IVR",          # Internet Video Recording
-    "VTT",          # Web Video Text Tracks File
-    "TRP",          # HD Video Transport Stream
-    "MPEG",         # MPEG Video
-    "M4U",          # MPEG-4 Playlist
-    "MJPG",         # Motion JPEG Video
-    "SMV",          # VideoLink Mail Video File
-    "WMMP",         # Windows Movie Maker Project File
-    "REC",          # Topfield PVR Recording
-    "VIDEO",        # aTube Catcher Video File
-    "AEPX",         # After Effects XML Project
-    "MJ2",          # Motion JPEG 2000 Video
-    "SWI",          # SWiSH Project File
-    "MP4V",         # MPEG-4 Video
-    "MGV",          # PSP Video File
-    "AMX",          # Adobe Motion Exchange File
-    "SCREENFLOW",   # ScreenFlow Document
-    "MANI",         # Mine-imator Project File
-    "D3V",          # Datel Video File
-    "RMS",          # Secure Real Media File
-    "BK2",          # Bink Video 2 File
-    "VC1",          # VC-1 Video File
-    "MEPX",         # Movavi Video Project
-    "PSH",          # Photodex Slide Show
-    "ASF",          # Advanced Systems Format File
-    "FLV",          # Flash Video
-    "PMF",          # PlayStation Portable Movie
-    "DV",           # Digital Video File
-    "LSAV",         # Xiaomi Gallery Hidden Video
-    "TVSHOW",       # mimoLive Show
-    "ZM2",          # ZSNES Movie #2 File
-    "ARCUT",        # Prelude Rough Cut File
-    "SIV",          # Silicon Imaging Video File
-    "RCUT",         # Webinaria Recording Cut
-    "ALE",          # Avid Log Exchange File
-    "G2M",          # GoToMeeting Recording File
-    "DPA"           # DrawPlus Animation File
-]
-# noinspection SpellCheckingInspection
-AUDIO_EXT = [
-		"WMA" , # was missing
-    "SEQUENCE",
-    "SVP",
-    "FUR",
-    "FTM",
-    "ABC",
-    "WEBA",
-    "MTM",
-    "EFS",
-    "UST",
-    "XRNS",
-    "FLP",
-    "TG",
-    "COPY",
-    "MP3",
-    "VSQ",
-    "EC3",
-    "TOC",
-    "SDS",
-    "FLAC",
-    "SF2",
-    "ASD",
-    "L",
-    "DCF",
-    "WPROJ",
-    "STY",
-    "MUI",
-    "AUP",
-    "MKA",
-    "MIDI",
-    "FSC",
-    "CDO",
-    "FEV",
-    "VPW",
-    "SAF",
-    "H5S",
-    "ITLS",
-    "PHY",
-    "M4R",
-    "CGRP",
-    "OMG",
-    "CWS",
-    "XMU",
-    "RIP",
-    "KT3",
-    "SNGX",
-    "MMLP",
-    "MTI",
-    "SC2",
-    "CWB",
-    "ACP",
-    "XFS",
-    "DCT",
-    "IGP",
-    "VOXAL",
-    "DSM",
-    "GSF",
-    "MINIGSF",
-    "AKP",
-    "DFF",
-    "PNA",
-    "NKI",
-    "VDJ",
-    "ALS",
-    "AMXD",
-    "PTXT",
-    "DMSE",
-    "GP",
-    "SLP",
-    "RAD",
-    "ARIA",
-    "SFK",
-    "MID",
-    "BAND",
-    "4MP",
-    "GSM",
-    "GP5",
-    "RX2",
-    "MSCZ",
-    "GBS",
-    "APL",
-    "BUN",
-    "PEK",
-    "ANG",
-    "RMJ",
-    "OGG",
-    "ABM",
-    "ACM",
-    "G726",
-    "VSQX",
-    "WAV",
-    "MMPZ",
-    "SGP",
-    "AFC",
-    "ALC",
-    "LOGICX",
-    "SFPACK",
-    "PLA",
-    "VLC",
-    "STM",
-    "ACD-ZIP",
-    "OVW",
-    "PSM",
-    "S3M",
-    "QCP",
-    "EMX"
-]
-# noinspection SpellCheckingInspection
-D3_EXT = [
-    "BBMODEL",      # Blockbench 3D Model
-    "HIPNC",        # Houdini Apprentice File
-    "GH",           # Grasshopper Binary Definition
-    "CRZ",          # Compressed Poser Character Rigging File
-    "MESH",         # Godot Engine 3D Mesh File
-    "VRM",          # Virtual Reality Model
-    "IAVATAR",      # iClone Avatar
-    "REAL",         # Aero Experience
-    "DDP",          # DreamPlan Home Design Project
-    "PART",         # PartDesigner Part
-    "MD5ANIM",      # id Tech 4 Model Animation File
-    "IRR",          # Irrlicht 3D Scene
-    "C4D",          # Cinema 4D Model
-    "DUF",          # DAZ User File
-    "FSH",          # Fragment Shader File
-    "MCSG",         # MagicaCSG 3D Model
-    "DFF",          # RenderWare Model File
-    "BLEND",        # Blender 3D Data File
-    "MAKERBOT",     # MakerBot Print File
-    "M3D",          # 3D Model File
-    "IV",           # Open Inventor Scene Graph File
-    "CMDB",         # Ansys CFD Mesh
-    "ZT",           # Mental Ray Image Depth File
-    "ATM",          # Vue Atmospheres File
-    "MC5",          # Poser 5 Material File
-    "DSV",          # DAZ Studio UV Mapping File
-    "PHY",          # 3ds Max Physique File
-    "THING",        # MakerBot Thing File
-    "PMX",          # MikuMikuDance Model File
-    "CFG",          # Cal3D Model Configuration File
-    "SMD",          # Valve Studiomdl Data File
-    "MDL",          # Warcraft 3 3D Model Text File
-    "XAF",          # 3ds Max XML Animation File
-    "MIX",          # 3ds Max Motion Mixer File
-    "FX",           # Direct3D Effects File
-    "LXF",          # LEGO Digital Designer Model File
-    "X",            # DirectX Model File
-    "NM",           # Space Engine Nebula Model
-    "MU",           # Kerbal Space Program Mesh File
-    "P3D",          # Peak3D 3D Graphics File
-    "AN8",          # Anim8or File
-    "MTZ",          # Compressed MetaStream Scene File
-    "MDX",          # Warcraft 3 Model File
-    "3DS",          # 3D Studio Scene
-    "PSA",          # Unreal Engine Skeletal Animation File
-    "VOX",          # Voxlap Voxel Model File
-    "FLT",          # OpenFlight Scene Description File
-    "CSO",          # Compiled Shader Object File
-    "M3D",          # DIALux 3D Object File
-    "X3D",          # Xara3D Project
-    "3D2",          # Stereo CAD-3D 2.0 Image File
-    "3MF",          # 3D Manufacturing File
-    "OBP",          # Bryce Object File
-    "MESH",         # 3D Mesh Model
-    "WFT",          # GTA 4 Car Model File
-    "ATL",          # Artlantis 3D Scene File
-    "KFM",          # Gamebryo 3D Model File
-    "IRRMESH",      # Irrlicht Static Mesh File
-    "N3D",          # Nuclear 3D File
-    "VPD",          # MikuMikuDance Vocaloid Pose Data File
-    "3DXML",        # Dassault Systemes 3D XML File
-    "P4D",          # Pix4D Project
-    "GLTF",         # GL Transmission Format File
-    "MD5MESH",      # id Tech 4 3D Mesh File
-    "PRM",          # Re-Volt Model File
-    "USD",          # Universal Scene Description Format
-    "IVE",          # OpenSceneGraph Binary File
-    "ANIMSET",      # FaceFX Animation Set File
-    "MD5CAMERA",    # id Tech 4 Model Camera File
-    "P3L",          # Adobe Photoshop Light Preset File
-    "E57",          # LIDAR Point Cloud Data File
-    "BR7",          # Bryce 7 Scene File
-    "T3D",          # Swift 3D Document
-    "TILT",         # Tilt Brush Sketch
-    "3D4",          # Stereo CAD-3D 2.0 Image File
-    "SHAPR",        # Shapr3D Model
-    "HDZ",          # Compressed Poser Hand Pose File
-    "GRS",          # Gravity Sketch Sketch File
-    "GHX",          # Grasshopper XML Definition
-    "GMF",          # Leadwerks Game Model File
-    "LLM",          # Linden Lab Mesh File
-    "CCP",          # CopperCube JavaScript File
-    "BIP",          # Character Studio Biped File
-    "DAE",          # Digital Asset Exchange File
-    "PPZ",          # Compressed Poser Prop File
-    "STEL",         # Stella Polyhedron
-    "PP2",          # Poser Prop File
-    "TRACE",        # TRACES 3D Scene
-    "AMF",          # Additive Manufacturing File
-    "FACEFX",       # FaceFX Actor File
-    "MHM",          # MakeHuman Model
-    "V3D",          # Visual3D.NET Data File
-    "TME",          # Bryce Time File
-    "MA",           # Maya ASCII Scene
-    "REALITY",      # Reality 3D Scene Format
-    "SH3D",         # Sweet Home 3D Design
-    "XMF",          # Cal3D XML Mesh File
-    "ANIM",         # Maya Animation File
-    "DS",           # DAZ Studio 1/2 Script
-    "IFC",          # Industry Foundation Classes File
-    "PSK"           # Unreal Engine Skeletal Model File
-]
-# noinspection SpellCheckingInspection
-RASTER_IMAGE_EXT = [
-    "BIF",          # Ventana Whole Slide Image
-    "JXL",          # JPEG XL Image
-    "SPRITE2",      # Scratch 2.0 Sprite File
-    "QOI",          # Quite OK Image Format
-    "XPM",          # X11 Pixmap Graphic
-    "ICON",         # Icon Image
-    "AFPHOTO",      # Affinity Photo Document
-    "ASE",          # Aseprite Sprite File
-    "PSDC",         # Adobe Photoshop Cloud Document
-    "PXD",          # Pixelmator Pro Image
-    "LRPREVIEW",    # Adobe Lightroom Preview File
-    "8CI",          # TI-84 Plus C Pic Vars Image
-    "SUMO",         # Sumo Paint Image
-    "GIF",          # Graphical Interchange Format File
-    "MNR",          # AutoCAD Menu Resource File
-    "PSD",          # Adobe Photoshop Document
-    "SPRITE3",      # Scratch 3.0 Sprite File
-    "PTEX",         # Ptex Texture File
-    "SNAGX",        # Snagit 2022 Capture
-    "TBN",          # Kodi Thumbnail Image
-    "PLP",          # PixelLab Project
-    "AVATAR",       # Google Talk Avatar File
-    "BPG",          # Better Portable Graphics Image
-    "PNG",          # Portable Network Graphic
-    "YSP",          # BYOB Sprite File
-    "SPRITE",       # Scratch Sprite File
-    "TGA",          # Targa Graphic
-    "FLIF",         # Free Lossless Image Format File
-    "TPF",          # TexMod Package File
-    "KRA",          # Krita Image Document
-    "DDS",          # DirectDraw Surface Image
-    "DIB",          # Device-Independent Bitmap Image
-    "SAI",          # PaintTool SAI Image
-    "SPR",          # Half-Life Sprite
-    "PDN",          # paint.net Image
-    "PISKEL",       # Piskel Sprite
-    "JPEG",         # JPEG Image
-    "HDR",          # High Dynamic Range Image File
-    "WIC",          # Java Wavelet Image
-    "PAM",          # Portable Arbitrary Map Image
-    "IPV",          # ibis Paint Artwork
-    "VICAR",        # VICAR Image File
-    "SKITCH",       # Skitch Image
-    "PSP",          # Pixel Studio Project
-    "PZP",          # PhotoSuite Project File
-    "SKTZ",         # Sony Sketch Drawing
-    "LINEA",        # Linea Sketch Drawing
-    "OC4",          # openCanvas 4 Event File
-    "JLS",          # JPEG-LS Image
-    "NWM",          # Sony NWM Display Screen File
-    "APS",          # Greeting Card Studio Project File
-    "IPICK",        # iPick Football Image
-    "CT",           # Scitex Continuous Tone Image
-    "PPP",          # PhotoPad Project
-    "OPLC",         # Nokia Operator Logo File
-    "SIX",          # Sixel Image
-    "SLD",          # AutoCAD Slide File
-    "CLIP",         # Clip Studio Paint Illustration
-    "PM",           # Unix XV Graphic File
-    "JPG",          # JPEG Image
-    "PCX",          # Paintbrush Bitmap Image File
-    "HEIF",         # High Efficiency Image Format
-    "WEBP",         # WebP Image
-    "JPS",          # Stereo JPEG Image
-    "OTA",          # OTA Bitmap Image
-    "LIP",          # Clip Studio Paint File
-    "TFC",          # Unreal Engine 3 Texture File Cache
-    "ITC2",         # iTunes Cover Flow Data File 2
-    "POV",          # POV-Ray Raytracing Format
-    "PWP",          # PhotoWorks Image File
-    "MNG",          # Multiple-Image Network Graphic
-    "XCF",          # GIMP Image File
-    "WBZ",          # Webshots Download Picture File
-    "FITS",         # Flexible Image Transport System File
-    "73I",          # TI-73 Screenshot File
-    "PSDX",         # Photoshop Touch Document
-    "WBC",          # Webshots Collection File
-    "LZP",          # LazPaint Image
-    "EXR",          # OpenEXR Image
-    "DJVU",         # DjVu Image
-    "USERTILE-MS",  # Windows 8 User Tile File
-    "PPF",          # Picture Publisher Image File
-    "CPC",          # CPC Compressed Image File
-    "CDC",          # AutoCAD DesignCenter Preview Cache File
-    "TIFF",         # Tagged Image File Format
-    "PMG",          # Adobe Photoshop Photomerge Panoramic Composition File
-    "OZJ",          # MU Online Image File
-    "ACCOUNTPICTURE-MS", # Windows 8 Account Picture File
-    "BMP",          # Bitmap Image
-    "CAN",          # Canon Navigator Fax Document
-    "PBM",          # Portable Bitmap Image
-    "RGF",          # LEGO MINDSTORMS EV3 Robot Graphics File
-    "2BP",          # Pocket PC Bitmap Image File
-    "STEX",         # Godot Engine 3 StreamTexture File
-    "SNAG",         # Snagit for Windows Capture
-    "JPC",          # JPEG 2000 Code Stream File
-    "MDP",          # FireAlpaca Image
-    "ECW"           # Enhanced Compression Wavelet Image
-]
-# noinspection SpellCheckingInspection
-VECTOR_IMAGE_EXT = [
-    "SVG",          # Scalable Vector Graphic
-    "SVGZ",         # Compressed SVG File
-    "SHAPES",       # Pixelmator Pro Shapes
-    "VSTM",         # Visio Macro-Enabled Drawing Template
-    "AI",           # Adobe Illustrator Artwork
-    "VSDX",         # Microsoft Visio Drawing
-    "GVDESIGN",     # Gravit Designer File
-    "CDR",          # CorelDRAW File
-    "EP",           # Pencil Document
-    "CMX",          # Corel Presentation Exchange Image
-    "APM",          # Aldus Placeable Metafile Image
-    "FCM",          # CanvasWorkspace Fabric Cutting Design
-    "FH8",          # FreeHand 8 Drawing File
-    "EPSF",         # Encapsulated PostScript Format File
-    "SLDDRT",       # SolidWorks Drawing Sheet
-    "AFDESIGN",     # Affinity Design Document
-    "VSTX",         # Microsoft Visio Drawing Template
-    "DPR",          # Digital InterPlot File
-    "EPS",          # Encapsulated PostScript File
-    "DRW",          # Drawing File
-    "FH10",         # FreeHand 10 Drawing File
-    "CSY",          # Canvas Symbol File
-    "STD",          # Apache OpenOffice Drawing Template
-    "PS",           # PostScript File
-    "WMF",          # Windows Metafile
-    "PFD",          # Micrografx Optima! File
-    "FH9",          # FreeHand 9 Drawing File
-    "CDMZ",         # ConceptDraw MINDMAP Document
-    "CDD",          # ConceptDraw DIAGRAM Document (Legacy)
-    "ODG",          # OpenDocument Graphic File
-    "LMK",          # Sothink Logo Maker Image
-    "POBJ",         # Photo Pos Pro Vector Object File
-    "FT9",          # FreeHand 9 Drawing Template
-    "CDRAPP",       # CorelDRAW.app Image File
-    "PSID",         # PostScript Image Data File
-    "GLOX",         # Microsoft Office SmartArt Graphics Layout File
-    "FH4",          # FreeHand 4 Drawing File
-    "FH7",          # FreeHand 7 Drawing File
-    "FXG",          # Flash XML Graphics File
-    "VSD",          # Microsoft Visio Drawing (Legacy)
-    "IGX",          # iGrafx Document
-    "DRW",          # Corel Drawing File
-    "DPP",          # DrawPlus Drawing File
-    "EMZ",          # Windows Compressed Enhanced Metafile
-    "INK",          # InkML Image
-    "XAR",          # Xara Xtreme Drawing
-    "NODES",        # Stick Nodes 2D Object
-    "PLT",          # HPGL Plot File
-    "ECS5",         # Easy Cut Studio Version 5 Project
-    "CVD",          # Canvas X Drawing
-    "MVG",          # Magick Vector Graphics File
-    "FHD",          # FreeHand Drawing File
-    "SSK",          # SmartSketch 95 Document
-    "AIC",          # Adobe Illustrator Cloud Document
-    "XMMAT",        # MindManager XML Map Template
-    "TEX.EMZ",      # Street Fighter IV Texture File
-    "DRAWIT",       # DrawIt Drawing
-    "SK",           # Skencil Drawing
-    "DRAWIO",       # diagrams.net Diagram File
-    "VSDM",         # Visio Macro-Enabled Drawing
-    "CVX",          # Canvas Drawing
-    "OTG",          # OpenDocument Graphic Template
-    "AC6",          # ArtCut 6 Document
-    "PMG",          # PageMaker Group File
-    "SVM",          # StarView Metafile
-    "PEN",          # Logitech io2 Drawing
-    "AIT",          # Adobe Illustrator Template
-    "PLT",          # AutoCAD Plotter Document
-    "PD",           # FlexiSIGN 5 Plotter Document
-    "PIXIL",        # Pixilart Project
-    "FT8",          # FreeHand 8 Template
-    "PUPPET",       # Adobe Character Animator Puppet
-    "WPG",          # WordPerfect Graphic
-    "SCV",          # ScanVec CASmate Sign File
-    "HPGL",         # HP Graphics Language Plotter File
-    "RDL",          # MicroStation Redline File
-    "CDX",          # CorelDRAW Compressed File
-    "ESC",          # EasySignCut Pro Project
-    "HPG",          # HPGL Plot File
-    "PICT",         # Picture File
-    "VECTORNATOR",  # Vectornator Drawing
-    "CDTX",         # ConceptDraw DIAGRAM XML Template
-    "HVIF",         # Haiku Vector Icon File
-    "FIG",          # Xfig Drawing
-    "GSD",          # Graphtec Vector Graphics File
-    "DIA",          # Dia Diagram File
-    "MP",           # LaTeX MetaPost File
-    "ASY",          # Asymptote Module
-    "SKETCH",       # Sketch Drawing
-    "VML",          # Vector Markup Language File
-    "MGC",          # Microsoft Clip Organizer Media Catalog
-    "SMF",          # Serif Metafile
-    "CLARIFY",      # Clarify Document
-    "FH11"          # FreeHand 11 Drawing File
-]
-# noinspection SpellCheckingInspection
-TEXT_EXT = [
-    "SMF",         # StarMath Formula File
-    "STY",         # LaTeX Style
-    "MPD",         # MPEG-DASH Media Presentation Description
-    "GSITE",       # Google Sites Shortcut
-    "DOC",         # Microsoft Word Document (Legacy)
-    "LST",         # Data List
-    "LTXD",        # Light Text Editor Document
-    "MAN",         # Unix Manual
-    "DOTM",        # Microsoft Word Macro-Enabled Document Template
-    "ADOC",        # AsciiDoc Document
-    "DSC",         # Text Description File
-    "QBL",         # QuickBooks License File
-    "UPD",         # Program Update Information
-    "FPT",         # FoxPro Table Memo
-    "SAM",         # LMHOSTS Sample File
-    "EMBED",       # Embed Notes Note
-    "DOTX",        # Microsoft Word Template
-    "SAVE",        # Nano Temporary Save File
-    "WTT",         # Write! Document
-    "LTX",         # LaTeX Document
-    "FCF",         # Final Draft Converter File
-    "B",           # Brainfuck Source Code File
-    "ORG",         # Emacs Org Text Document
-    "DOCX",        # Microsoft Word Document
-    "DIZ",         # Description in Zip File
-    "MNT",         # FoxPro Menu Memo
-    "LXFML",       # LEGO Digital Designer XML File
-    "ODM",         # OpenDocument Master Document
-    "GFORM",       # Google Forms Shortcut
-    "STORY",       # Storyist Document
-    "ME",          # Readme Text File
-    "EIO",         # Yozo Office File
-    "LUE",         # Norton LiveUpdate Log File
-    "FOUNTAIN",    # Fountain Script File
-    "ANS",         # ANSI Text File
-    "TMDX",        # TextMaker Document
-    "GPD",         # Generic Printer Description File
-    "README",      # Readme File
-    "APT",         # Almost Plain Text File
-    "VNT",         # Mobile Phone vNote File
-    "FBL",         # CADfix Command Level Log File
-    "AWW",         # Ability Write Document
-    "TEX",         # LaTeX Source Document
-    "LOG",         # Log File
-    "FADEIN.TEMPLATE", # Fade In Template
-    "BF",          # Brainf*ck Source Code File
-    "KLG",         # KOFIA Log
-    "IPF",         # OS/2 Help File
-    "CEC",         # Studio C Alpha Upgrade File
-    "PWDPL",       # Password Pad Lite Document
-    "JARVIS",      # Jarvis Subscriber File
-    "FODT",        # OpenDocument Flat XML Document
-    "TXT",         # Plain Text File
-    "RPT",         # Generic Report
-    "GDOC",        # Google Docs Shortcut
-    "NFO",         # Warez Information File
-    "LIS",         # SQR Output File
-    "GSD",         # General Station Description File
-    "AIM",         # AIMMS ASCII Model File
-    "TLB",         # VAX Text Library
-    "DROPBOX",     # Dropbox Shared Folder Tracker
-    "ASC",         # Autodesk ASCII Export File
-    "LST",         # FoxPro Documenting Wizard List
-    "RFT",         # Revisable Form Text Document
-    "SCM",         # Schema File
-    "SDM",         # StarOffice Mail Message
-    "OPEICO",      # Opeico Text File
-    "DXB",         # Duxbury Braille File
-    "IPYNB",       # Jupyter Notebook
-    "ASC",         # ASCII Text File
-    "TEXT",        # Plain Text File
-    "DOCM",        # Microsoft Word Macro-enabled Document
-    "WPD",         # WordPerfect Document
-    "TMVX",        # TextMaker Document Template
-    "EMULECOLLECTION", # eMule Data File
-    "WPS",         # Microsoft Works Word Processor Document
-    "OTT",         # OpenDocument Document Template
-    "HS",          # Java HelpSet File
-    "BIB",         # Bibliography Document
-    "_DOCX",       # Renamed Microsoft Word Document
-    "1ST",         # Readme File
-    "MD5.TXT",     # Message Digest 5 Hash File
-    "RTF",         # Rich Text Format File
-    "BIB",         # BibTeX Bibliography Database
-    "ERR",         # Error Log File
-    "BDR",         # Exchange Non-Delivery Report Body File
-    "DTEX",        # DataTex Document
-    "TM",          # TeXmacs Document
-    "WPW",         # WordPerfect Works Document
-    "GSCRIPT",     # Google Apps Script Shortcut
-    "FLUID",       # Loop Component
-    "BWD",         # BanglaWord Document
-    "KNT",         # KeyNote Note File
-    "ETF",         # ENIGMA Transportable File
-    "DM",          # BYOND Dream Maker Code
-    "ATY",         # Association Type Placeholder
-    "JNP",         # Java Web Start File
-    "XY",          # XYWrite Document
-    "LUF",         # Lipikar Uniform Format File
-    "TFRPROJ",     # theFrame Project File
-    "RAD",         # Radar ViewPoint Radar Data
-    "RIS",         # Research Information Systems Citation File
-    "ODT"          # OpenDocument Text Document
-]
-# noinspection SpellCheckingInspection
-CAD_FILE_EXT = [
-    "BAK",      # AutoCAD Drawing Backup
-    "AXM",      # FormIt Sketch
-    "CIR",      # Micro-Cap Schematic
-    "G",        # FlashForge G-Code File
-    "BDC",      # West Point Bridge Designer Design File
-    "CIRCUIT",  # KTechlab Circuit Design File
-    "PSM",      # Solid Edge Sheet Metal File
-    "IBA",      # Lectra Clothing Design Pieces File
-    "SIM",      # SimLab Composer Scene
-    "DLV",      # CATIA 4 Export File
-    "SMB",      # Autodesk Shape Manager Binary File
-    "EPF",      # EAGLE Project
-    "CPA",      # CADSTAR PCB Archive File
-    "DSNX",     # RoadEng Location Design Document
-    "AFS",      # STAAD.foundation Project File
-    "TCT",      # TurboCAD Drawing Template
-    "MCX",      # MICRO CADAM-X/6000 Model Data File
-    "FCSTD1",   # FreeCAD Backup Document
-    "PLUSH",    # Plushify Project
-    "MP12",     # Multisim 12 Project
-    "OPT",      # Opterecenja File
-    "GSM",      # Graphic Description Language File
-    "EDF",      # Edificius Project
-    "DB1",      # Tekla Structures Model File
-    "FPC",      # FreePCB Printed Circuit Board Layout
-    "MSM",      # Multisim Circuit Design File
-    "MC9",      # Mastercam 9 Geometry File
-    "RTD",      # Robot Structural Analysis Design File
-    "PSV",      # Pipe System Viewer File
-    "JVSG",     # Video Surveillance Project
-    "LCF",      # Archicad Library Container File
-    "TERX",     # RoadEng Terrain Design Document
-    "MS14",     # Multisim 14 Circuit Design File
-    "CAD",      # BobCAD-CAM File
-    "CATPRODUCT",# CATIA V5 Assembly File
-    "JOB",      # MetaCAM Nest Job File
-    "MODEL",    # CATIA 3D Model
-    "GCODE",    # G-code 3D Printer File
-    "JT",       # JT Open CAD File
-    "DC3",      # DesignCAD 3D ASCII Drawing
-    "CTB",      # Chitubox Sliced 3D Model
-    "LOGICLY",  # Logicly Circuit
-    "RSG",      # RaySupreme Graph
-    "LI3D",     # Live Interior 3D Document
-    "CIB",      # Luminaire Data File
-    "3DL",      # Sierra LandDesigner 3D File
-    "VET",      # Lectra Cutter's Must File
-    "CAD",      # Autodesk QuickCAD File
-    "CBDDLP",   # Chitubox Sliced 3D Model
-    "XV3",      # Lattice XVL Geometry File
-    "IDE",      # Inventor iFeature
-    "MTO",      # FastCAM MTO Text File
-    "AFD",      # Alphacam Flame Drawing
-    "PC7",      # PowerCADD 7 Drawing File
-    "DWT",      # AutoCAD Drawing Template
-    "FZP",      # Fritzing XML Part Description
-    "CYP",      # Home Design Project
-    "NC",       # DSTV Numerical Control File
-    "ASY",      # LTspice Symbol File
-    "ADI",      # AutoCAD Device-Independent Binary Plotter File
-    "PAT",      # AutoCAD Hatch Pattern File
-    "123DX",    # 123D Design Model File
-    "ICD",      # IronCAD 2D Drawing File
-    "DES",      # Pro/DESKTOP CAD File
-    "SAT",      # ACIS SAT 3D Model
-    "FZB",      # Fritzing Bin File
-    "PSS",      # AutoCAD Plot Stamp Settings File
-    "SKF",      # AutoSketch Drawing
-    "MS13",     # Multisim 13 Circuit Design File
-    "DST",      # AutoCAD Sheet Set
-    "GDS",      # Graphic Data System File
-    "SCH",      # gEDA Schematic File
-    "EDN",      # EDIF Implementation Netlist File
-    "JVSGZ",    # Compressed Video Surveillance Project
-    "MHS",      # Xilinx XPS Hardware Specification File
-    "PWT",      # AutoCAD Publish To Web Template
-    "SPT",      # SpeedTree Tree Data File
-    "SLDASM",   # SolidWorks Assembly
-    "FCW",      # FastCAD Windows Drawing
-    "SLDPRT",   # SolidWorks Part
-    "BLK",      # AutoCAD Block Template File
-    "SCAD",     # OpenSCAD Script
-    "CF2",      # Common File Format File
-    "PHJ",      # PhCNC Project File
-    "BCD",      # RealView Debugger Board Chip Definition File
-    "DRU",      # EAGLE Design Rules
-    "DC2",      # DesignCAD 2D ASCII Drawing
-    "NWF",      # Navisworks File Set
-    "DWFX",     # Design Web Format XPS File
-    "PLN",      # Archicad Solo Project
-    "NC",       # Mastercam Numerical Control File
-    "IGS",      # IGES Drawing
-    "BDL",      # CoCreate Bundle File
-    "LIN",      # AutoCAD Linetype File
-    "123D",     # Autodesk 123D Drawing
-    "STL",      # Stereolithography File
-    "DSN",      # OrCAD Design File
-	"FCStd"
-]
+# VIDEO_EXT = [
+# 		"AVI", # was missing strange
+# 		"MOV", # was missing strange
+#     "STR",          # YouTube Livestream Recording
+#     "TTML",         # Timed Text Markup Language Subtitles File
+#     "RXR",          # RecordXR Recording
+#     "SWF",          # Shockwave Flash Movie
+#     "AEP",          # After Effects Project
+#     "MKV",          # Matroska Video
+#     "PZ",           # Panzoid Video Project
+#     "PLOT",         # Plotagon Studio Project
+#     "KINE",         # KineMaster Project File
+#     "PRPROJ",       # Premiere Pro Project
+#     "PIV",          # Pivot Animator Animation
+#     "SFD",          # Sofdec Dreamcast Movie
+#     "PSV",          # Pluralsight Video File
+#     "AV1",          # AV1 Video
+#     "PLOTDOC",      # Plotagon Project File
+#     "ANM",          # DeluxePaint Animation
+#     "DREAM",        # Procreate Dreams Project
+#     "OBJECTION",    # Objection.lol Project
+#     "NTP",          # Natron Project File
+#     "VEG",          # VEGAS Video Project
+#     "MSDVD",        # Windows DVD Maker Project File
+#     "KMPROJECT",    # KineMaster Project
+#     "WLMP",         # Windows Live Movie Maker Project
+#     "DRP",          # DaVinci Resolve Project
+#     "AEC",          # Cinema 4D After Effects Composition
+#     "DCR",          # Digital Court Recorder Video File
+#     "AMC",          # AMC Video File
+#     "BIK",          # Bink Video File
+#     "MSWMM",        # Windows Movie Maker Project
+#     "PAC",          # PAC Subtitles File
+#     "MSE",          # MediaShow Slideshow Project File
+#     "WEBM",         # WebM Video
+#     "KDENLIVE",     # Kdenlive Project
+#     "DIR",          # Adobe Director Movie
+#     "SER",          # Astronomical Capture Video File
+#     "CINE",         # Phantom Digital Video File
+#     "SCM",          # ScreenCam Screen Recording
+#     "SUB",          # MicroDVD Subtitle File
+#     "FBR",          # FlashBack Recording
+#     "FCP",          # Final Cut Project
+#     "EVO",          # SeeVogh Player Video Recording
+#     "VPJ",          # VideoPad Video Editor Project File
+#     "WPL",          # Windows Media Player Playlist
+#     "DCR",          # Liberty Video Recording File
+#     "MP4",          # MPEG-4 Video
+#     "RMVB",         # RealMedia Variable Bit Rate File
+#     "VOB",          # DVD Video Object File
+#     "FLC",          # FLIC Animation
+#     "CLPI",         # Blu-ray Clip Information File
+#     "SBT",          # SBT Subtitle File
+#     "SRT",          # SubRip Subtitle File
+#     "DMX",          # Source Filmmaker Project
+#     "M4S",          # MPEG-DASH Video Segment
+#     "IFO",          # DVD-Video Disc Information File
+#     "INP",          # Sony Camcorder Image Management File
+#     "VP6",          # TrueMotion VP6 Video File
+#     "3GP",          # 3GPP Multimedia File
+#     "DMSM",         # VideoWave Movie Project File
+#     "MXF",          # Material Exchange Format
+#     "VSP",          # VideoStudio Project
+#     "CPVC",         # Adobe Captivate Video Composition
+#     "META",         # RealPlayer Metafile
+#     "CAMPROJ",      # Camtasia Studio Project
+#     "MVD",          # Movie Studio Movie
+#     "IVR",          # Internet Video Recording
+#     "VTT",          # Web Video Text Tracks File
+#     "TRP",          # HD Video Transport Stream
+#     "MPEG",         # MPEG Video
+#     "M4U",          # MPEG-4 Playlist
+#     "MJPG",         # Motion JPEG Video
+#     "SMV",          # VideoLink Mail Video File
+#     "WMMP",         # Windows Movie Maker Project File
+#     "REC",          # Topfield PVR Recording
+#     "VIDEO",        # aTube Catcher Video File
+#     "AEPX",         # After Effects XML Project
+#     "MJ2",          # Motion JPEG 2000 Video
+#     "SWI",          # SWiSH Project File
+#     "MP4V",         # MPEG-4 Video
+#     "MGV",          # PSP Video File
+#     "AMX",          # Adobe Motion Exchange File
+#     "SCREENFLOW",   # ScreenFlow Document
+#     "MANI",         # Mine-imator Project File
+#     "D3V",          # Datel Video File
+#     "RMS",          # Secure Real Media File
+#     "BK2",          # Bink Video 2 File
+#     "VC1",          # VC-1 Video File
+#     "MEPX",         # Movavi Video Project
+#     "PSH",          # Photodex Slide Show
+#     "ASF",          # Advanced Systems Format File
+#     "FLV",          # Flash Video
+#     "PMF",          # PlayStation Portable Movie
+#     "DV",           # Digital Video File
+#     "LSAV",         # Xiaomi Gallery Hidden Video
+#     "TVSHOW",       # mimoLive Show
+#     "ZM2",          # ZSNES Movie #2 File
+#     "ARCUT",        # Prelude Rough Cut File
+#     "SIV",          # Silicon Imaging Video File
+#     "RCUT",         # Webinaria Recording Cut
+#     "ALE",          # Avid Log Exchange File
+#     "G2M",          # GoToMeeting Recording File
+#     "DPA"           # DrawPlus Animation File
+# ]
+# # noinspection SpellCheckingInspection
+# AUDIO_EXT = [
+# 		"WMA" , # was missing
+#     "SEQUENCE",
+#     "SVP",
+#     "FUR",
+#     "FTM",
+#     "ABC",
+#     "WEBA",
+#     "MTM",
+#     "EFS",
+#     "UST",
+#     "XRNS",
+#     "FLP",
+#     "TG",
+#     "COPY",
+#     "MP3",
+#     "VSQ",
+#     "EC3",
+#     "TOC",
+#     "SDS",
+#     "FLAC",
+#     "SF2",
+#     "ASD",
+#     "L",
+#     "DCF",
+#     "WPROJ",
+#     "STY",
+#     "MUI",
+#     "AUP",
+#     "MKA",
+#     "MIDI",
+#     "FSC",
+#     "CDO",
+#     "FEV",
+#     "VPW",
+#     "SAF",
+#     "H5S",
+#     "ITLS",
+#     "PHY",
+#     "M4R",
+#     "CGRP",
+#     "OMG",
+#     "CWS",
+#     "XMU",
+#     "RIP",
+#     "KT3",
+#     "SNGX",
+#     "MMLP",
+#     "MTI",
+#     "SC2",
+#     "CWB",
+#     "ACP",
+#     "XFS",
+#     "DCT",
+#     "IGP",
+#     "VOXAL",
+#     "DSM",
+#     "GSF",
+#     "MINIGSF",
+#     "AKP",
+#     "DFF",
+#     "PNA",
+#     "NKI",
+#     "VDJ",
+#     "ALS",
+#     "AMXD",
+#     "PTXT",
+#     "DMSE",
+#     "GP",
+#     "SLP",
+#     "RAD",
+#     "ARIA",
+#     "SFK",
+#     "MID",
+#     "BAND",
+#     "4MP",
+#     "GSM",
+#     "GP5",
+#     "RX2",
+#     "MSCZ",
+#     "GBS",
+#     "APL",
+#     "BUN",
+#     "PEK",
+#     "ANG",
+#     "RMJ",
+#     "OGG",
+#     "ABM",
+#     "ACM",
+#     "G726",
+#     "VSQX",
+#     "WAV",
+#     "MMPZ",
+#     "SGP",
+#     "AFC",
+#     "ALC",
+#     "LOGICX",
+#     "SFPACK",
+#     "PLA",
+#     "VLC",
+#     "STM",
+#     "ACD-ZIP",
+#     "OVW",
+#     "PSM",
+#     "S3M",
+#     "QCP",
+#     "EMX"
+# ]
+# # noinspection SpellCheckingInspection
+# D3_EXT = [
+#     "BBMODEL",      # Blockbench 3D Model
+#     "HIPNC",        # Houdini Apprentice File
+#     "GH",           # Grasshopper Binary Definition
+#     "CRZ",          # Compressed Poser Character Rigging File
+#     "MESH",         # Godot Engine 3D Mesh File
+#     "VRM",          # Virtual Reality Model
+#     "IAVATAR",      # iClone Avatar
+#     "REAL",         # Aero Experience
+#     "DDP",          # DreamPlan Home Design Project
+#     "PART",         # PartDesigner Part
+#     "MD5ANIM",      # id Tech 4 Model Animation File
+#     "IRR",          # Irrlicht 3D Scene
+#     "C4D",          # Cinema 4D Model
+#     "DUF",          # DAZ User File
+#     "FSH",          # Fragment Shader File
+#     "MCSG",         # MagicaCSG 3D Model
+#     "DFF",          # RenderWare Model File
+#     "BLEND",        # Blender 3D Data File
+#     "MAKERBOT",     # MakerBot Print File
+#     "M3D",          # 3D Model File
+#     "IV",           # Open Inventor Scene Graph File
+#     "CMDB",         # Ansys CFD Mesh
+#     "ZT",           # Mental Ray Image Depth File
+#     "ATM",          # Vue Atmospheres File
+#     "MC5",          # Poser 5 Material File
+#     "DSV",          # DAZ Studio UV Mapping File
+#     "PHY",          # 3ds Max Physique File
+#     "THING",        # MakerBot Thing File
+#     "PMX",          # MikuMikuDance Model File
+#     "CFG",          # Cal3D Model Configuration File
+#     "SMD",          # Valve Studiomdl Data File
+#     "MDL",          # Warcraft 3 3D Model Text File
+#     "XAF",          # 3ds Max XML Animation File
+#     "MIX",          # 3ds Max Motion Mixer File
+#     "FX",           # Direct3D Effects File
+#     "LXF",          # LEGO Digital Designer Model File
+#     "X",            # DirectX Model File
+#     "NM",           # Space Engine Nebula Model
+#     "MU",           # Kerbal Space Program Mesh File
+#     "P3D",          # Peak3D 3D Graphics File
+#     "AN8",          # Anim8or File
+#     "MTZ",          # Compressed MetaStream Scene File
+#     "MDX",          # Warcraft 3 Model File
+#     "3DS",          # 3D Studio Scene
+#     "PSA",          # Unreal Engine Skeletal Animation File
+#     "VOX",          # Voxlap Voxel Model File
+#     "FLT",          # OpenFlight Scene Description File
+#     "CSO",          # Compiled Shader Object File
+#     "M3D",          # DIALux 3D Object File
+#     "X3D",          # Xara3D Project
+#     "3D2",          # Stereo CAD-3D 2.0 Image File
+#     "3MF",          # 3D Manufacturing File
+#     "OBP",          # Bryce Object File
+#     "MESH",         # 3D Mesh Model
+#     "WFT",          # GTA 4 Car Model File
+#     "ATL",          # Artlantis 3D Scene File
+#     "KFM",          # Gamebryo 3D Model File
+#     "IRRMESH",      # Irrlicht Static Mesh File
+#     "N3D",          # Nuclear 3D File
+#     "VPD",          # MikuMikuDance Vocaloid Pose Data File
+#     "3DXML",        # Dassault Systemes 3D XML File
+#     "P4D",          # Pix4D Project
+#     "GLTF",         # GL Transmission Format File
+#     "MD5MESH",      # id Tech 4 3D Mesh File
+#     "PRM",          # Re-Volt Model File
+#     "USD",          # Universal Scene Description Format
+#     "IVE",          # OpenSceneGraph Binary File
+#     "ANIMSET",      # FaceFX Animation Set File
+#     "MD5CAMERA",    # id Tech 4 Model Camera File
+#     "P3L",          # Adobe Photoshop Light Preset File
+#     "E57",          # LIDAR Point Cloud Data File
+#     "BR7",          # Bryce 7 Scene File
+#     "T3D",          # Swift 3D Document
+#     "TILT",         # Tilt Brush Sketch
+#     "3D4",          # Stereo CAD-3D 2.0 Image File
+#     "SHAPR",        # Shapr3D Model
+#     "HDZ",          # Compressed Poser Hand Pose File
+#     "GRS",          # Gravity Sketch Sketch File
+#     "GHX",          # Grasshopper XML Definition
+#     "GMF",          # Leadwerks Game Model File
+#     "LLM",          # Linden Lab Mesh File
+#     "CCP",          # CopperCube JavaScript File
+#     "BIP",          # Character Studio Biped File
+#     "DAE",          # Digital Asset Exchange File
+#     "PPZ",          # Compressed Poser Prop File
+#     "STEL",         # Stella Polyhedron
+#     "PP2",          # Poser Prop File
+#     "TRACE",        # TRACES 3D Scene
+#     "AMF",          # Additive Manufacturing File
+#     "FACEFX",       # FaceFX Actor File
+#     "MHM",          # MakeHuman Model
+#     "V3D",          # Visual3D.NET Data File
+#     "TME",          # Bryce Time File
+#     "MA",           # Maya ASCII Scene
+#     "REALITY",      # Reality 3D Scene Format
+#     "SH3D",         # Sweet Home 3D Design
+#     "XMF",          # Cal3D XML Mesh File
+#     "ANIM",         # Maya Animation File
+#     "DS",           # DAZ Studio 1/2 Script
+#     "IFC",          # Industry Foundation Classes File
+#     "PSK"           # Unreal Engine Skeletal Model File
+# ]
+# # noinspection SpellCheckingInspection
+# RASTER_IMAGE_EXT = [
+#     "BIF",          # Ventana Whole Slide Image
+#     "JXL",          # JPEG XL Image
+#     "SPRITE2",      # Scratch 2.0 Sprite File
+#     "QOI",          # Quite OK Image Format
+#     "XPM",          # X11 Pixmap Graphic
+#     "ICON",         # Icon Image
+#     "AFPHOTO",      # Affinity Photo Document
+#     "ASE",          # Aseprite Sprite File
+#     "PSDC",         # Adobe Photoshop Cloud Document
+#     "PXD",          # Pixelmator Pro Image
+#     "LRPREVIEW",    # Adobe Lightroom Preview File
+#     "8CI",          # TI-84 Plus C Pic Vars Image
+#     "SUMO",         # Sumo Paint Image
+#     "GIF",          # Graphical Interchange Format File
+#     "MNR",          # AutoCAD Menu Resource File
+#     "PSD",          # Adobe Photoshop Document
+#     "SPRITE3",      # Scratch 3.0 Sprite File
+#     "PTEX",         # Ptex Texture File
+#     "SNAGX",        # Snagit 2022 Capture
+#     "TBN",          # Kodi Thumbnail Image
+#     "PLP",          # PixelLab Project
+#     "AVATAR",       # Google Talk Avatar File
+#     "BPG",          # Better Portable Graphics Image
+#     "PNG",          # Portable Network Graphic
+#     "YSP",          # BYOB Sprite File
+#     "SPRITE",       # Scratch Sprite File
+#     "TGA",          # Targa Graphic
+#     "FLIF",         # Free Lossless Image Format File
+#     "TPF",          # TexMod Package File
+#     "KRA",          # Krita Image Document
+#     "DDS",          # DirectDraw Surface Image
+#     "DIB",          # Device-Independent Bitmap Image
+#     "SAI",          # PaintTool SAI Image
+#     "SPR",          # Half-Life Sprite
+#     "PDN",          # paint.net Image
+#     "PISKEL",       # Piskel Sprite
+#     "JPEG",         # JPEG Image
+#     "HDR",          # High Dynamic Range Image File
+#     "WIC",          # Java Wavelet Image
+#     "PAM",          # Portable Arbitrary Map Image
+#     "IPV",          # ibis Paint Artwork
+#     "VICAR",        # VICAR Image File
+#     "SKITCH",       # Skitch Image
+#     "PSP",          # Pixel Studio Project
+#     "PZP",          # PhotoSuite Project File
+#     "SKTZ",         # Sony Sketch Drawing
+#     "LINEA",        # Linea Sketch Drawing
+#     "OC4",          # openCanvas 4 Event File
+#     "JLS",          # JPEG-LS Image
+#     "NWM",          # Sony NWM Display Screen File
+#     "APS",          # Greeting Card Studio Project File
+#     "IPICK",        # iPick Football Image
+#     "CT",           # Scitex Continuous Tone Image
+#     "PPP",          # PhotoPad Project
+#     "OPLC",         # Nokia Operator Logo File
+#     "SIX",          # Sixel Image
+#     "SLD",          # AutoCAD Slide File
+#     "CLIP",         # Clip Studio Paint Illustration
+#     "PM",           # Unix XV Graphic File
+#     "JPG",          # JPEG Image
+#     "PCX",          # Paintbrush Bitmap Image File
+#     "HEIF",         # High Efficiency Image Format
+#     "WEBP",         # WebP Image
+#     "JPS",          # Stereo JPEG Image
+#     "OTA",          # OTA Bitmap Image
+#     "LIP",          # Clip Studio Paint File
+#     "TFC",          # Unreal Engine 3 Texture File Cache
+#     "ITC2",         # iTunes Cover Flow Data File 2
+#     "POV",          # POV-Ray Raytracing Format
+#     "PWP",          # PhotoWorks Image File
+#     "MNG",          # Multiple-Image Network Graphic
+#     "XCF",          # GIMP Image File
+#     "WBZ",          # Webshots Download Picture File
+#     "FITS",         # Flexible Image Transport System File
+#     "73I",          # TI-73 Screenshot File
+#     "PSDX",         # Photoshop Touch Document
+#     "WBC",          # Webshots Collection File
+#     "LZP",          # LazPaint Image
+#     "EXR",          # OpenEXR Image
+#     "DJVU",         # DjVu Image
+#     "USERTILE-MS",  # Windows 8 User Tile File
+#     "PPF",          # Picture Publisher Image File
+#     "CPC",          # CPC Compressed Image File
+#     "CDC",          # AutoCAD DesignCenter Preview Cache File
+#     "TIFF",         # Tagged Image File Format
+#     "PMG",          # Adobe Photoshop Photomerge Panoramic Composition File
+#     "OZJ",          # MU Online Image File
+#     "ACCOUNTPICTURE-MS", # Windows 8 Account Picture File
+#     "BMP",          # Bitmap Image
+#     "CAN",          # Canon Navigator Fax Document
+#     "PBM",          # Portable Bitmap Image
+#     "RGF",          # LEGO MINDSTORMS EV3 Robot Graphics File
+#     "2BP",          # Pocket PC Bitmap Image File
+#     "STEX",         # Godot Engine 3 StreamTexture File
+#     "SNAG",         # Snagit for Windows Capture
+#     "JPC",          # JPEG 2000 Code Stream File
+#     "MDP",          # FireAlpaca Image
+#     "ECW"           # Enhanced Compression Wavelet Image
+# ]
+# # noinspection SpellCheckingInspection
+# VECTOR_IMAGE_EXT = [
+#     "SVG",          # Scalable Vector Graphic
+#     "SVGZ",         # Compressed SVG File
+#     "SHAPES",       # Pixelmator Pro Shapes
+#     "VSTM",         # Visio Macro-Enabled Drawing Template
+#     "AI",           # Adobe Illustrator Artwork
+#     "VSDX",         # Microsoft Visio Drawing
+#     "GVDESIGN",     # Gravit Designer File
+#     "CDR",          # CorelDRAW File
+#     "EP",           # Pencil Document
+#     "CMX",          # Corel Presentation Exchange Image
+#     "APM",          # Aldus Placeable Metafile Image
+#     "FCM",          # CanvasWorkspace Fabric Cutting Design
+#     "FH8",          # FreeHand 8 Drawing File
+#     "EPSF",         # Encapsulated PostScript Format File
+#     "SLDDRT",       # SolidWorks Drawing Sheet
+#     "AFDESIGN",     # Affinity Design Document
+#     "VSTX",         # Microsoft Visio Drawing Template
+#     "DPR",          # Digital InterPlot File
+#     "EPS",          # Encapsulated PostScript File
+#     "DRW",          # Drawing File
+#     "FH10",         # FreeHand 10 Drawing File
+#     "CSY",          # Canvas Symbol File
+#     "STD",          # Apache OpenOffice Drawing Template
+#     "PS",           # PostScript File
+#     "WMF",          # Windows Metafile
+#     "PFD",          # Micrografx Optima! File
+#     "FH9",          # FreeHand 9 Drawing File
+#     "CDMZ",         # ConceptDraw MINDMAP Document
+#     "CDD",          # ConceptDraw DIAGRAM Document (Legacy)
+#     "ODG",          # OpenDocument Graphic File
+#     "LMK",          # Sothink Logo Maker Image
+#     "POBJ",         # Photo Pos Pro Vector Object File
+#     "FT9",          # FreeHand 9 Drawing Template
+#     "CDRAPP",       # CorelDRAW.app Image File
+#     "PSID",         # PostScript Image Data File
+#     "GLOX",         # Microsoft Office SmartArt Graphics Layout File
+#     "FH4",          # FreeHand 4 Drawing File
+#     "FH7",          # FreeHand 7 Drawing File
+#     "FXG",          # Flash XML Graphics File
+#     "VSD",          # Microsoft Visio Drawing (Legacy)
+#     "IGX",          # iGrafx Document
+#     "DRW",          # Corel Drawing File
+#     "DPP",          # DrawPlus Drawing File
+#     "EMZ",          # Windows Compressed Enhanced Metafile
+#     "INK",          # InkML Image
+#     "XAR",          # Xara Xtreme Drawing
+#     "NODES",        # Stick Nodes 2D Object
+#     "PLT",          # HPGL Plot File
+#     "ECS5",         # Easy Cut Studio Version 5 Project
+#     "CVD",          # Canvas X Drawing
+#     "MVG",          # Magick Vector Graphics File
+#     "FHD",          # FreeHand Drawing File
+#     "SSK",          # SmartSketch 95 Document
+#     "AIC",          # Adobe Illustrator Cloud Document
+#     "XMMAT",        # MindManager XML Map Template
+#     "TEX.EMZ",      # Street Fighter IV Texture File
+#     "DRAWIT",       # DrawIt Drawing
+#     "SK",           # Skencil Drawing
+#     "DRAWIO",       # diagrams.net Diagram File
+#     "VSDM",         # Visio Macro-Enabled Drawing
+#     "CVX",          # Canvas Drawing
+#     "OTG",          # OpenDocument Graphic Template
+#     "AC6",          # ArtCut 6 Document
+#     "PMG",          # PageMaker Group File
+#     "SVM",          # StarView Metafile
+#     "PEN",          # Logitech io2 Drawing
+#     "AIT",          # Adobe Illustrator Template
+#     "PLT",          # AutoCAD Plotter Document
+#     "PD",           # FlexiSIGN 5 Plotter Document
+#     "PIXIL",        # Pixilart Project
+#     "FT8",          # FreeHand 8 Template
+#     "PUPPET",       # Adobe Character Animator Puppet
+#     "WPG",          # WordPerfect Graphic
+#     "SCV",          # ScanVec CASmate Sign File
+#     "HPGL",         # HP Graphics Language Plotter File
+#     "RDL",          # MicroStation Redline File
+#     "CDX",          # CorelDRAW Compressed File
+#     "ESC",          # EasySignCut Pro Project
+#     "HPG",          # HPGL Plot File
+#     "PICT",         # Picture File
+#     "VECTORNATOR",  # Vectornator Drawing
+#     "CDTX",         # ConceptDraw DIAGRAM XML Template
+#     "HVIF",         # Haiku Vector Icon File
+#     "FIG",          # Xfig Drawing
+#     "GSD",          # Graphtec Vector Graphics File
+#     "DIA",          # Dia Diagram File
+#     "MP",           # LaTeX MetaPost File
+#     "ASY",          # Asymptote Module
+#     "SKETCH",       # Sketch Drawing
+#     "VML",          # Vector Markup Language File
+#     "MGC",          # Microsoft Clip Organizer Media Catalog
+#     "SMF",          # Serif Metafile
+#     "CLARIFY",      # Clarify Document
+#     "FH11"          # FreeHand 11 Drawing File
+# ]
+# # noinspection SpellCheckingInspection
+# TEXT_EXT = [
+#     "SMF",         # StarMath Formula File
+#     "STY",         # LaTeX Style
+#     "MPD",         # MPEG-DASH Media Presentation Description
+#     "GSITE",       # Google Sites Shortcut
+#     "DOC",         # Microsoft Word Document (Legacy)
+#     "LST",         # Data List
+#     "LTXD",        # Light Text Editor Document
+#     "MAN",         # Unix Manual
+#     "DOTM",        # Microsoft Word Macro-Enabled Document Template
+#     "ADOC",        # AsciiDoc Document
+#     "DSC",         # Text Description File
+#     "QBL",         # QuickBooks License File
+#     "UPD",         # Program Update Information
+#     "FPT",         # FoxPro Table Memo
+#     "SAM",         # LMHOSTS Sample File
+#     "EMBED",       # Embed Notes Note
+#     "DOTX",        # Microsoft Word Template
+#     "SAVE",        # Nano Temporary Save File
+#     "WTT",         # Write! Document
+#     "LTX",         # LaTeX Document
+#     "FCF",         # Final Draft Converter File
+#     "B",           # Brainfuck Source Code File
+#     "ORG",         # Emacs Org Text Document
+#     "DOCX",        # Microsoft Word Document
+#     "DIZ",         # Description in Zip File
+#     "MNT",         # FoxPro Menu Memo
+#     "LXFML",       # LEGO Digital Designer XML File
+#     "ODM",         # OpenDocument Master Document
+#     "GFORM",       # Google Forms Shortcut
+#     "STORY",       # Storyist Document
+#     "ME",          # Readme Text File
+#     "EIO",         # Yozo Office File
+#     "LUE",         # Norton LiveUpdate Log File
+#     "FOUNTAIN",    # Fountain Script File
+#     "ANS",         # ANSI Text File
+#     "TMDX",        # TextMaker Document
+#     "GPD",         # Generic Printer Description File
+#     "README",      # Readme File
+#     "APT",         # Almost Plain Text File
+#     "VNT",         # Mobile Phone vNote File
+#     "FBL",         # CADfix Command Level Log File
+#     "AWW",         # Ability Write Document
+#     "TEX",         # LaTeX Source Document
+#     "LOG",         # Log File
+#     "FADEIN.TEMPLATE", # Fade In Template
+#     "BF",          # Brainf*ck Source Code File
+#     "KLG",         # KOFIA Log
+#     "IPF",         # OS/2 Help File
+#     "CEC",         # Studio C Alpha Upgrade File
+#     "PWDPL",       # Password Pad Lite Document
+#     "JARVIS",      # Jarvis Subscriber File
+#     "FODT",        # OpenDocument Flat XML Document
+#     "TXT",         # Plain Text File
+#     "RPT",         # Generic Report
+#     "GDOC",        # Google Docs Shortcut
+#     "NFO",         # Warez Information File
+#     "LIS",         # SQR Output File
+#     "GSD",         # General Station Description File
+#     "AIM",         # AIMMS ASCII Model File
+#     "TLB",         # VAX Text Library
+#     "DROPBOX",     # Dropbox Shared Folder Tracker
+#     "ASC",         # Autodesk ASCII Export File
+#     "LST",         # FoxPro Documenting Wizard List
+#     "RFT",         # Revisable Form Text Document
+#     "SCM",         # Schema File
+#     "SDM",         # StarOffice Mail Message
+#     "OPEICO",      # Opeico Text File
+#     "DXB",         # Duxbury Braille File
+#     "IPYNB",       # Jupyter Notebook
+#     "ASC",         # ASCII Text File
+#     "TEXT",        # Plain Text File
+#     "DOCM",        # Microsoft Word Macro-enabled Document
+#     "WPD",         # WordPerfect Document
+#     "TMVX",        # TextMaker Document Template
+#     "EMULECOLLECTION", # eMule Data File
+#     "WPS",         # Microsoft Works Word Processor Document
+#     "OTT",         # OpenDocument Document Template
+#     "HS",          # Java HelpSet File
+#     "BIB",         # Bibliography Document
+#     "_DOCX",       # Renamed Microsoft Word Document
+#     "1ST",         # Readme File
+#     "MD5.TXT",     # Message Digest 5 Hash File
+#     "RTF",         # Rich Text Format File
+#     "BIB",         # BibTeX Bibliography Database
+#     "ERR",         # Error Log File
+#     "BDR",         # Exchange Non-Delivery Report Body File
+#     "DTEX",        # DataTex Document
+#     "TM",          # TeXmacs Document
+#     "WPW",         # WordPerfect Works Document
+#     "GSCRIPT",     # Google Apps Script Shortcut
+#     "FLUID",       # Loop Component
+#     "BWD",         # BanglaWord Document
+#     "KNT",         # KeyNote Note File
+#     "ETF",         # ENIGMA Transportable File
+#     "DM",          # BYOND Dream Maker Code
+#     "ATY",         # Association Type Placeholder
+#     "JNP",         # Java Web Start File
+#     "XY",          # XYWrite Document
+#     "LUF",         # Lipikar Uniform Format File
+#     "TFRPROJ",     # theFrame Project File
+#     "RAD",         # Radar ViewPoint Radar Data
+#     "RIS",         # Research Information Systems Citation File
+#     "ODT"          # OpenDocument Text Document
+# ]
+# # noinspection SpellCheckingInspection
+# CAD_FILE_EXT = [
+#     "BAK",      # AutoCAD Drawing Backup
+#     "AXM",      # FormIt Sketch
+#     "CIR",      # Micro-Cap Schematic
+#     "G",        # FlashForge G-Code File
+#     "BDC",      # West Point Bridge Designer Design File
+#     "CIRCUIT",  # KTechlab Circuit Design File
+#     "PSM",      # Solid Edge Sheet Metal File
+#     "IBA",      # Lectra Clothing Design Pieces File
+#     "SIM",      # SimLab Composer Scene
+#     "DLV",      # CATIA 4 Export File
+#     "SMB",      # Autodesk Shape Manager Binary File
+#     "EPF",      # EAGLE Project
+#     "CPA",      # CADSTAR PCB Archive File
+#     "DSNX",     # RoadEng Location Design Document
+#     "AFS",      # STAAD.foundation Project File
+#     "TCT",      # TurboCAD Drawing Template
+#     "MCX",      # MICRO CADAM-X/6000 Model Data File
+#     "FCSTD1",   # FreeCAD Backup Document
+#     "PLUSH",    # Plushify Project
+#     "MP12",     # Multisim 12 Project
+#     "OPT",      # Opterecenja File
+#     "GSM",      # Graphic Description Language File
+#     "EDF",      # Edificius Project
+#     "DB1",      # Tekla Structures Model File
+#     "FPC",      # FreePCB Printed Circuit Board Layout
+#     "MSM",      # Multisim Circuit Design File
+#     "MC9",      # Mastercam 9 Geometry File
+#     "RTD",      # Robot Structural Analysis Design File
+#     "PSV",      # Pipe System Viewer File
+#     "JVSG",     # Video Surveillance Project
+#     "LCF",      # Archicad Library Container File
+#     "TERX",     # RoadEng Terrain Design Document
+#     "MS14",     # Multisim 14 Circuit Design File
+#     "CAD",      # BobCAD-CAM File
+#     "CATPRODUCT",# CATIA V5 Assembly File
+#     "JOB",      # MetaCAM Nest Job File
+#     "MODEL",    # CATIA 3D Model
+#     "GCODE",    # G-code 3D Printer File
+#     "JT",       # JT Open CAD File
+#     "DC3",      # DesignCAD 3D ASCII Drawing
+#     "CTB",      # Chitubox Sliced 3D Model
+#     "LOGICLY",  # Logicly Circuit
+#     "RSG",      # RaySupreme Graph
+#     "LI3D",     # Live Interior 3D Document
+#     "CIB",      # Luminaire Data File
+#     "3DL",      # Sierra LandDesigner 3D File
+#     "VET",      # Lectra Cutter's Must File
+#     "CAD",      # Autodesk QuickCAD File
+#     "CBDDLP",   # Chitubox Sliced 3D Model
+#     "XV3",      # Lattice XVL Geometry File
+#     "IDE",      # Inventor iFeature
+#     "MTO",      # FastCAM MTO Text File
+#     "AFD",      # Alphacam Flame Drawing
+#     "PC7",      # PowerCADD 7 Drawing File
+#     "DWT",      # AutoCAD Drawing Template
+#     "FZP",      # Fritzing XML Part Description
+#     "CYP",      # Home Design Project
+#     "NC",       # DSTV Numerical Control File
+#     "ASY",      # LTspice Symbol File
+#     "ADI",      # AutoCAD Device-Independent Binary Plotter File
+#     "PAT",      # AutoCAD Hatch Pattern File
+#     "123DX",    # 123D Design Model File
+#     "ICD",      # IronCAD 2D Drawing File
+#     "DES",      # Pro/DESKTOP CAD File
+#     "SAT",      # ACIS SAT 3D Model
+#     "FZB",      # Fritzing Bin File
+#     "PSS",      # AutoCAD Plot Stamp Settings File
+#     "SKF",      # AutoSketch Drawing
+#     "MS13",     # Multisim 13 Circuit Design File
+#     "DST",      # AutoCAD Sheet Set
+#     "GDS",      # Graphic Data System File
+#     "SCH",      # gEDA Schematic File
+#     "EDN",      # EDIF Implementation Netlist File
+#     "JVSGZ",    # Compressed Video Surveillance Project
+#     "MHS",      # Xilinx XPS Hardware Specification File
+#     "PWT",      # AutoCAD Publish To Web Template
+#     "SPT",      # SpeedTree Tree Data File
+#     "SLDASM",   # SolidWorks Assembly
+#     "FCW",      # FastCAD Windows Drawing
+#     "SLDPRT",   # SolidWorks Part
+#     "BLK",      # AutoCAD Block Template File
+#     "SCAD",     # OpenSCAD Script
+#     "CF2",      # Common File Format File
+#     "PHJ",      # PhCNC Project File
+#     "BCD",      # RealView Debugger Board Chip Definition File
+#     "DRU",      # EAGLE Design Rules
+#     "DC2",      # DesignCAD 2D ASCII Drawing
+#     "NWF",      # Navisworks File Set
+#     "DWFX",     # Design Web Format XPS File
+#     "PLN",      # Archicad Solo Project
+#     "NC",       # Mastercam Numerical Control File
+#     "IGS",      # IGES Drawing
+#     "BDL",      # CoCreate Bundle File
+#     "LIN",      # AutoCAD Linetype File
+#     "123D",     # Autodesk 123D Drawing
+#     "STL",      # Stereolithography File
+#     "DSN",      # OrCAD Design File
+# 	"FCStd"
+# ]
 
-ext_classes={'video':VIDEO_EXT,
-             'audio':AUDIO_EXT,
-             'text':TEXT_EXT,
-             'picture':RASTER_IMAGE_EXT,
-             'pixmap':RASTER_IMAGE_EXT,
-             'image':RASTER_IMAGE_EXT,
-             'raster-image':RASTER_IMAGE_EXT,
-             'vector-image':VECTOR_IMAGE_EXT,
-             '3d-model':D3_EXT,
-             'cad':CAD_FILE_EXT
-             }
+# ext_classes={'video':VIDEO_EXT,
+#              'audio':AUDIO_EXT,
+#              'text':TEXT_EXT,
+#              'picture':RASTER_IMAGE_EXT,
+#              'pixmap':RASTER_IMAGE_EXT,
+#              'image':RASTER_IMAGE_EXT,
+#              'raster-image':RASTER_IMAGE_EXT,
+#              'vector-image':VECTOR_IMAGE_EXT,
+#              '3d-model':D3_EXT,
+#              'cad':CAD_FILE_EXT
+#              }
 
-def create_regular_expression(mime_list,re_flags=re.IGNORECASE):
-	"""create_regular_expression from a extension list
-	parameter re_flags: a combination with operator '|' of re.ASCII re.DEBUG
-	re.DOTALL re.IGNORECASE re.LOCALE  re.MULTILINE re.TEMPLATE  re.UNICODE
-	re.VERBOSE"""
-	#DEBUGPRINT(mime_list)
-	exts = [ext for mime in mime_list for ext in ext_classes[mime] ]
-	reg_str='|'.join(exts)
-	#DEBUGPRINT(reg_str)
-	#DEBUGPRINT(r'\.(' + reg_str + r')$')
-	return re.compile(r'\.(' + reg_str + r')$',flags=re_flags)
+# def create_regular_expression(mime_list,re_flags=re.IGNORECASE):
+# 	"""create_regular_expression from a extension list
+# 	parameter re_flags: a combination with operator '|' of re.ASCII re.DEBUG
+# 	re.DOTALL re.IGNORECASE re.LOCALE  re.MULTILINE re.TEMPLATE  re.UNICODE
+# 	re.VERBOSE"""
+# 	#DEBUGPRINT(mime_list)
+# 	exts = [ext for mime in mime_list for ext in ext_classes[mime] ]
+# 	reg_str='|'.join(exts)
+# 	#DEBUGPRINT(reg_str)
+# 	#DEBUGPRINT(r'\.(' + reg_str + r')$')
+# 	return re.compile(r'\.(' + reg_str + r')$',flags=re_flags)
 
 class SelectOnExtension:
-	def __init__(self,extensions=None):
-		self.extensions=set()
-		if extensions:
-			self.add(extensions)
-			self.extensions=extensions
-			
-	def add(self,exts)->None:
+	def __init__(self,*args):
+		self.my_set=set()
+		#DEBUGPRINT(f'__init__ {self.my_set=}')
+		self.add(args)
+		
+	def add(self,*args)->None:
 		"""
-		add a single extension or a list of extensions to test.
+		add a single extension or a list of my_set to test.
 		:param exts: extension or extensions
 		:return: None
 		"""
-		if isinstance(exts,str):
-			exts=[exts]
-		self.extensions=self.extensions.union(exts)
+		#DEBUGPRINT(f'add {self.my_set=}')
+		#DEBUGPRINT(args)
+		for arg in args:
+			if isinstance(arg,str):
+				if arg in extension_dict.keys():
+					#DEBUGPRINT(f'"{arg}" in extension_dict.keys()')
+					union_set=extension_dict[arg]
+					self.my_set=self.my_set.union(union_set)
+					#DEBUGPRINT(f'extension_dict.keys {self.my_set=}')
+				else:
+					self.my_set=self.my_set.union([arg.upper()])
+					#DEBUGPRINT(f'str add {self.my_set=}')
+				continue
+			if isinstance(arg,set):
+				self.my_set=self.my_set.update(arg)
+				#DEBUGPRINT(f'set update{self.my_set=}')
+				continue
+			try:
+				for it in arg:
+					self.add(it)
+			except TypeError as e:
+				print(f'{it=} {e=}')
+				exit(1)
+		#DEBUGPRINT(f'{self.my_set=}')
 		
-	def test(self,path:str)->bool:
+	def check(self,path:str)->bool:
+		#DEBUGPRINT(f'SelectOnExstenion:check("{path}")')
 		period = path.rfind('.')
 		if period < 0:
 			return False
-		ext=path[period+1:]
-		return ext in self.extensions
-		
-# class MagicMime:
-# 	wanted=None
-#
-# 	def __init__(self,mime_list):
-# 		if not self.wanted:
-# 			self.wanted=mime_list
-# 	def check(self,path)->bool:
-# 		"""
-# 		Check if the file is of a mime type in the wanted list
-# 		:param path: full file path
-# 		:return: True if wanted else False
-# 		"""
-#
-#
-MAGIC_FILE="/etc/mailcap"
+		ext=path[period+1:].upper()
+		#DEBUGPRINT (f'{ext} {ext in self.my_set}')
+		return ext in self.my_set
+	
+	def show(self,col=8):
+		count=0
+		row=0
+		for ext in self.my_set:
+			print (f'{ext:10}',end='')
+			count+=1
+			if count > col:
+				count=0
+				print()
+				row+=1
+				if row > 5:
+					print()
+					row=0
+					
 
-def show_mime_types(mf=MAGIC_FILE):
+MAGIC_FILE="/etc/mailcap"
+#application/vnd.sun.xml.writer.template; soffice --nologo --writer %s; edit=soffice --nologo --writer %s; description="OpenOffice.org Text Document Template"; nametemplate=%s.stw
+#audio/mpeg; alsaplayer -i gtk2 '%s'; test=test "$DISPLAY" != ""; nametemplate=%s.mp3
+def collect_mime_types(mf=MAGIC_FILE,encoding=None):
 	try:
 		with open(mf,'r') as f:
 			data=f.read()
@@ -810,15 +834,66 @@ def show_mime_types(mf=MAGIC_FILE):
 		print(f'Reading: "{mf}" failed.')
 		return
 	lines=data.split('\n')
+	if encoding:
+		return collect_mime_catagory(lines,encoding)
 	mime_set={ mime.split('/')[0] for mime in lines if mime and mime[0] != '#'}
 	mime_list=list(mime_set)
 	mime_list.sort()
-	print(f'Base Mime Types in: "{mf}".')
-	comma=''
+	return mime_list
+
+def show_mime_types(mf=MAGIC_FILE,encoding=None):
+	max_space=14
+	mime_list = collect_mime_types(mf,encoding)
+	if encoding:
+		print(f'\nEncodings of "{encoding}" in "{mf}":\n')
+		row = 0
+		col = 0
+		for mime in mime_list:
+			mime = f'/{mime}'
+			print(f'{mime:{max_space}}',end='')
+			col+=1
+			xl=max_space-len(mime)
+			if xl <= 0:
+				print(f'{" ":{max_space+xl}}',end='')
+				col+=1
+			if col > 4:
+				col=0
+				row+=1
+				print()
+				if row > 4:
+					row=0
+					print()
+		print()
+		return
+	column=0
+	print(f'\nGeneral mime types in "{mf}":\n')
 	for mime in mime_list:
-		print(f'{comma}"{mime}"',end='')
-		comma=',\n'
+		mime = f'"{mime}"'
+		print (f'{mime:{max_space}}',end='')
+		column+=1
+		xl=max_space-len(mime)
+		if xl <= 0:
+			print(f'{" ":{max_space+xl}}',end='')
+			column+=1
+		if column > 4:
+			column=0
+			print()
 	print()
+	
+def collect_mime_catagory(lines,encoding):
+	cat_set=set()
+	encoding=end_slash(encoding)
+	lcat=len(encoding)
+	for line in lines:
+		if line[:lcat] != encoding:
+			continue
+		semicolon=line.find(';')
+		cat=line[lcat:semicolon]
+		cat_set.add(cat)
+	cat_list=list(cat_set)
+	cat_list.sort()
+	#DEBUGPRINT(f'{cat_list=}')
+	return cat_list
 	
 class MagicMime:
 	"""
@@ -827,12 +902,24 @@ class MagicMime:
 	"""
 	wanted=[]
 
-	def __init__(self,mime_list):
+	def __init__(self,mimes):
+		"""
+		read a list of mime types to check against if the wanted list empty
+		:param mime_list: list of mime types
+		"""
+		#DEBUGPRINT(f'MagicMime("{mimes}"')
 		if self.wanted == [] :
-			for mime in mime_list:
-				self.wanted.append((mime,len(mime)))
+			self.add(mimes)
 		self.diagnose=''
 		self.path=''
+		DEBUGPRINT(f'{self.wanted=}')
+		#DEBUGEXIT(0)
+		
+	def add(self,mimes):
+		DEBUGPRINT(f'add {mimes=}')
+		for mime in mimes:
+			DEBUGPRINT(f'add {mime=}')
+			self.wanted.append(mime)
 			
 	def check(self,path)->bool:
 		"""
@@ -840,33 +927,32 @@ class MagicMime:
 		:param path: full file path
 		:return: True if wanted else False
 		"""
-		self.path=lu.bytes_to_utf8(path)
+		self.path=lu.bytes_to_utf8(path) # make sure path is a str
 		diagnose = subprocess.check_output(["file","-i", self.path])
-		self.diagnose = lu.bytes_to_utf8(diagnose)
+		self.diagnose = lu.bytes_to_utf8(diagnose) # make sure diagnose a str
 		mime=self.mime_tag()
+		DEBUGPRINT(f'{mime=}')
 		for want in self.wanted:
-			#DEBUGPRINT(f'{want[0]} == {mime[:want[1]]}')
-			if want[0] == mime[:want[1]]:
+			if want in mime:
+				DEBUGPRINT(f'{want} in {mime}')
 				return True
 		return False
 		
 	def mime_tag(self):
-		#print(f'{self.diagnose=}')
+		#self.diagnose= "/home/mememe/MUZIEK/song.MP3: audio/mpeg; charset=binary"
 		split_collon = self.diagnose.split(':')
-		#print(f'{split_collon=}')
+		# split_collon =  ["/home/mememe/MUZIEK/song.MP3"," audio/mpeg; charset=binary"]
 		split_semmi =split_collon[1].split( ';')
-		#print(f'{split_semmi=}')
-		return split_semmi[0].strip()
+		# split_semmi = [ " audio/mpeg"," charset=binary"]
+		return split_semmi[0].strip() # "audio/mpeg"
 	
 	def show_result(self):
 		print(f'{self.diagnose}: "{os.path.basename(self.path)}"')
 
 if __name__ == '__main__':
-    print("No Tests Defined")
-    # reg_str=string_extensions(VIDEO_EXT)
-    # print(reg_str)
-    # reg=create_regular_expression(reg_str)
-    # print(reg)
-    
+	#tester=SelectOnExtension('mp3','wav','audio',['txt','raster_image'])
+	show_mime_types()
+	show_mime_types(encoding='audio')
+	
 
    

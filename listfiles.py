@@ -3,10 +3,13 @@ import argparse
 import os
 import re
 from collections import deque
+from time import sleep
 
 import listutils as lu
 import extensions as ext
 
+
+DEBUGEXIT=exit
 
 FILTEROUT=['/Cookies/','/Microsoft/','/Windows/','/Cache','#.*#$','\.lnk$',
            '\.tmp$','\.log$','\.err$','~$','/AppData/',
@@ -27,11 +30,11 @@ parser.add_argument('scandir',
                     action='store'
                     )
 #x x x x x x x x x x x x x x x x
-exts=[str(K) for K in ext.ext_classes.keys()]
-extss=",".join(exts)
+ext_str=','.join(ext.extension_dict.keys())
+
 parser.add_argument('-x','--extension',
-                    help='select files on extensions of or more types: ' + extss,
-                    choices=ext.ext_classes.keys(),
+                    help='select files by extension individual or one of these classes: ' + ext_str,
+                    #choices=ext.extension_dict.keys(),
                     nargs='*',
                     metavar='',
                     action='store'
@@ -39,7 +42,7 @@ parser.add_argument('-x','--extension',
 #M M M M M M M M M M M M M M M M M
 parser.add_argument('-M','--mime-type',
                     help='select files by a list of mime types the "file -i" command knows.',
-                    choices=ext.ext_classes.keys(),
+                    #choices=ext.ext_classes.keys(),
                     nargs='*',
                     metavar='',
                     action='store'
@@ -94,8 +97,11 @@ parser.add_argument('-s', '--smaller',
                     )
 #show-mime show-mime show-mime show-mime
 parser.add_argument('--show-mime',
-                    help=f'Show the basic mime types in "{ext.MAGIC_FILE}" ',
-                    action='store_true',
+                    help=f'Show "general" mime types or encodings of given "general mime type" "{ext.MAGIC_FILE}" ',
+                    #default=None,
+                    metavar='',
+                    action='store',
+                    nargs='?'
                     )
 args = parser.parse_args()
 
@@ -103,11 +109,13 @@ class FileListing:
     initiated=False
     excl_re=None
     incl_re=None
-    ext_re =None
+    ext_select =None
     check_size=False
     bigger =1e8
     smaller=0
     magic=None
+    tumble=lu.Tumbler()
+    
     def __init__(self,args,directory,output_file):
         """
         List filtered files to the output file.
@@ -133,6 +141,8 @@ class FileListing:
         data+='\n'
         try:
             self.outp.write(data)
+            self.tumble.step()
+            
         except OSError as e:
             print(f'Writing: "{data}" failed.')
             print(f'errno {e.errno} "{e.strerror}"')
@@ -158,11 +168,12 @@ class FileListing:
         if excl_str:
             self.excl_re=re.compile(excl_str)
         
-        # construct the regular expression that selects on extensions
+        # construct extension checker
         if sa.extension:
-            self.magic=ext.MagicMime(sa.extension)
-            self.ext_re=ext.create_regular_expression(sa.extension)
-            
+            self.ext_select=ext.SelectOnExtension(sa.extension)
+            # self.ext_select.show()
+            # DEBUGEXIT(0)
+        
         # construct the regular expression that filters for paths with a matching substring
         if sa.match:
             match_str="|".join(sa.match)
@@ -176,10 +187,54 @@ class FileListing:
         if sa.bigger:
             self.bigger=lu.kilo_mega(sa.bigger)
             self.check_size=True
+  
         if sa.smaller:
             self.smaller=lu.kilo_mega(sa.smaller)
             self.check_size=True
         
+    
+    def filter(self)->bool:
+        """
+        test the entry <DirEntry> against the selection criteria.
+        :return: True if all tests are passed with success.
+        """
+        cur=self.current_entry
+        if self.check_size:
+            size=cur.stat().st_size
+            if size < self.bigger or size > self.smaller:
+                return False
+        if isinstance(cur.path,bytes):
+            try:
+                path = cur.path.decode(encoding ='utf-8', errors = 'ignore')
+            except UnicodeDecodeError as e:
+                print(f'UnicodeDecodeError {e}')
+                print(f'May be "unicode_broom.py" can solve the problem.')
+                print(f'Bee careful with your data always backup in time.')
+                exit(1)
+        else:
+            path=cur.path
+           
+        if self.excl_re:
+            if self.excl_re.search(path):
+                #DEBUGPRINT(f'excl_re fired: "{path}"')
+                return False
+   
+        if self.ext_select:
+            if not self.ext_select.check(path):
+                #DEBUGPRINT(f'not ext_re fired: "{path}"')
+                return False
+        
+        if self.magic:
+            if not self.magic.check(path):
+                return False
+            
+        if self.incl_re:
+            if not self.incl_re.search(path):
+                #DEBUGPRINT(f'not incl_re fired: "{path}"')
+                return False
+        self.string_path=path
+        return True
+    
     def walk(self):
         dir_stack=deque()
         push=dir_stack.append
@@ -201,54 +256,15 @@ class FileListing:
                 if self.filter():
                     self.write() # writes self.string_path
 
-    def filter(self)->bool:
-        """
-        test the entry <DirEntry> against the selection criteria.
-        :return: True if all tests are passed with success.
-        """
-        cur=self.current_entry
-        if self.check_size:
-            size=cur.stat().st_size
-            if size < self.bigger or size > self.smaller:
-                return False
-        if isinstance(cur.path,bytes):
-            try:
-                path = cur.path.decode(encoding ='utf-8', errors = 'ignore')
-            except UnicodeDecodeError as e:
-                print(f'UnicodeDecodeError {e}')
-                print(f'May be "unicode_broom.py" can solve the problem.')
-                print(f'Bee careful with your data always backup in time.')
-                exit(1)
-        else:
-            path=cur.path
-            
-            
-        
-        if self.excl_re:
-            if self.excl_re.search(path):
-                #DEBUGPRINT(f'excl_re fired: "{path}"')
-                return False
-   
-        if self.ext_re:
-            if not self.ext_re.search(path):
-                #DEBUGPRINT(f'not ext_re fired: "{path}"')
-                return False
-        
-        if self.magic:
-            if not self.magic.check(path):
-                return False
-            
-        if self.incl_re:
-            if not self.incl_re.search(path):
-                #DEBUGPRINT(f'not incl_re fired: "{path}"')
-                return False
-        self.string_path=path
-        return True
  
 def main() -> None:
     
     if args.show_mime:
-        ext.show_mime_types()
+        low= args.show_mime.lower()
+        if low =='general':
+            ext.show_mime_types()
+        else:
+            ext.show_mime_types( encoding=low)
     elif not args.scandir:
         parser.print_help()
         return

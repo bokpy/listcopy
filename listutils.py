@@ -6,6 +6,7 @@ import os
 import sys
 import re
 from idlelib.iomenu import errors
+from time import sleep
 
 DATA_BEGIN_MARKER='-------->Data_Begin_Marker-------->'
 DATA_END_MARKER='<--------Data_End_Marker<--------'
@@ -362,5 +363,30 @@ def main() -> None:
 	print (f'128k {kilo_mega("128k")}')
 	pass
 
+class Tumbler:
+	def __init__(self,tumblers="|/-\\"):
+		self.tumble=[i for i in tumblers]
+		self.cur=0
+		self.max=len(self.tumble)
+		
+	def __iter__(self):
+		return self
+	
+	def __next__(self):
+		self.cur+=1
+		self.cur%=self.max
+		return self.tumble[self.cur]
+	
+	def step(self):
+		i=self.__next__()
+		print(f'\b{i}',end='')
+		sys.stdout.flush()
+		
 if __name__ == '__main__':
+	tumble=Tumbler('ABCDEFGH')
+	for i in tumble:
+		sleep(0.2)
+		print(f'\b{i}',end='')
+		sys.stdout.flush()
+		
 	main()

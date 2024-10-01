@@ -1,8 +1,12 @@
 # This works for now 29 sept 2024.
 # When "https://fileinfo.com/filetypes/" gets redesigned the script needs to be adopted.
 # A more robust parsing is maybe nicer.
+
 # noinspection SpellCheckingInspection
-text_set = (
+set_text = set()
+
+# noinspection SpellCheckingInspection
+set_text = {
 	'SMF' , # StarMath Formula File
 	'STY' , # LaTeX Style
 	'TNL' , # Super Mario Maker Course Thumbnail
@@ -365,10 +369,14 @@ text_set = (
 	'GMD' , # GroupMail Message
 	'MCW' , # MacWrite II Document
 	'DOX' , # MultiMate Document
-)
+}
+
 
 # noinspection SpellCheckingInspection
-data_set = (
+set_data = set()
+
+# noinspection SpellCheckingInspection
+set_data = {
 	'TT20' , # TurboTax Canada 2020 Tax Return
 	'LDF' , # SQL Server Transaction Log File
 	'TXD' , # Game Texture Dictionary
@@ -869,10 +877,14 @@ data_set = (
 	'ITM' , # iThink Model File
 	'WB2' , # Corel Quattro Pro File
 	'IVT' , # Beyond 20/20 Table File
-)
+}
+
 
 # noinspection SpellCheckingInspection
-audio_set = (
+set_audio = set()
+
+# noinspection SpellCheckingInspection
+set_audio = {
 	'SEQUENCE' , # Online Sequencer Sequence
 	'SVP' , # Synthesizer V Project
 	'FUR' , # Furnace Module
@@ -1373,10 +1385,14 @@ audio_set = (
 	'CPT' , # DTS Compact Audio File
 	'A2T' , # Adlib Tracker II Tiny Module File
 	'VMF' , # Vocaltec Media File
-)
+}
+
 
 # noinspection SpellCheckingInspection
-video_set = (
+set_video = set()
+
+# noinspection SpellCheckingInspection
+set_video = {
 	'STR' , # YouTube Livestream Recording
 	'TTML' , # Timed Text Markup Language Subtitles File
 	'RXR' , # RecordXR Recording
@@ -1877,10 +1893,14 @@ video_set = (
 	'PMP' , # PlayStation Portable Movie
 	'VFT' , # VideoStudio Filter File
 	'VSH' , # VideoStudio HTML5 Project
-)
+}
+
 
 # noinspection SpellCheckingInspection
-image_3d_set = (
+set_3d_image = set()
+
+# noinspection SpellCheckingInspection
+set_3d_image = {
 	'BBMODEL' , # Blockbench 3D Model
 	'HIPNC' , # Houdini Apprentice File
 	'GH' , # Grasshopper Binary Definition
@@ -2302,10 +2322,14 @@ image_3d_set = (
 	'ANIM' , # Antibody Animation File
 	'RIG' , # Antibody Model Rig File
 	'RAY' , # Rayshade Image
-)
+}
+
 
 # noinspection SpellCheckingInspection
-raster_image_set = (
+set_raster_image = set()
+
+# noinspection SpellCheckingInspection
+set_raster_image = {
 	'BIF' , # Ventana Whole Slide Image
 	'JXL' , # JPEG XL Image
 	'PXD' , # Pixelmator Pro Image
@@ -2806,10 +2830,14 @@ raster_image_set = (
 	'IC2' , # Medium Resolution Imagic Graphics File
 	'IC1' , # Low Resolution Imagic Graphics File
 	'IPHOTOPROJECT' , # iPhoto Print Project
-)
+}
+
 
 # noinspection SpellCheckingInspection
-vector_image_set = (
+set_vector_image = set()
+
+# noinspection SpellCheckingInspection
+set_vector_image = {
 	'SVG' , # Scalable Vector Graphic
 	'SVGZ' , # Compressed SVG File
 	'VSTM' , # Visio Macro-Enabled Drawing Template
@@ -3021,10 +3049,14 @@ vector_image_set = (
 	'CWT' , # ClarisWorks Texture File
 	'IGT' , # iGrafx Document Template
 	'NAP' , # NAP Metafile
-)
+}
+
 
 # noinspection SpellCheckingInspection
-page_layout_set = (
+set_page_layout = set()
+
+# noinspection SpellCheckingInspection
+set_page_layout = {
 	'FIG' , # Figma Design
 	'CHAI' , # Chaimera Artwork File
 	'DRMZ' , # Drumlin Fully Secure Mobile PDF File
@@ -3339,10 +3371,14 @@ page_layout_set = (
 	'ADF' , # Actual Drawing File
 	'PDZ' , # ProntoDoc for Word Structured Text Document Template
 	'SBPAGE' , # Storybook Creator 4 Page
-)
+}
+
 
 # noinspection SpellCheckingInspection
-spreadsheet_set = (
+set_spreadsheet = set()
+
+# noinspection SpellCheckingInspection
+set_spreadsheet = {
 	'PRESTO' , # Presto Project Spreadsheet
 	'FODS' , # OpenDocument Flat XML Spreadsheet
 	'XLSX' , # Microsoft Excel Spreadsheet
@@ -3412,10 +3448,14 @@ spreadsheet_set = (
 	'WKI' , # Lotus 2 Worksheet
 	'WKU' , # Lotus 1-2-3 Spreadsheet
 	'WLS' , # 602Tab Spreadsheet
-)
+}
+
 
 # noinspection SpellCheckingInspection
-database_set = (
+set_database = set()
+
+# noinspection SpellCheckingInspection
+set_database = {
 	'TE' , # Textease CT Database File
 	'TRM' , # Oracle Trace Map File
 	'NMONEY' , # Denaro Account
@@ -3661,10 +3701,14 @@ database_set = (
 	'FCD' , # First Choice Database
 	'KEXIS' , # Kexi Database Shortcut File
 	'R2D' , # Borland Reflex Database
-)
+}
+
 
 # noinspection SpellCheckingInspection
-executable_set = (
+set_executable = set()
+
+# noinspection SpellCheckingInspection
+set_executable = {
 	'APK' , # Android Package File
 	'JAR' , # Java Archive
 	'AHK' , # AutoHotkey Script
@@ -3688,13 +3732,14 @@ executable_set = (
 	'AIR' , # Adobe AIR Installation Package
 	'XAP' , # Silverlight Application Package
 	'APP' , # macOS Application Bundle
-	'MPK' , # Makino Package
-	'SHORTCUT' , # Apple Shortcuts Shortcut
-	'SCPT' , # AppleScript Script File
-	'FBA' , # Fitbit OS App Package
 	'WIDGET' , # Microsoft Windows Mobile Widget
-	'RBF' , # LEGO MINDSTORMS EV3 Robot Brick File
+	'FBA' , # Fitbit OS App Package
 	'X86_64' , # 64-bit Linux Executable File
+	'RBF' , # LEGO MINDSTORMS EV3 Robot Brick File
+	'SHORTCUT' , # Apple Shortcuts Shortcut
+	'MPK' , # Makino Package
+	'BA_' , # Renamed BAT File
+	'SCPT' , # AppleScript Script File
 	'AC' , # Autoconf Script
 	'COM' , # DOS Command File
 	'XLM' , # Microsoft Excel Macro
@@ -3708,10 +3753,9 @@ executable_set = (
 	'SCRIPT' , # Generic Script File
 	'EX5' , # MetaTrader 5 Program File
 	'COMMAND' , # Terminal Command File
-	'CELX' , # Celestia Script
 	'EBS2' , # E-Run 2.0 Script File 
+	'CELX' , # Celestia Script
 	'SCB' , # Scala Published Script
-	'BA_' , # Renamed BAT File
 	'PS1' , # Windows PowerShell Cmdlet File
 	'PAF.EXE' , # PortableApps.com Program File
 	'SCAR' , # SCAR Script
@@ -3723,8 +3767,8 @@ executable_set = (
 	'ACTION' , # Automator Action
 	'TCP' , # Tally Compiled Program File
 	'GM9' , # GodMode9 Script
-	'SHB' , # Windows Document Shortcut
 	'ACC' , # GEM Accessory File
+	'SHB' , # Windows Document Shortcut
 	'RFU' , # Remote Firmware Update
 	'HTA' , # HTML Application
 	'CGI' , # Common Gateway Interface Script
@@ -3751,6 +3795,7 @@ executable_set = (
 	'IIM' , # iMacro Macro File
 	'PHAR' , # PHP Archive
 	'89K' , # TI-89 Application
+	'PYC' , # Python Compiled File
 	'SERVER' , # MySQL Server Script
 	'A7R' , # Authorware 7 Runtime File
 	'MEL' , # Maya Embedded Language Script
@@ -3762,7 +3807,6 @@ executable_set = (
 	'FPI' , # FPS Creator Intelligence Script
 	'GPE' , # GP2X Video Game
 	'WCM' , # WordPerfect Macro
-	'PYC' , # Python Compiled File
 	'JS' , # JScript Executable Script
 	'EX4' , # MetaTrader 4 Program
 	'JSF' , # Java Script Command File
@@ -3772,10 +3816,10 @@ executable_set = (
 	'EXE1' , # Renamed EXE File
 	'EAR' , # Java Enterprise Archive File
 	'ICD' , # SafeDisc Encrypted Program
-	'SNAP' , # Snap Application Package
 	'VEXE' , # Virus Executable File
-	'AZW2' , # Kindle Active Content App File
+	'SNAP' , # Snap Application Package
 	'CEL' , # Celestia Script File
+	'AZW2' , # Kindle Active Content App File
 	'ROX' , # Actuate Report Object Executable File
 	'ZL9' , # ZoneAlarm Quarantined EXE File
 	'RGS' , # Registry Script
@@ -3783,120 +3827,124 @@ executable_set = (
 	'EPK' , # LG Firmware Package
 	'PAF' , # Portable Application Installer File
 	'MS' , # Maxwell Script
-	'TIAPP' , # TiTanium App
-	'FRS' , # Flash Renamer Script
+	'ATMX' , # Automation Anywhere Task
 	'PYO' , # Python Optimized Code
+	'HMS' , # HostMonitor Script File
+	'89Z' , # TI-89 Program
+	'SREC' , # S-record File
+	'FRS' , # Flash Renamer Script
+	'TIAPP' , # TiTanium App
+	'APPLESCRIPT' , # AppleScript File
+	'UVM' , # UnitVM Executable File
 	'OTM' , # Outlook Macro File
 	'MSL' , # Magick Scripting Language File
-	'UVM' , # UnitVM Executable File
-	'APPLESCRIPT' , # AppleScript File
-	'SREC' , # S-record File
-	'ATMX' , # Automation Anywhere Task
-	'89Z' , # TI-89 Program
-	'HMS' , # HostMonitor Script File
 	'ACTC' , # Action(s) Collection File
-	'MRP' , # Mythroad Platform File
 	'N' , # Neko Bytecode File
+	'MRP' , # Mythroad Platform File
 	'WIDGET' , # Yahoo! Widget
-	'CSH' , # C Shell Script
-	'MRC' , # mIRC Script File
 	'WIZ' , # Microsoft Wizard File
+	'CSH' , # C Shell Script
 	'BEAM' , # Compiled Erlang File
+	'MRC' , # mIRC Script File
 	'PRG' , # Program File
+	'SPR' , # FoxPro Generated Screen File
+	'CYW' , # Rbot.CYW Worm File
+	'SCT' , # Windows Scriptlet
 	'OSX' , # PowerPC Executable File
 	'MCR' , # JitBit Macro Recorder Macro
-	'SCT' , # Windows Scriptlet
-	'CYW' , # Rbot.CYW Worm File
-	'SPR' , # FoxPro Generated Screen File
-	'MCR' , # Tecplot Macro
 	'EBM' , # EXTRA! Basic Macro
-	'TMS' , # Telemate Script
+	'MCR' , # Tecplot Macro
 	'TIPA' , # TrollStore IPA File
-	'YGH' , # YGH Trojan Executable
+	'TMS' , # Telemate Script
+	'FAS' , # QuickSilver Fast Save Lisp File
 	'PRG' , # GEM Application
 	'FKY' , # FoxPro Macro
 	'XQT' , # SuperCalc Macro File
-	'FAS' , # QuickSilver Fast Save Lisp File
+	'YGH' , # YGH Trojan Executable
 	'APP' , # Symbian OS Application
-	'MXE' , # Macro Express Playable Macro
 	'ACTM' , # AutoCAD Action Macro File
 	'UDF' , # Microsoft Excel User-defined Function
+	'MXE' , # Macro Express Playable Macro
+	'SEED' , # Linux Preseed File
+	'IPK' , # webOS TV Application
 	'KIX' , # KiXtart Script File
 	'KX' , # KiXtart Tokenized Script File
-	'IPK' , # webOS TV Application
-	'SEED' , # Linux Preseed File
 	'VBSCRIPT' , # Visual Basic Script
 	'APP' , # FoxPro Generated Application
 	'EZS' , # EZ-R Stats Batch Script
 	'THM' , # Thermwood Macro File
 	'LO' , # Interleaf Compiled Lisp File
 	'VBE' , # VBScript Encoded Script File
-	'E_E' , # Renamed EXE File
 	'GS' , # Geosoft Script
+	'E_E' , # Renamed EXE File
 	'JSE' , # JScript Encoded File
-	'SCPTD' , # AppleScript Script Bundle
-	'PRC' , # Palm Resource Code File
 	'HPF' , # HP9100A Program File
 	'PRG' , # Commander X16 Program
-	'XYS' , # XYplorer Script File
-	'MS' , # 3ds Max Script
-	'DMC' , # Medical Manager Script
-	'MHM' , # Microsoft Hardware Macro
-	'SCA' , # Scala Script File
-	'WPK' , # WordPerfect Macro
-	'EXZ' , # Zipped Executable File
-	'S2A' , # SEAL2 Application
 	'PXO' , # LG Mobile Phone Executable File
 	'LS' , # LightWave LScript Source Code
+	'MS' , # 3ds Max Script
+	'DMC' , # Medical Manager Script
+	'SCPTD' , # AppleScript Script Bundle
+	'EXZ' , # Zipped Executable File
+	'PRC' , # Palm Resource Code File
+	'SCA' , # Scala Script File
+	'S2A' , # SEAL2 Application
+	'MHM' , # Microsoft Hardware Macro
+	'WPK' , # WordPerfect Macro
+	'XYS' , # XYplorer Script File
 	'ITA' , # VTech InnoTab Application File
 	'EHAM' , # ExtraHAM Executable File
 	'QIT' , # QIT Trojan Horse File
-	'ES' , # SageCRM Script File
 	'ARSCRIPT' , # ArtRage Script
+	'ES' , # SageCRM Script File
 	'RBX' , # Rembo-C Compiled Script
-	'MEM' , # Macro Editor Macro
 	'SAPK' , # SICK AppPool Application
+	'MEM' , # Macro Editor Macro
 	'WSF' , # Windows Script File
 	'EBACMD' , # EBA Command Center Data File
+	'MAM' , # Microsoft Access Macro
 	'NCL' , # NirCmd Script File
-	'DXL' , # Rational DOORS Script
 	'UPX' , # Ultimate Packer for eXecutables File
 	'KSH' , # Unix Korn Shell Script
-	'MAM' , # Microsoft Access Macro
-	'HAM' , # HAM Executable File
+	'DXL' , # Rational DOORS Script
 	'BTM' , # 4DOS Batch File
+	'HAM' , # HAM Executable File
 	'MIO' , # MioEngine Application File
+	'GPU' , # GP2X Utility Program
 	'IPF' , # SMS Installer Script
 	'VDO' , # Heathen Virus File
-	'GPU' , # GP2X Utility Program
 	'EXOPC' , # ExoPC Application
 	'DS' , # TWAIN Data Source
 	'MAC' , # Application Macro File
 	'SBS' , # SPSS Script
+	'RFS' , # Reflection FTP Client Script
 	'CFS' , # CFS Console Program
 	'ASB' , # Alphacam Stone VB Macro File
 	'STS' , # #TASK Script File
-	'RFS' , # Reflection FTP Client Script
+	'QPX' , # Visual FoxPro Compiled Query Program
 	'WPM' , # WordPerfect Macro File
+	'RPG' , # DTPS Robot Program
+	'P' , # MATLAB P-Code File
+	'AFMACRO' , # Affinity Photo Macro File
+	'PVD' , # Instalit Script
 	'AFMACROS' , # Affinity Photo Macros File
 	'UW8' , # MicroW8 Cartridge File
 	'MLAPPINSTALL' , # MATLAB App Installation Package
-	'RPG' , # DTPS Robot Program
-	'P' , # MATLAB P-Code File
-	'PVD' , # Instalit Script
 	'PYZ' , # Python Application Zip File
-	'QPX' , # Visual FoxPro Compiled Query Program
-	'AFMACRO' , # Affinity Photo Macro File
 	'ORE' , # Ore Executable File
 	'EZT' , # EZT Malicious Worm File
-	'SMM' , # Ami Pro Macro
 	'MAMC' , # Murgee Auto Mouse Click Script
 	'73P' , # TI-73 Program
+	'SMM' , # Ami Pro Macro
 	'BNS' , # Compiled Rabbit Network Script
-)
+}
+
 
 # noinspection SpellCheckingInspection
-game_set = (
+set_game = set()
+
+# noinspection SpellCheckingInspection
+set_game = {
 	'U8' , # Mario Kart Wii Archive
 	'OSR' , # osu! Replay File
 	'BNS' , # Portal Bonus Map Script
@@ -4397,10 +4445,14 @@ game_set = (
 	'UT2' , # Unreal Tournament Map
 	'VRMANIFEST' , # SteamVR Manifest
 	'NSBCA' , # Nintendo DS Model Animation File
-)
+}
+
 
 # noinspection SpellCheckingInspection
-cad_set = (
+set_cad = set()
+
+# noinspection SpellCheckingInspection
+set_cad = {
 	'BAK' , # AutoCAD Drawing Backup
 	'G' , # FlashForge G-Code File
 	'CIR' , # Micro-Cap Schematic
@@ -4769,10 +4821,14 @@ cad_set = (
 	'FCD' , # FastCAD DOS Drawing
 	'CMP' , # Generic CADD Component File
 	'PCA' , # Archicad Teamwork Draft Archive
-)
+}
+
 
 # noinspection SpellCheckingInspection
-gis_set = (
+set_gis = set()
+
+# noinspection SpellCheckingInspection
+set_gis = {
 	'GMAP' , # Garmin Map File
 	'NM2' , # Navitel Map
 	'SP3' , # NGS SP3 File
@@ -4953,10 +5009,14 @@ gis_set = (
 	'COR' , # Trimble Corrected SSF File
 	'WFD' , # Wayfinder Map File
 	'DVC' , # IDRISI Vector Definition File
-)
+}
+
 
 # noinspection SpellCheckingInspection
-web_set = (
+set_web = set()
+
+# noinspection SpellCheckingInspection
+set_web = {
 	'ASTX' , # Active Server Template Extended File
 	'SCSS' , # Sass Cascading Style Sheet
 	'GMI' , # Gemtext Document
@@ -5226,10 +5286,14 @@ web_set = (
 	'MOZ' , # Mozilla Cache File
 	'ARC' , # Internet Archive Web Archive
 	'FCGI' , # FastCGI File
-)
+}
+
 
 # noinspection SpellCheckingInspection
-plugin_set = (
+set_plugin = set()
+
+# noinspection SpellCheckingInspection
+set_plugin = {
 	'APLG' , # Audials Plug-in
 	'AMXX' , # AMX Mod X Plugin File
 	'MILK' , # MilkDrop Winamp Plug-in Preset
@@ -5463,10 +5527,14 @@ plugin_set = (
 	'EXV' , # Adobe Extension Script
 	'Q7Q' , # India Ink Photoshop Plug-in
 	'Q4Q' , # Solar Cell Photoshop Plug-in
-)
+}
+
 
 # noinspection SpellCheckingInspection
-font_set = (
+set_font = set()
+
+# noinspection SpellCheckingInspection
+set_font = {
 	'VFB' , # FontLab Studio Font File
 	'PFA' , # Printer Font ASCII File
 	'FNT' , # Windows Font File
@@ -5528,10 +5596,14 @@ font_set = (
 	'FEA' , # AFDKO Feature Definitions File
 	'PFT' , # ChiWriter Printer Font
 	'SFT' , # ChiWriter Screen Font
-)
+}
+
 
 # noinspection SpellCheckingInspection
-system_set = (
+set_system = set()
+
+# noinspection SpellCheckingInspection
+set_system = {
 	'RMT' , # Router Firmware File
 	'ADMX' , # Group Policy Administrative Template File
 	'VGA' , # VGA Display Driver
@@ -5854,10 +5926,14 @@ system_set = (
 	'DIFFBASE' , # Windows Diagnostics Tracking Diffbase File
 	'RVP' , # Sharp Blu-ray Player Firmware File
 	'IM4M' , # IMG4 Manifest
-)
+}
+
 
 # noinspection SpellCheckingInspection
-settings_set = (
+set_settings = set()
+
+# noinspection SpellCheckingInspection
+set_settings = {
 	'GXT' , # Grand Theft Auto Text File
 	'STB' , # AutoCAD Plot Style Table File
 	'STYLE' , # SketchUp Style
@@ -6358,10 +6434,14 @@ settings_set = (
 	'CPS' , # Captivate Styles File
 	'CLR' , # CryptLoad Router Information File
 	'MSW' , # Painter Color Mixer Swatches
-)
+}
+
 
 # noinspection SpellCheckingInspection
-encoded_set = (
+set_encoded = set()
+
+# noinspection SpellCheckingInspection
+set_encoded = {
 	'BHX' , # BinHex Encoded File
 	'ECD' , # Encrypted Cryptee Document
 	'KDE' , # KryptoStorage Container File
@@ -6655,10 +6735,14 @@ encoded_set = (
 	'EXTR' , # COW App Extractor File
 	'HBX' , # BinHex Encoded File
 	'LXV' , # JumpDrive Secure II Vault
-)
+}
+
 
 # noinspection SpellCheckingInspection
-compressed_set = (
+set_compressed = set()
+
+# noinspection SpellCheckingInspection
+set_compressed = {
 	'MINT' , # Linux Mint Installer File
 	'ZHELP' , # Ziphelp Package
 	'B6Z' , # B6Z Archive
@@ -7019,10 +7103,14 @@ compressed_set = (
 	'SBX' , # SeqBox Container File
 	'SQZ' , # The Master Genealogist Backup Project
 	'XFP' , # FormsForWeb Extensible Form Package
-)
+}
+
 
 # noinspection SpellCheckingInspection
-disk_image_set = (
+set_disk_image = set()
+
+# noinspection SpellCheckingInspection
+set_disk_image = {
 	'VFD' , # Virtual Floppy Disk
 	'DMG' , # Apple Disk Image
 	'ISO' , # Disc Image File
@@ -7243,10 +7331,14 @@ disk_image_set = (
 	'UFS' , # FreeBSD Unix File System File
 	'K3B' , # K3b Disk Burning Project File
 	'TAP' , # Oric Tape Image
-)
+}
+
 
 # noinspection SpellCheckingInspection
-developer_set = (
+set_developer = set()
+
+# noinspection SpellCheckingInspection
+set_developer = {
 	'AWK' , # AWK Script
 	'APPXBUNDLE' , # Windows App Bundle
 	'UNITY' , # Unity Scene File
@@ -7747,10 +7839,14 @@ developer_set = (
 	'JPX' , # JBuilder Project
 	'GMD' , # Game Maker Program Code
 	'R' , # REBOL Script
-)
+}
+
 
 # noinspection SpellCheckingInspection
-backup_set = (
+set_backup = set()
+
+# noinspection SpellCheckingInspection
+set_backup = {
 	'IV2I' , # Norton Ghost Incremental Virtual Volume Image
 	'SPASS' , # Samsung Pass Backup
 	'SMEM' , # Smart Switch Text Message Backup
@@ -8074,10 +8170,14 @@ backup_set = (
 	'J01' , # Akeeba Multi-part Backup Archive
 	'OBK' , # OrangeCD Backup File
 	'SCBACKUP' , # Secret Calculator Folder Backup
-)
+}
+
 
 # noinspection SpellCheckingInspection
-misc_set = (
+set_misc = set()
+
+# noinspection SpellCheckingInspection
+set_misc = {
 	'ADI' , # Dynamics AX Developer Documentation Index File
 	'BRUSHSET' , # Procreate Brush Set
 	'ART80' , # BERNINA ARTlink 8 Embroidery File
@@ -8578,34 +8678,35 @@ misc_set = (
 	'CDL' , # ConceptDraw DIAGRAM Library
 	'TCR' , # TouchMagix Creative Suite Published File
 	'MCF' , # MasterCook 2 Cookbook File
-)
+}
 
+
+# noinspection SpellCheckingInspection
 extension_dict={
-	
-	'text':text_set,
-	'data':data_set,
-	'audio':audio_set,
-	'video':video_set,
-	'3d_image':image_3d_set,
-	'raster_image':raster_image_set,
-	'vector_image':vector_image_set,
-	'page_layout':page_layout_set,
-	'spreadsheet':spreadsheet_set,
-	'database':database_set,
-	'executable':executable_set,
-	'game':game_set,
-	'cad':cad_set,
-	'gis':gis_set,
-	'web':web_set,
-	'plugin':plugin_set,
-	'font':font_set,
-	'system':system_set,
-	'settings':settings_set,
-	'encoded':encoded_set,
-	'compressed':compressed_set,
-	'disk_image':disk_image_set,
-	'developer':developer_set,
-	'backup':backup_set,
-	'misc':misc_set,
+	'text':set_text,
+	'data':set_data,
+	'audio':set_audio,
+	'video':set_video,
+	'3d_image':set_3d_image,
+	'raster_image':set_raster_image,
+	'vector_image':set_vector_image,
+	'page_layout':set_page_layout,
+	'spreadsheet':set_spreadsheet,
+	'database':set_database,
+	'executable':set_executable,
+	'game':set_game,
+	'cad':set_cad,
+	'gis':set_gis,
+	'web':set_web,
+	'plugin':set_plugin,
+	'font':set_font,
+	'system':set_system,
+	'settings':set_settings,
+	'encoded':set_encoded,
+	'compressed':set_compressed,
+	'disk_image':set_disk_image,
+	'developer':set_developer,
+	'backup':set_backup,
+	'misc':set_misc,
 	}
 
