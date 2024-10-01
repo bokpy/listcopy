@@ -23,7 +23,6 @@ description='Create a list of files matching some criteria. '
             'There after the bookkeeping would become out of sink. ',
 epilog='Have Fun'
 )
-
 parser.add_argument('scandir',
                     help="The directory('s) to scan for files.",
                     nargs='*',

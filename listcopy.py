@@ -8,6 +8,7 @@ import pathlib
 import time
 import signal
 import listutils as lu
+from pathseeker import PathSeeker,LANGUAGES
 from metadata import ExifTags
 import metadata as meta
 DEBUGPRINT=print
@@ -17,7 +18,6 @@ DEBUGPRINT=print
 DEBUGEXIT=exit
 
 processed_file='/No Such File ' + time.ctime() # for signal handler to fail
-LISTSOURCES='listsources'
 
 #skiplist=None
 MIN_SECS=60
@@ -48,74 +48,43 @@ signal.signal(signal.SIGINT, handler)
 
 call_name = os.path.basename(__file__)
 
-if call_name==LISTSOURCES:
-	parser = argparse.ArgumentParser(
-	prog=call_name,
-	description='Create a list of files matching some criteria. '
-	            'This listing is to be used to copy this files with listcopy.py. '
-	            'You can edit this file further as long copying was not started. '
-	            'There after the bookkeeping would become out of sink. ',
-	epilog='Have Fun'
+parser = argparse.ArgumentParser(
+prog=call_name,
+description=f'Copy a with "listfiles.py" created list of files to destination directory. '
+            f'Picture files with exif data can be placed in subdirectories named based on this data. '
+            f'Copying can be interrupted at any moment with CTRL+C or a program error. '
+            f'The copying can be restarted where it left off to the same or an other destination. ',
+
+epilog='Have Fun'
 	)
-else:
-	parser = argparse.ArgumentParser(
-	prog=call_name,
-	description=f'Copy a with "{LISTSOURCES}" created list of files to -T directory. '
-	            f'Picture files with exif data can be placed in subdirectories named based on this data. '
-	            f'Copying can be interrupted at any moment with CTRL+C or a program error. '
-	            f'The copying can be restarted where it left off to the same or an other destination. ',
-	
-	epilog='Have Fun'
-	)
+parser.add_argument('destination',
+                    help="The directory to copy the files to.",
+                    metavar='',
+                    nargs='?',
+                    action='store'
+                    )
 # 'u u u u u u u u u u u u u u u u '
 parser.add_argument('-u', '--usage',
                     help='How to use.',
                     action='store_true'
                     )
-if call_name != LISTSOURCES:
-	#v v v v v v v v v v v v v v v v
-	parser.add_argument('-v', '--verbose',
-	                    help='Verbose output.',
-	                    action='store_true'
-	                    )
-	#d d d d d d d d d d d d d d d d
-	parser.add_argument('-d', '--deliver',
-	                    help='Read files from a file ( "-" = stdin ) and copy to -T , --target. ',
-	                    action='store',
-	                    metavar='',
-	                   # default='Non',
-	                    nargs='?'
-	                    )
-if call_name == LISTSOURCES:
-	#g g g g g g g g g g g g g g g g
-	parser.add_argument('-g', '--gather',
-	                    help='File ( "-" = stdout ) to save a listing of files gathered from the -T,--target directory.',
-	                    action='store',
-	                    metavar='',
-	                   # default='Non',
-	                    nargs='?'
-	                    )
 
-#T T T T T T T T T T T T T T T T T T T T T
-parser.add_argument('-T','--target' ,
-                    help = f'Destination directory for copy or {lu.CONTINUE} '
-	f'to continue after an interrupted session.',
+#v v v v v v v v v v v v v v v v
+parser.add_argument('-v', '--verbose',
+                    help='Verbose output.',
+                    action='store_true'
+                    )
+#i i i i i i i i i i i i i i i i
+parser.add_argument('-i', '--input',
+                    help='Read the filelisting from this file.',
                     action='store',
                     metavar='',
+                   # default='Non',
                     nargs='?'
                     )
-if call_name==LISTSOURCES:
-#a a a a a a a a a a a a a a a a
-	parser.add_argument('-a', '--append',
-	                    help='Append a file listing to --gather file from --target.',
-	                    action='store_true',
-	                    default=False
-	                    )
-	
-	
 #t t t t t t t t t t t t t t t t
 parser.add_argument('-t', '--todo',
-                    help='print the files that still need to bee copied of the file-list-file.',
+                    help='print the files that still need to bee copied of the filelisting file.',
                     action='store_true'
                     )
 #p p p p p p p p p p p p p p p p
@@ -126,40 +95,39 @@ parser.add_argument('-p', '--post-it',
                     default='~/listcopy',
                     metavar='',
                     nargs='?'
-	)
-if call_name!=LISTSOURCES:
-	#M M M M M M M M M M M M M M M M
-	parser.add_argument('-M', '--meta',
-	                    help=f'Copy to an on exif tags based dir "{meta.ExifTags.EXIFTAGS}"'
-	                         f' a positif number is a subdir above the source root'
-	                         f' negatief a subdir under the basename.',
-	                    choices=meta.ExifTags.EXIFTAGS,
-	                    nargs='*',
-	                    metavar='',
-	                    action='store'
-	                    )
-	#l l l l l l l l l l l l l l l l
-	parser.add_argument('-l', '--language',
-	                    help=f'Language for days and months {lu.LANGUAGES}.',
-	                    choices=lu.LANGUAGES,
-	                    nargs='?',
-	                    metavar='',
-	                    action='store'
-	                    )
-	
-	#i i i i i i i i i i i i i i i i i i
-	parser.add_argument('-i', '--gps-info',
-	                    help='File to read and write GPS, "OpenStreetMap, Overpass" data.',
-	                    action='store',
-	                    metavar='',
-	                    nargs='?'
-	                    )
-	#r r r r r r r r r r r r r r r r r r r
-	parser.add_argument('-r', '--dry-run',
-	                    help='Just print the source and destination files.',
-	                    action='store_true'
-	                    )
+                    )
+#s s s s s s s s s s s s s s s s s s
+parser.add_argument('-s', '--substitute',
+                    help=f'Substitute the destination directory based on exif tags if this is possible "{meta.ExifTags.EXIFTAGS}"'
+                         f' or a selection of original directories "number" negatief a subdir under the basename.'
+	                    f' or subdir names based on mime type',
+                    #choices=meta.ExifTags.EXIFTAGS,
+                    nargs='*',
+                    metavar='',
+                    action='store'
+                    )
+#l l l l l l l l l l l l l l l l
+parser.add_argument('-l', '--language',
+                    help=f'Language for days and months {LANGUAGES}.',
+                    choices=LANGUAGES,
+                    nargs='?',
+                    metavar='',
+                    action='store'
+                    )
+#g g g g g g g g g g g g g g g g g g g
+parser.add_argument('-g', '--gps-info',
+                    help='File to read and write GPS, "OpenStreetMap, Overpass" data.',
+                    action='store',
+                    metavar='',
+                    nargs='?'
+                    )
+#r r r r r r r r r r r r r r r r r r r
+parser.add_argument('-r', '--dry-run',
+                    help='Just print the source and destination files.',
+                    action='store_true'
+                    )
 args = parser.parse_args()
+
 
 def explain()->None:
 	with open('README','r') as rm:
@@ -476,38 +444,48 @@ def file_check_ok(source,target,l)->bool:
 	os.remove(target)
 	return False
 	
-def copy_listed_files(target_dir,listing_file,track_and_trace,subdir_format):
+def process_filelisting(args):
+	global destination_path
 	global processed_file
 	global chunk_size
-	target_dir=lu.end_slash(target_dir)
-	if subdir_format=='meta_data':
-		listing=ExifTags(target_dir,listing_file, track_and_trace)
+	destination_path=os.path.expanduser(args.destination)
+	destination_path = lu.end_slash(destination_path)
+	input=os.path.expanduser(args.input)
+	if args.post_it:
+		tracker= os.path.join(os.path.expanduser('~'),args.post_it)
 	else:
-		if subdir_format=='qualified_destination':
-			listing=lu.InputFileIterator(target_dir,listing_file, track_and_trace)
-		else:
-			raise ValueError
+		tracker= os.path.join(os.path.expanduser('~'),'listcopy')
+	listing=lu.InputFileIterator(input,tracker)
+		
+	path_seeker=PathSeeker(args.substitute)
+	# :=='meta_data':
+	# 	listing=ExifTags(target_dir,listing_file, track_and_trace)
+	# else:
+	# 	if subdir_format=='qualified_destination':
+	# 		listing=lu.InputFileIterator(target_dir,listing_file, track_and_trace)
+	# 	else:
+	# 		raise ValueError
 	
 	if args.language:
 		listing.set_language(args.language)
 	if args.gps_info:
 		listing.load_info(args.gps_info)
-	target_fs_properties(listing.dest_dir)
+	target_fs_properties(destination_path)
 	chunk_size = FsBlockSize
 	
 	count=0
-	for src,dst in listing:
-		processed_file=dst
+	for src in listing:
+		#processed_file=dst
 		if args.dry_run:
 			print(f'"{src}"')
-			print(f'"{dst}"')
+			print(f'"{listing}"')
 			print()
 			continue
 		
-		lu.assure_dir(os.path.dirname(dst))
-		#write_chunks_to_file(src,dst)
-		#time.sleep(1)
-		listing.save_progress()
+		# lu.assure_dir(os.path.dirname(dst))
+		# #write_chunks_to_file(src,dst)
+		# #time.sleep(1)
+		# listing.save_progress()
 		count+=1
 	if args.gps_info:
 		listing.dump_info(args.gps_info)
@@ -521,26 +499,9 @@ def track_and_trace():
 	return os.path.join(os.path.expanduser('~'),'listcopy')
 
 def main() -> None:
-	global WorkPath,ok_file,bad_file
-	if args.target:
-		WorkPath = lu.end_slash(args.target)
-	marker=os.path.expanduser(args.post_it)
+	global destination_path,ok_file,bad_file
+	print(f'{args.input=} {args.destination=}')
 	
-	if args.post_it:
-		tracker= os.path.join(os.path.expanduser('~'),args.post_it)
-	else:
-		tracker= os.path.join(os.path.expanduser('~'),'listcopy')
-		
-	if not call_name == LISTSOURCES: # -T copy the files
-		DEBUGPRINT(f'Read files to copy from "{args.deliver}".')
-		if args.meta:
-			DEBUGPRINT(args.meta)
-			meta.set_exiftags_format(args.meta)
-			copy_listed_files(args.target,args.deliver,track_and_trace(),'meta_data')
-			exit(0)
-		copy_listed_files(args.target,args.deliver,track_and_trace(),'qualified_destination')
-		exit(0)
-		 
 	if args.usage:
 		explain()
 		exit(0)
@@ -548,12 +509,13 @@ def main() -> None:
 	if args.todo:
 		list_to_do()
 		exit(0)
+		
+	if (not args.destination) or (not args.input):
+		parser.print_help()
+		print(f'Need at least an input file and a destination!')
+		exit(0)
 	
-	# if WorkPath:
-	# 	copy_to(target_file_dir)
-	# 	exit(0)
-	
-	parser.print_help()
+	process_filelisting(args)
 	
 if __name__ == '__main__':
 	print('Called as main')

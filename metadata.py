@@ -32,67 +32,6 @@ CT_YEAR=4
 # vrijdag	freed
 # zaterdag	sneon
 # zondag	snein
-NL_MAAND= {
-    "Jan": "Jan",
-    "Feb": "Feb",
-    "Mar": "Mar",
-    "Apr": "Apr",
-    "May": "Mei",
-    "Jun": "Jun",
-    "Jul": "Jul",
-    "Aug": "Aug",
-    "Sep": "Sep",
-    "Oct": "Okt",
-    "Nov": "Nov",
-    "Dec": "Dec"
-}
-NL_DAG={
-    "Mon": "Ma",
-    "Tue": "Di",
-    "Wed": "Wo",
-    "Thu": "Do",
-    "Fri": "Vr",
-    "Sat": "Za",
-    "Sun": "Zo"
-}
-#FRIS_MONTHS = {
-#     'Jan': 'Jan',
-#     'Feb': 'Feb',
-#     'Mar': 'Mrt',
-#     'Apr': 'Apr',
-#     'May': 'Mai',
-#     'Jun': 'Jun',
-#     'Jul': 'Jul',
-#     'Aug': 'Aug',
-#     'Sep': 'Sep',
-#     'Oct': 'Okt',
-#     'Nov': 'Nov',
-#     'Dec': 'Des'
-# }
-
-FRIS_MONTHS = {
-'Jan':'jannewaris',
-'Feb':'febrewaris',
-'Mar':'maart',
-'Apr':'april',
-'May':'maaie',
-'Jun':'juny',
-'Jul':'july',
-'Aug':'augustus',
-'Sep':'septimber',
-'Oct':'oktober',
-'Nov':'novimber',
-'Dec':'desimber'
-}
-FRIS_DAYS = {
-    'Mon': 'moandei',
-    'Tue': 'tiisdei',
-    'Wed': 'woansdei',
-    'Thu': 'tongersdei',
-    'Fri': 'freed',
-    'Sat': 'sneon',
-    'Sun': 'snein'
-}
 
 DEBUGPRINT=print
 UNKNOWN='unknown'
@@ -213,7 +152,7 @@ def set_exiftags_format(format):
 
 class ExifTags(InputFileIterator):
 	EXIFTAGS = ['date', 'yearmonth', 'year', 'month', 'day', 'weekday','camera', 'gps',
-	            'flash', 'light', 'mime'] + [str(x) for x in range(4,-5,-1) if x != 0]
+	            'flash', 'light', 'mime'] # + [str(x) for x in range(4,-5,-1) if x != 0]
 	#"2024:09:03 10:51:43+02:00"
 	date_split=re.compile(r'(\d+):(\d+):(\d+) (\d+):(\d+):(\d+)(.*)')
 	#'date':["2012","01","25","03","41","57"]

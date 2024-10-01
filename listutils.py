@@ -6,6 +6,7 @@ import os
 import sys
 import re
 from idlelib.iomenu import errors
+from os import write
 from time import sleep
 
 DATA_BEGIN_MARKER='-------->Data_Begin_Marker-------->'
@@ -14,7 +15,6 @@ CONTINUE='<CONTINUE>'
 FILTEROUT=['/Cookies/','/Microsoft/','/Windows/','/Cache','#.*#$','\.lnk$',
            '\.tmp$','\.log$','\.err$','~$','/AppData/',
            '\.ini$','/NTUSER.DAT',]
-LANGUAGES=['nl','fy']
 DEBUGPRINT=print
 
 def printerr(message:str)->None:
@@ -146,43 +146,20 @@ def directory_walker(directory,rename_unicode=False):
 					yield (cur_dir,entry)
 
 class InputFileIterator:
-	def __init__(self,destination_dir:str,input_file,tracker_file_stem):
-		self.continue_dir=False
-		self.dest_dir=end_slash(destination_dir)
-		if destination_dir == CONTINUE:
-			self.dest_dir=''
-			self.continue_dir=True
-		#assure_dir(self.dest_dir)
-		#DEBUGPRINT(f'\nInputFileIterator.__init__(')
-		#DEBUGPRINT(f'{destination_dir=}')
-		#DEBUGPRINT(f'{input_file=}')
-		#DEBUGPRINT(f'{tracker_file_stem=}')
-		#DEBUGPRINT(')\n')
-		self.source_dir=''
-		if input_file==sys.stdin or input_file=='-' or input_file=='':
-			input_file = sys.stdin
-			#DEBUGPRINT('input_file==sys.stdin')
-			if sys.stdin.isatty():
-				print(f"I guess you don't want to type a list by hand.")
-				print('Redirect input from a file or give a previous generated,')
-				print('file with a listing to option -d , --deliver.')
-				exit(1)
-				#DEBUGPRINT('read sys.stdin')
-			self.filelist=sys.stdin.readlines()
-		else: # input from a file
-			try:
-				with open(input_file,'r') as f:
-					self.filelist=f.readlines()
-			except IOError as e:
-				print(f'InputFileIterator could not open "{input_file}"')
-				print(f'error {e.errno} "{e.strerr}"')
-				exit(e.errno)
+	def __init__(self,input_file,progress_file):
+		try:
+			with open(input_file,'r') as f:
+				self.filelist=f.readlines()
+		except IOError as e:
+			print(f'InputFileIterator could not open "{input_file}"')
+			print(f'error {e.errno} "{e.strerr}"')
+			exit(e.errno)
 		self.filelist_len = len(self.filelist)
 		self.strip_newline()
-		self.ok_file=tracker_file_stem+'.ok'
-		self.bad_file=tracker_file_stem+'.bad'
-		self.skip=self.read_progress()
+		self.ok_file = progress_file
+		skip=self.read_progress()
 		self.index=-1
+		self._go_to_start(skip)
 		
 	def __iter__(self):
 		return self
@@ -192,40 +169,60 @@ class InputFileIterator:
 			self.index-=1
 			#DEBUGPRINT(f'Should not happen!!!')
 			return
-		while self.index < self.skip:
-			if self.current() == DATA_BEGIN_MARKER:
-				self._data_begin_marker_found()
-			if self.current() == DATA_END_MARKER:
-				self.source_dir=''
-				self.source_dir_len=0
-			self._kick_index()
-		while not self.source_dir:
-			if self.current() == DATA_BEGIN_MARKER:
-				self._data_begin_marker_found()
-			self._kick_index()
+		
 		if self.current()==DATA_END_MARKER:
-			self.source_dir=''
+			self.root_path=''
 			self._kick_index()
-		#DEBUGPRINT(f'{self.source_dir=}')
-		if self.source_dir:
-			#DEBUGPRINT(f'{self.source_dir}')
-			return self.current(),self.destination()
+		#DEBUGPRINT(f'{self.root_path=}')
+		if self.root_path:
+			#DEBUGPRINT(f'{self.root_path}')
+			return self.current()
+		
+	def __str__(self):
+		return self.current()[self.root_path_length:]
 	
 	def _kick_index(self):
 		self.index+=1
 		if self.index < self.filelist_len:
 			return True
 		self.index-=1
-		self._save_progress(-1,self.dest_dir,'Done')
 		#DEBUGPRINT('FIRE STOPITERATION FIRE STOPITERATION FIRE STOPITERATION FIRE STOPITERATION FIRE STOPITERATION ')
 		raise StopIteration
-		return False
 		
 	def _data_begin_marker_found(self):
+		"""
+		The next line is the source path root.
+		store it and the length for whom that needs it
+		:return:
+		"""
 		self._kick_index()
-		self.source_dir = self.current()
-		self.source_dir_len=len(self.source_dir)
-		#DEBUGPRINT(f'_data_begin_marker_found "{self.source_dir}"')
+		self.root_path = self.current()
+		self.root_path_length=len(self.root_path )
+		
+	def _go_to_start(self,skip:int)->None:
+		"""
+		Find where the copying was interrupted and determine the root_path
+		of the listed files at that point in the listing.
+		:param skip: number of files already copied before.
+		:return: None
+		"""
+		while self.index < skip:
+			if self.current() == DATA_BEGIN_MARKER: # read self.root_path
+				self._data_begin_marker_found()
+			if self.current() == DATA_END_MARKER: # root_path no longer valid
+				self.root_path=''
+				self.root_path_length=0
+			self._kick_index()
+		while not self.root_path:
+			# if we didn't get a valid path where we are now
+			# read until we find it or till end of the list
+			if self.current() == DATA_BEGIN_MARKER:
+				self._data_begin_marker_found()
+				return
+			try:
+				self._kick_index()
+			except StopIteration:
+				return
 		
 	def set_language(self,language): # Virtual
 		pass
@@ -236,38 +233,26 @@ class InputFileIterator:
 	def dump_info(self,file:str): # Virtual
 		pass
 	
-	def destination(self)->str:
-		dst=self.current()
-		dst=dst[self.source_dir_len:]
-		dst=self.dest_dir+dst
-		#return self.dest_dir + self.current()[self.source_dir_len:]
-		return dst
+	# def destination(self)->str:
+	# 	dst=self.current()
+	# 	dst=dst[self.root_path_length:]
 	
 	def current(self):
 		return self.filelist[self.index]
 	
 	def source_path_length(self):
-		return self.source_dir_len
+		return self.root_path_length
 	
-	def _save_progress(self,index,dir,source):
+
+	def save_progress(self,destination_root_path):
 		try:
 			with open(self.ok_file,'w') as f:
-				f.write(str(index) + '\n')
-				f.write(dir +'\n')
-				f.write(source +'\n')
-		except IOError as e:
-			print('InputFileIterator:save_progress failed')
+				f.write(self.index,destination_root_path,self.current())
+		except OSError as e:
+			print(f'Writing "{self.ok_file}" Failed.')
 			print(f'{e.errno} {e.strerror}')
-			exit(e.errno)
-		return
-	
-	def save_progress(self):
-		#DEBUGPRINT(f'save_progres({self.index} "{self.current()}"')
-		if not self.source_dir:
-			self._save_progress(-1,'Done','Done')
-			return
-		self._save_progress(self.index,self.source_dir,self.current())
-		
+			exit (e.errno)
+			
 	def read_progress(self)->int:
 		if not os.path.exists(self.ok_file): # new session start from the beginning
 			return 0
