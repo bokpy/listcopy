@@ -323,7 +323,7 @@ if __name__ == '__main__':
 	hveen_coords=(52.95841726530616, 5.958291851243422 )
 	gron_coords=(53.23738, 6.560770)
 	suri_coords=(5.822541730620219, -55.25871342154263)
-	if True:
+	if False:
 		data = ovp_box_query(hveen_coords,200)
 		print (f'{json.dumps(data,indent=4)}')
 		exit(0)

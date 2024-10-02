@@ -5,7 +5,7 @@ from gpstree import DEBUGPRINT
 
 DEBUGPRINT=print
 
-LANGUAGES=['nl','fy','eng']
+
 NL_MAAND= {
     "Jan": "Jan",
     "Feb": "Feb",
@@ -89,7 +89,10 @@ ENG_MONTHS = {
     "Nov": "November",
     "Dec": "December"
 }
-
+LANGUAGES={'nl':(NL_DAG,NL_MAAND),
+           'fy':(FRIS_DAYS,FRIS_MONTHS),
+           'eng':(ENG_DAYS,ENG_MONTHS)
+           }
 class PathSeeker:
 
 	def __init__(self, path_format: list, gps_file=None,language='eng') -> None:
@@ -98,14 +101,17 @@ class PathSeeker:
 			DEBUGPRINT(f'{subname} {type(subname)}')
 			try:
 				val=int(subname)
-				self.components.append((val,self.add_old_subdir))
+				self.components.append((val,PathSeeker.add_old_subdir))
 				continue
 			except ValueError:
 				pass
-			if subname in meta.ExifTags.EXIFTAGS:
-				self.components.append((subname,self.add_exif))
+			if 'tags:' in subname:
+				self.components.append((subname[5:],PathSeeker.add_gps))
 				continue
-			self.components.append((subname,self.add_mime))
+			if subname in meta.ExifTags.EXIFTAGS:
+				self.components.append((subname,PathSeeker.add_exif))
+				continue
+			self.components.append((subname,PathSeeker.add_mime))
 		DEBUGPRINT(f'{self.components}')
 		
 	def add_old_subdir(self,pos):
@@ -114,8 +120,16 @@ class PathSeeker:
 	def add_exif(self,tag):
 		return f'not jet exif "{tag}"'
 	
+	def add_gps(self,tag):
+		return f'not jet gps "{tag}"'
+	
 	def add_mime(self,mime):
 		return f'not jet mime "{mime}"'
+	
+	def compose_path(self,full_path,tail_path):
+		if self.components == []:
+			return tail_path
+		return 'dummy_compose_path'
 
 def main() -> None:
 	pathmaker=PathSeeker([1,2,'audio','year'])

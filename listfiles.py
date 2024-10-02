@@ -7,7 +7,7 @@ from time import sleep
 
 import listutils as lu
 import extensions as ext
-
+from metadata import DEBUGPRINT
 
 DEBUGEXIT=exit
 
@@ -257,7 +257,7 @@ class FileListing:
 
  
 def main() -> None:
-    
+    DEBUGPRINT(f'{args.scandir}')
     if args.show_mime:
         low= args.show_mime.lower()
         if low =='general':

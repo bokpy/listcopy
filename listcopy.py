@@ -79,7 +79,6 @@ parser.add_argument('-i', '--input',
                     help='Read the filelisting from this file.',
                     action='store',
                     metavar='',
-                   # default='Non',
                     nargs='?'
                     )
 #t t t t t t t t t t t t t t t t
@@ -98,36 +97,39 @@ parser.add_argument('-p', '--post-it',
                     )
 #s s s s s s s s s s s s s s s s s s
 parser.add_argument('-s', '--substitute',
-                    help=f'Substitute the destination directory based on exif tags if this is possible "{meta.ExifTags.EXIFTAGS}"'
+                    help=f'Substitute the destination directory based on exif tags if this is possible "{meta.ExifTags.EXIFTAGS}" '
+                         f'if there is gps data use nearest "tags:tagname" like "tags:addr:street" "tags:addr:housenumber" "tags:building" '
+                         f'info at: https://wiki.openstreetmap.org/wiki/Category:Tag_descriptions'
                          f' or a selection of original directories "number" negatief a subdir under the basename.'
-	                    f' or subdir names based on mime type',
-                    #choices=meta.ExifTags.EXIFTAGS,
+	                    f' or subdir names based on mime type.',
                     nargs='*',
                     metavar='',
                     action='store'
                     )
 #l l l l l l l l l l l l l l l l
+langs='","'.join(LANGUAGES.keys())
 parser.add_argument('-l', '--language',
-                    help=f'Language for days and months {LANGUAGES}.',
-                    choices=LANGUAGES,
+                    help=f'Language for days and months "{langs}".',
+                    choices=LANGUAGES.keys(),
                     nargs='?',
                     metavar='',
+                    default='eng',
                     action='store'
                     )
 #g g g g g g g g g g g g g g g g g g g
 parser.add_argument('-g', '--gps-info',
                     help='File to read and write GPS, "OpenStreetMap, Overpass" data.',
                     action='store',
+                    default='',
                     metavar='',
                     nargs='?'
                     )
-#r r r r r r r r r r r r r r r r r r r
-parser.add_argument('-r', '--dry-run',
+#d d d d d d d d d d d d d d d d d d
+parser.add_argument('-d', '--dry-run',
                     help='Just print the source and destination files.',
                     action='store_true'
                     )
 args = parser.parse_args()
-
 
 def explain()->None:
 	with open('README','r') as rm:
@@ -457,28 +459,18 @@ def process_filelisting(args):
 		tracker= os.path.join(os.path.expanduser('~'),'listcopy')
 	listing=lu.InputFileIterator(input,tracker)
 		
-	path_seeker=PathSeeker(args.substitute)
-	# :=='meta_data':
-	# 	listing=ExifTags(target_dir,listing_file, track_and_trace)
-	# else:
-	# 	if subdir_format=='qualified_destination':
-	# 		listing=lu.InputFileIterator(target_dir,listing_file, track_and_trace)
-	# 	else:
-	# 		raise ValueError
+	path_seeker=PathSeeker(args.substitute,args.gps_info,language=args.language)
 	
-	if args.language:
-		listing.set_language(args.language)
-	if args.gps_info:
-		listing.load_info(args.gps_info)
 	target_fs_properties(destination_path)
 	chunk_size = FsBlockSize
 	
 	count=0
 	for src in listing:
+		dest = path_seeker.compose_path(src,listing)
 		#processed_file=dst
 		if args.dry_run:
-			print(f'"{src}"')
-			print(f'"{listing}"')
+			print(f'from: "{src}"')
+			print(f'to  : "{destination_path}{dest}"')
 			print()
 			continue
 		
