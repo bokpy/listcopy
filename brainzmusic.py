@@ -1695,6 +1695,56 @@ def time_float(year, month, day) -> float:
 	dt = datetime.datetime(year, month, day)
 	return time.mktime(dt.timetuple())
 
+class MusicTags():
+	def __init__(self):
+		self.reset()
+		
+	def reset(self):
+		self.dict={
+				'name'    : set(),
+				'publiced': time_float(3000, 1, 1),
+				'title'   : set(),
+				'format'  : set(),
+				'tracks'  : 0,
+				'position': 0,
+			}
+		
+	def set(self,key,value):
+		if key not in self.dict:
+			raise ValueError
+		if isinstance(self.dict[key],set):
+			self.dict[key]=set([value])
+			return
+		self.dict[key]=value
+		
+	def add(self,key,value):
+		if key not in self.dict:
+			raise ValueError
+		if isinstance(self.dict[key],set):
+			self.dict[key].add(value)
+			return
+		self.dict[key]=value
+		
+	def get(self,key):
+		if key not in self.dict:
+			raise ValueError
+		return self.dict[key]
+	
+	def is_younger(self,other):
+		return other.dict['publiced'] > self.dict['publiced']
+	
+	def show(self):
+		sd=self.dict
+		print(f'\nMusicTags:')
+		print(f'\tname     : {sd["name"]}')
+		print(f'\tpubliced : {sd["publiced"]}')
+		print(f'\t           {time.ctime(sd["publiced"])}')
+		print(f'\ttitle    : {sd["title"]}')
+		print(f'\tformat   : {sd["format"]}')
+		print(f'\tposition : {sd["position"]}')
+		print(f'\ttracks   : {sd["tracks"]}')
+		print()
+
 
 class BrainzMusic:
 	
@@ -1794,48 +1844,126 @@ class BrainzMusic:
 		for err in requests.status_codes._codes[retcode]: print(f'\t{err}')
 		return {}
 
-
 	def parse_acoustid_lookup(self, info):
-		result = {
+		if not 'results' in info: return {}
+		early=time_float(3000, 1, 1)
+		
+		younges_result={
 				'name'    : set(),
-				'publiced': datetime.datetime(3000, 1, 1),
+				'publiced': time_float(3000, 1, 1),
 				'title'   : set(),
 				'format'  : set(),
 				'tracks'  : 0,
 				'position': 0,
 		}
+		current_result=MusicTags()
+		for result in info['results']:
+			print(f"result-> {result}")
+			if 'recordings' in result:
+				current_result.show()
+				current_result.reset()
+				print(f"\tresult->recordings {result['recordings']} ")
+				for record_item in result['recordings']:
+					if 'artists' in record_item:
+						for artist in record_item['artists']:
+							current_result.add('name','name')
+					
+					print(f"\t\tresult->recordings->record_item  {record_item} ")
+					if  'releases' in record_item:
+						for release in record_item['releases']:
+							#'mediums':
+							# [{'format': 'CD', 'position': 2, 'track_count': 19,
+							# 'tracks':[{'artists': [{'id': '144ef525-85e9-40c3-8335-02c32d0861f3','name': 'John Mayer'}],
+							# 'id': 'aa9c8ae4-72e4-4634-8b46-1d14e5bd00cd', 'position': 7}]
+							# }],
+							if 'mediums' in release:
+								medium=release['mediums'][0] # just pick one
+								if 'format' in medium:
+									print(f"\t\t\t\tformat {medium['format']}")
+								if 'position' in medium:
+									print(f"\t\t\t\tposition {medium['position']}")
+							if 'title' in release:
+								print(f"\t\t\t\ttitle \"{release['title']}\" ")
+							if 'track_count' in release:
+								print(f"\t\t\t\t'track_count' {release['track_count']}")
+							if 'artists' in release:
+								for artist in release['artists']:
+									print(f"\t\t\t\tresult->recordings->record_item->release->artists \"{artist['name']}\" ")
+									current_result.add('name',artist['name'])
+							print(f"\t\t\tresult->recordings->record_item->release {release} ")
+							if 'date' in release:
+								rd=release['date']
+								day   = 31 # make it the oldest if day and/or month are missing
+								month = 12
+								year  = 3000
+								if 'year'  in rd: year =rd['year']
+								if 'month' in rd: month=rd['month']
+								if 'day'   in rd: day  =rd['day']
+								print(f"\t\t\t\tdate {day}-{month}-{year}")
+		return
+		def keep_earliest():
+			pass
 		
-		def parse_branche(key, value):
-			if (not isinstance(value, list)) and (not isinstance(value, dict)):
-				if key in result:
-					if key == 'name':
-						result['name'].add(value)
-					elif key == 'year':
-						result['year'].add(value)
-					elif key == 'title':
-						result['title'].add(value)
-					elif key == 'format':
-						result['format'].add(value)
-					elif key == 'tracks':
-						result['tracks'] = value
-					elif key == 'position':
-						result['position'] = value
-					return
-			
-			if isinstance(value, list):
-				for twig in value:
-					parse_branche('dummy', twig)
-				return
-			if isinstance(value, dict):
-				for key in value.keys():
-					parse_branche(key, value[key])
-				return
-			print(f'a value "{value}" of type({type(value)})')
-		
-		parse_branche('dummy', info)
-		print(f"{result['name']}")
-		print(f"{result['title']}")
-		
+		# def earliest_record(recording):
+		# 	if 'releases' in recording:
+		# 		for release in recording:
+		# 			print(f'\t\trecording->release-> {release}')
+		# 			if 'date' in release:
+		# 				print(f"\t\t\trecording->release->date {date}")
+		#
+		#
+		# result = {
+		# 		'name'    : set(),
+		# 		'publiced': datetime.datetime(3000, 1, 1),
+		# 		'title'   : set(),
+		# 		'format'  : set(),
+		# 		'tracks'  : 0,
+		# 		'position': 0,
+		# }
+		# for key in info['results']:
+		# 	print(f"info['results']->'recordings' {key['recordings']}")
+		# 	for record in key['recordings']:
+		# 		print (f'\trecord-> {record}')
+		# 		earliest_record(record)
+		# return
+		#
+		#
+		#
+		#
+		#
+		# first_time=datetime.datetime(3000, 1, 1)
+		#
+		# def parse_branche(key, value):
+		# 	if (not isinstance(value, list)) and (not isinstance(value, dict)):
+		# 		if key in result:
+		# 			if key == 'name':
+		# 				result['name'].add(value)
+		# 			elif key == 'year':
+		# 				result['year'].add(value)
+		# 			elif key == 'title':
+		# 				result['title'].add(value)
+		# 			elif key == 'format':
+		# 				result['format'].add(value)
+		# 			elif key == 'tracks':
+		# 				result['tracks'] = value
+		# 			elif key == 'position':
+		# 				result['position'] = value
+		# 			return
+		#
+		# 	if isinstance(value, list):
+		# 		for twig in value:
+		# 			parse_branche('dummy', twig)
+		# 		return
+		# 	if isinstance(value, dict):
+		# 		for key in value.keys():
+		# 			parse_branche(key, value[key])
+		# 		return
+		# 	print(f'a value "{value}" of type({type(value)})')
+		#
+		# parse_branche('dummy', info)
+		# print(f"{result['name']}")
+		# print(f"{result['title']}")
+		#
 		# def _parse_branche(self,branche,):
 		# 	print(json.dumps(info,indent=4))
 		# 	for item in info['results']:

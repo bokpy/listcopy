@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
-
-import datetime
+import time
 import metadata as meta
 import extensions as ext
 
@@ -125,6 +124,24 @@ for <tag>      "osm"  https://wiki.openstreetmap.org/wiki/Map_features(#Addresse
 for <tag>      "mbz"  
 '''
 
+def date_str(epoch_time,language='fy'):
+	print(time.ctime(epoch_time))
+	cts=time.ctime(epoch_time)
+	ct=cts.split(' ')
+	print(ct)
+	
+	day = ct[0]
+	monthday=ct[3]
+	month = ct[1]
+	year = ct[5]
+	print (f'{day=} {month=} {year=}')
+	days,months=LANGUAGES[language]
+	if (language == 'fy') or ( language == 'nl'):
+		datestr= days[day] + ' ' + monthday + "-" + months[month] + "-" + year
+		return datestr
+	datestr= days[day] + ' ' + months[month] + '/' + monthday +"/" + year
+	return datestr
+	
 def show_substitute_help():
 	print(help_text)
 
@@ -167,7 +184,9 @@ class PathSeeker:
 		return 'dummy_compose_path'
 
 def main() -> None:
-	pathmaker=PathSeeker([1,2,'audio','year'])
+	print(date_str(time.time()))
+	print(date_str(time.time(),'eng'))
+	#pathmaker=PathSeeker([1,2,'audio','year'])
 
 if __name__ == '__main__':
 	main()
