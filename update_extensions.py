@@ -67,10 +67,10 @@ def main() -> None:
 # A more robust parsing is maybe nicer.''')
 	extensions_dict={}
 	for ext_type in TYPES:
-		print(f'\n# noinspection SpellCheckingInspection')
+		#print(f'\n# noinspection SpellCheckingInspection')
 		set_name=f'set_{ext_type}'
 		extensions_dict[ext_type]=set_name
-		print(f'{set_name} = set()')
+		#print(f'{set_name} = set()')
 		print(f'\n# noinspection SpellCheckingInspection')
 		print(f'{set_name} = {{')
 		FileinfoComRequester(ext_type).distillate()

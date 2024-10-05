@@ -77,7 +77,7 @@ parser.add_argument('-m', '--match',
                     help='Only paths that contain a part that match with one of these '
                          'regular expressions are listed.',
                     action='store',
-                    metavar='',
+                    metavar='regular expressions',
                     nargs='*'
                     )
 #b b b b b b b b b b b b b b b b
@@ -96,9 +96,9 @@ parser.add_argument('-s', '--smaller',
                     )
 #show-mime show-mime show-mime show-mime
 parser.add_argument('--show-mime',
-                    help=f'Show "general" mime types or encodings of given "general mime type" "{ext.MAGIC_FILE}" ',
+                    help=f'Show "general" mime types or encodings of given "general mime type" in "{ext.MAGIC_FILE}" ',
                     #default=None,
-                    metavar='',
+                    metavar='general',
                     action='store',
                     nargs='?'
                     )
@@ -257,7 +257,7 @@ class FileListing:
 
  
 def main() -> None:
-    DEBUGPRINT(f'{args.scandir}')
+    DEBUGPRINT(f'{args.show_mime=} {args.scandir}')
     if args.show_mime:
         low= args.show_mime.lower()
         if low =='general':

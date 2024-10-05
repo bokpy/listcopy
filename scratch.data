@@ -963,3 +963,44 @@
  'ZoomStepCount':('none',store_none),
  'ZoomTargetWidth':('none',store_none),
  }
+  # Lookup by fingerprint
+
+   # This function (or code block) performs a lookup using a Chromaprint fingerprint
+   # to retrieve associated MusicBrainz metadata.
+
+   # URL
+   # https://api.acoustid.org/v2/lookup
+
+   # Parameters
+
+   # | Name          | Required | Values          | Description                                 |
+   # |----------------|----------|-----------------|----------------------------------------------|
+   # | format         | no       | json, jsonp, xml | response format                             |
+   # | jsoncallback   | no       | jsonAcoustidApi  | JSONP callback, only for jsonp format     |
+   # | client         | yes      | YOUR_API_KEY    | application's API key                      |
+   # | duration       | yes      | INTEGER         | duration of the whole audio file in seconds |
+   # | fingerprint    | yes      | STRING          | audio fingerprint data                      |
+   # | meta           | no       | comma-separated | returned metadata (recordings, recordingids,  |
+   # |                |          | list            | releases, releaseids, releasegroups,        |
+   # |                |          |                | releasegroupids, tracks, compress,           |
+   # |                |          |                | usermeta, sources)                          |
+'''Usage: fpcalc [OPTIONS] FILE [FILE...]
+
+Generate fingerprints from audio files/streams.
+
+Options:
+-format NAME   Set the input format name
+-rate NUM      Set the sample rate of the input audio
+-channels NUM  Set the number of channels in the input audio
+-length SECS   Restrict the duration of the processed input audio (default 120)
+-chunk SECS    Split the input audio into chunks of this duration
+-algorithm NUM Set the algorithm method (default 2)
+-overlap       Overlap the chunks slightly to make sure audio on the edges is fingerprinted
+-ts            Output UNIX timestamps for chunked results, useful when fingerprinting real-time audio stream
+-raw           Output fingerprints in the uncompressed format
+-signed        Change the uncompressed format from unsigned integers to signed (for pg_acoustid compatibility)
+-json          Print the output in JSON format
+-text          Print the output in text format
+-plain         Print the just the fingerprint in text format
+-version       Print version information
+'''

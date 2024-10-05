@@ -3,9 +3,6 @@
 # A more robust parsing is maybe nicer.
 
 # noinspection SpellCheckingInspection
-set_text = set()
-
-# noinspection SpellCheckingInspection
 set_text = {
 	'SMF' , # StarMath Formula File
 	'STY' , # LaTeX Style
@@ -36,14 +33,14 @@ set_text = {
 	'DOCX' , # Microsoft Word Document
 	'DIZ' , # Description in Zip File
 	'MNT' , # FoxPro Menu Memo
-	'LXFML' , # LEGO Digital Designer XML File
 	'GFORM' , # Google Forms Shortcut
+	'LXFML' , # LEGO Digital Designer XML File
 	'STORY' , # Storyist Document
 	'ME' , # Readme Text File
-	'LUE' , # Norton LiveUpdate Log File
+	'EIO' , # Yozo Office File
 	'FOUNTAIN' , # Fountain Script File
 	'ANS' , # ANSI Text File
-	'EIO' , # Yozo Office File
+	'LUE' , # Norton LiveUpdate Log File
 	'TMDX' , # TextMaker Document
 	'FODT' , # OpenDocument Flat XML Document
 	'GPD' , # Generic Printer Description File
@@ -54,12 +51,12 @@ set_text = {
 	'AWW' , # Ability Write Document
 	'TEX' , # LaTeX Source Document
 	'LOG' , # Log File
-	'BF' , # Brainf*ck Source Code File
-	'FADEIN.TEMPLATE' , # Fade In Template
+	'KLG' , # KOFIA Log
 	'CEC' , # Studio C Alpha Upgrade File
+	'FADEIN.TEMPLATE' , # Fade In Template
+	'BF' , # Brainf*ck Source Code File
 	'JARVIS' , # Jarvis Subscriber File
 	'PWDPL' , # Password Pad Lite Document
-	'KLG' , # KOFIA Log
 	'IPF' , # OS/2 Help File
 	'TXT' , # Plain Text File
 	'RPT' , # Generic Report
@@ -72,14 +69,14 @@ set_text = {
 	'TLB' , # VAX Text Library
 	'DROPBOX' , # Dropbox Shared Folder Tracker
 	'LST' , # FoxPro Documenting Wizard List
-	'OTT' , # OpenDocument Document Template
-	'RFT' , # Revisable Form Text Document
-	'SDM' , # StarOffice Mail Message
-	'SCM' , # Schema File
-	'DXB' , # Duxbury Braille File
 	'OPEICO' , # Opeico Text File
-	'IPYNB' , # Jupyter Notebook
+	'RFT' , # Revisable Form Text Document
+	'DXB' , # Duxbury Braille File
+	'SDM' , # StarOffice Mail Message
+	'OTT' , # OpenDocument Document Template
+	'SCM' , # Schema File
 	'TEXT' , # Plain Text File
+	'IPYNB' , # Jupyter Notebook
 	'DOCM' , # Microsoft Word Macro-enabled Document
 	'WPD' , # WordPerfect Document
 	'TMVX' , # TextMaker Document Template
@@ -88,93 +85,92 @@ set_text = {
 	'BIB' , # Bibliography Document
 	'_DOCX' , # Renamed Microsoft Word Document
 	'1ST' , # Readme File
-	'ASC' , # Autodesk ASCII Export File
 	'MD5.TXT' , # Message Digest 5 Hash File
+	'ASC' , # Autodesk ASCII Export File
 	'WPS' , # Microsoft Works Word Processor Document
-	'RTF' , # Rich Text Format File
 	'BIB' , # BibTeX Bibliography Database
-	'ATY' , # Association Type Placeholder
-	'ERR' , # Error Log File
-	'GSCRIPT' , # Google Apps Script Shortcut
-	'STW' , # StarOffice Document Template
-	'DTEX' , # DataTex Document
-	'BDR' , # Exchange Non-Delivery Report Body File
+	'RTF' , # Rich Text Format File
 	'TM' , # TeXmacs Document
-	'ETF' , # ENIGMA Transportable File
-	'WPW' , # WordPerfect Works Document
-	'XY' , # XYWrite Document
-	'DM' , # BYOND Dream Maker Code
-	'JNP' , # Java Web Start File
-	'FLUID' , # Loop Component
-	'KNT' , # KeyNote Note File
-	'LUF' , # Lipikar Uniform Format File
-	'TFRPROJ' , # theFrame Project File
+	'BDR' , # Exchange Non-Delivery Report Body File
+	'STW' , # StarOffice Document Template
+	'ATY' , # Association Type Placeholder
+	'DTEX' , # DataTex Document
+	'GSCRIPT' , # Google Apps Script Shortcut
+	'ERR' , # Error Log File
 	'RAD' , # Radar ViewPoint Radar Data
+	'XY' , # XYWrite Document
+	'KNT' , # KeyNote Note File
+	'WPW' , # WordPerfect Works Document
+	'DM' , # BYOND Dream Maker Code
+	'TFRPROJ' , # theFrame Project File
+	'LUF' , # Lipikar Uniform Format File
+	'JNP' , # Java Web Start File
+	'ETF' , # ENIGMA Transportable File
+	'FLUID' , # Loop Component
 	'ODT' , # OpenDocument Text Document
 	'RIS' , # Research Information Systems Citation File
 	'GTABLE' , # Google Fusion Table Shortcut
 	'PAGES' , # Apple Pages Document
 	'TEXTCLIPPING' , # Mac OS X Text Clipping File
 	'RST' , # reStructuredText File
-	'COD' , # Atlantis Word Processor Encrypted Document
 	'STRINGS' , # Text Strings File
+	'COD' , # Atlantis Word Processor Encrypted Document
 	'RTX' , # Rich Text Document
 	'DOCZ' , # ThinkFree Online Note Document
 	'COPF' , # Copy Operation File
 	'LICENSE' , # Software License File
 	'WPS' , # Kingsoft Writer Document
-	'FAQ' , # Frequently Asked Questions Document
 	'KLG' , # Log File
+	'FAQ' , # Frequently Asked Questions Document
 	'FDX' , # Final Draft Document
-	'SCC' , # Scenarist Closed Caption File
 	'EML' , # E-Mail Message
+	'SCC' , # Scenarist Closed Caption File
 	'MSG' , # Outlook Message Item File
-	'FDT' , # Final Draft 5-7 Template
 	'GJAM' , # Google Jamboard Shortcut
+	'FDT' , # Final Draft 5-7 Template
 	'SE' , # Shuttle Document
 	'RUN' , # Runscanner Scan File
-	'KES' , # Kurzweil 3000 Document
 	'OMFL' , # Open Multiple Files File List
+	'KES' , # Kurzweil 3000 Document
 	'TAB' , # Tab Separated Data File
 	'TMD' , # TextMaker Document
 	'GMAP' , # Google My Maps Shortcut
 	'MBOX' , # Email Mailbox
-	'LP2' , # iLEAP Word Processing Document
 	'SAF' , # SafeText File
+	'LP2' , # iLEAP Word Processing Document
 	'WRI' , # Microsoft Write Document
-	'DFTI' , # FlexiWrite Document
+	'LNK42' , # Windows 93 Desktop Shortcut
+	'BIBTEX' , # BibTeX Bibliography Database
 	'CHARSET' , # Character Set
 	'APPODEAL' , # Appodeal Text File
-	'LNK42' , # Windows 93 Desktop Shortcut
-	'FDR' , # Final Draft Document
-	'GSLIDES' , # Google Slides Shortcut
-	'BIBTEX' , # BibTeX Bibliography Database
 	'SGM' , # SGML File
-	'BEAN' , # Bean Rich Text Document
-	'BDP' , # Exchange Diagnostic Message
-	'ETX' , # Structure Enhanced Text (Setext) File
 	'SLA' , # Scribus Document
+	'DFTI' , # FlexiWrite Document
+	'BEAN' , # Bean Rich Text Document
+	'FDR' , # Final Draft Document
+	'ETX' , # Structure Enhanced Text (Setext) File
 	'UOT' , # Uniform Office Document
-	'SXW' , # StarOffice Writer Document
+	'BDP' , # Exchange Diagnostic Message
+	'GSLIDES' , # Google Slides Shortcut
 	'UTF8' , # Unicode UTF8-Encoded Text Document
+	'SXW' , # StarOffice Writer Document
 	'WPT' , # WordPerfect Template
 	'DCA' , # DisplayWrite Document
-	'IPSPOT' , # iPhoto Spot File
 	'MD' , # MuseData Musical Score
 	'QDL' , # QDL Program
 	'DX' , # DEC WPS Plus File
-	'FRT' , # FoxPro Report Memo
+	'IPSPOT' , # iPhoto Spot File
 	'BAD' , # Exchange Badmail File
-	'DVI' , # Device Independent Format File
-	'U3I' , # U3 Application Information File
-	'NGLOSS' , # Nisus Writer Glossary
-	'ODIF' , # Open Document Interchange Format
 	'HZ' , # Chinese (Hanzi) Text
-	'CAST' , # Asciicast Terminal Recording
 	'JIS' , # Japanese Industry Standard Text
+	'NGLOSS' , # Nisus Writer Glossary
+	'DVI' , # Device Independent Format File
 	'SHIM' , # Scoop Shim File
-	'XWP' , # XMLwriter Project
 	'RVF' , # RichView Format File
+	'U3I' , # U3 Application Information File
+	'CAST' , # Asciicast Terminal Recording
+	'XWP' , # XMLwriter Project
+	'ODIF' , # Open Document Interchange Format
 	'NOTE' , # Notability Note File
 	'ODO' , # Online Operating System Write Document
 	'602' , # Text602 Document
@@ -187,12 +183,12 @@ set_text = {
 	'PSW' , # Pocket Word Document
 	'SDOC' , # Satra Khmer Document
 	'SUBLIME-PROJECT' , # Sublime Text Project File
-	'EIT' , # Yozo Office Template File
 	'TRELBY' , # Trelby File
+	'EIT' , # Yozo Office Template File
 	'PWD' , # Pocket Word Document
-	'SXG' , # Apache OpenOffice Master Document
-	'CHORD' , # Song Chords File
 	'DOCXML' , # Microsoft Word XML Document
+	'CHORD' , # Song Chords File
+	'SXG' , # Apache OpenOffice Master Document
 	'HWP' , # Hangul Text Document
 	'XYW' , # XyWrite for Windows Document
 	'IDX' , # Outlook Express Mailbox Index File
@@ -203,15 +199,15 @@ set_text = {
 	'PLAIN' , # Plain Text File
 	'ABW' , # AbiWord Document
 	'PWI' , # Pocket Word Document
-	'PRT' , # Printer Output File
-	'HBK' , # Mathcad Handbook File
-	'NOW' , # Readme File
 	'ORT' , # Rich Text Editor Document
-	'LATEX' , # LaTeX Document
+	'HBK' , # Mathcad Handbook File
 	'BML' , # Braille 2000 Braille File
-	'JP1' , # Japanese (Romaji) Text File
 	'WPD' , # 602Text Word Processing Document
 	'XY3' , # XyWrite III Document
+	'JP1' , # Japanese (Romaji) Text File
+	'PRT' , # Printer Output File
+	'LATEX' , # LaTeX Document
+	'NOW' , # Readme File
 	'ZZS' , # Zyzzyva Search
 	'PBJ' , # Perfect Backup Job File
 	'TPC' , # Topic Connection Placeholder
@@ -238,130 +234,130 @@ set_text = {
 	'YTDL' , # Youtube-dl Download Progress File
 	'SCRIV' , # Scrivener Document
 	'GRAPH' , # GRAPH Hierarchical Data File
-	'WP' , # WordPerfect Document
-	'WP7' , # WordPerfect 7 Document
 	'WP4' , # WordPerfect 4 Document
+	'WP7' , # WordPerfect 7 Document
+	'WP' , # WordPerfect Document
 	'_DOC' , # Renamed Microsoft Word Document
 	'ZRTF' , # Nisus Compressed Rich Text File
 	'SAFETEXT' , # SafeText File
 	'XDL' , # Oracle Expert Definition Language File
 	'MW' , # MacWrite Text Document
-	'FDF' , # Acrobat Forms Data Format
 	'FLR' , # Flare Decompiled ActionScript File
+	'FDF' , # Acrobat Forms Data Format
 	'LWP' , # Lotus Word Pro Document
 	'WPT' , # Kingsoft Writer Template
 	'BTD' , # Business-in-a-Box Document
-	'SAM' , # Ami Pro Document
 	'XBDOC' , # Xiosis Scribe Document
 	'UTXT' , # Unicode Text File
+	'SAM' , # Ami Pro Document
 	'JOE' , # JOE Document
-	'MELL' , # Mellel Word Processing File
 	'UOF' , # Uniform Office Document
 	'PU' , # PlantUML File
+	'MELL' , # Mellel Word Processing File
+	'GV' , # Graphviz DOT File
 	'ACT' , # FoxPro Documenting Wizard Action Diagram
+	'ASCII' , # ASCII Text File
 	'WPL' , # DEC WPS Plus Text Document
 	'PFX' , # First Choice Word Processing Document
-	'LYX' , # LyX Document
 	'WPD' , # ACT! 2 Word Processing Document
 	'PVM' , # Photo Video Manifest File
+	'LYX' , # LyX Document
 	'NB' , # Nota Bene File
-	'CRWL' , # Windows Crawl File
 	'EUC' , # Extended Unix Code File
+	'CRWL' , # Windows Crawl File
 	'WBK' , # WordPerfect Workbook
-	'OFL' , # Ots File List
-	'JTD' , # JustSystems Ichitaro Document
 	'DGS' , # Dagesh Pro Document
 	'SESSION' , # Mozilla Firefox Session File
-	'ASCII' , # ASCII Text File
-	'AWT' , # AbiWord Template
+	'OFL' , # Ots File List
+	'JTD' , # JustSystems Ichitaro Document
 	'PLANTUML' , # PlantUML File
-	'UNAUTH' , # SiteMinder Unauthorized Message File
-	'FFT' , # Final Form Text File
+	'AWT' , # AbiWord Template
 	'GPN' , # GlidePlan Map Document
-	'WP6' , # WordPerfect 6 Document
+	'FFT' , # Final Form Text File
+	'UNAUTH' , # SiteMinder Unauthorized Message File
 	'TDF' , # Guide Text Definition File
+	'WP6' , # WordPerfect 6 Document
 	'CNM' , # NoteMap Outline File
 	'XBPLATE' , # Xiosis Scribe Template
 	'PRT' , # Crypt Edit Protected Text Format File
-	'SP1' , # Windows XP Service Pack 1 Identification File
-	'AWP' , # Ability Write Template
-	'RTD' , # RagTime Document
-	'FWDN' , # fWriter Document
 	'TVJ' , # TrueView Job Ticket
-	'PMO' , # Pegasus Saved Message File
-	'PWR' , # PowerWrite Document
 	'MSS' , # CartoCSS Map Stylesheet
+	'SP1' , # Windows XP Service Pack 1 Identification File
+	'RTD' , # RagTime Document
+	'AWP' , # Ability Write Template
+	'PWR' , # PowerWrite Document
+	'PMO' , # Pegasus Saved Message File
+	'FWDN' , # fWriter Document
 	'QUID' , # Legacy QuidProQuo Document
 	'LTR' , # Letter File
-	'GV' , # Graphviz DOT File
-	'OPENBSD' , # OpenBSD Readme File
 	'SDW' , # StarOffice Writer Text Document
+	'OPENBSD' , # OpenBSD Readme File
 	'NJX' , # NJStar Document
 	'DWD' , # DavkaWriter File
 	'XYP' , # XYWrite III Plus Document
-	'VCT' , # Visual Class Library Memo
 	'RZK' , # File Crypt Password File
-	'WTX' , # Text Document
+	'VCT' , # Visual Class Library Memo
 	'ZW' , # Chinese Text File
-	'XWP' , # Crosstalk Session File
-	'QPQD' , # QuidWriter Document
-	'DEL' , # Delimited ASCII File
-	'WP5' , # WordPerfect 5 Document
-	'NWCTXT' , # NoteWorthy Composer Text File
+	'WTX' , # Text Document
 	'SCT' , # FoxPro Form Memo
+	'DEL' , # Delimited ASCII File
+	'XWP' , # Crosstalk Session File
+	'NWCTXT' , # NoteWorthy Composer Text File
+	'QPQD' , # QuidWriter Document
+	'WP5' , # WordPerfect 5 Document
 	'BTXT' , # BTXTPad Document
 	'LYT' , # TurboTax Install Log File
-	'OCR' , # FAXGrapper Fax Text File
-	'TMV' , # TextMaker Template
 	'DESCRIPTION' , # Youtube-dl Video Description
+	'TMV' , # TextMaker Template
+	'OCR' , # FAXGrapper Fax Text File
+	'TDF' , # Xserve Test Definition File
 	'WPA' , # ACT! Word Processing Document
 	'BBS' , # Bulletin Board System Text
-	'TDF' , # Xserve Test Definition File
-	'DNE' , # Netica Text File
 	'ASE' , # Autodesk ASCII Scene Export File
+	'DNE' , # Netica Text File
 	'EBP' , # Express Burn Project
 	'EMF' , # Jasspa MicroEmacs Macro File
-	'SFX' , # Blood Sound Properties
-	'VW' , # Volkswriter Text File
-	'XDL' , # XML Schema File
-	'WSD' , # WordStar Document
 	'KWD' , # KWord Document
-	'CYI' , # Clustify Input File
 	'PWDP' , # Password Pad Document
+	'XDL' , # XML Schema File
+	'VW' , # Volkswriter Text File
+	'SFX' , # Blood Sound Properties
+	'CYI' , # Clustify Input File
+	'WSD' , # WordStar Document
 	'UDF' , # UYAP Document Format
 	'IIL' , # CleanSweep Installation Log
-	'VPDOC' , # VoodooPad Document
+	'FDXT' , # Final Draft 8 Template
 	'DAT' , # Prison Architect Asset Archive
 	'NWM' , # Nisus Macro
 	'LOOP' , # Loop Component
-	'BRX' , # Beam Report Document
 	'DXP' , # Duxbury Print File
 	'BXT' , # Balabolka Text Document
 	'FGS' , # Fig Figure Settings File
 	'PVJ' , # ProofVision Job Ticket
 	'NWP' , # Now Contact WP Document
+	'BRX' , # Beam Report Document
 	'SUBLIME-WORKSPACE' , # Sublime Text Workspace File
-	'ODP' , # Organ Definition Project
-	'PTNX' , # EasyBeadPatterns Pattern
 	'QPF' , # QuickPad Encrypted Document
+	'PTNX' , # EasyBeadPatterns Pattern
+	'VPDOC' , # VoodooPad Document
+	'ODP' , # Organ Definition Project
 	'CWS' , # Claris Works Template
-	'ZZQ' , # Zyzzyva Quiz
 	'LNT' , # Laego Note Taker File
-	'FLF' , # FIGlet Font File
-	'MAILSIGNATURE' , # Apple Mail Email Signature
-	'SGT' , # ShareGate Template
-	'FDXT' , # Final Draft 8 Template
-	'WG' , # WordGrinder Document Set
-	'MELTEM' , # Mellel Template
 	'WEBDOC' , # Box.net Web Document
+	'FLF' , # FIGlet Font File
+	'MELTEM' , # Mellel Template
+	'ZZQ' , # Zyzzyva Quiz
+	'WG' , # WordGrinder Document Set
+	'SGT' , # ShareGate Template
 	'TID' , # TiddlyWiki Tiddler
+	'MAILSIGNATURE' , # Apple Mail Email Signature
 	'GTHR' , # Gather Log File
 	'JRTF' , # JAmes OS Rich Text File
 	'MIN' , # Mint Source File
-	'MML' , # Map Markup Language File
 	'ARC' , # WWE 2K18 and 2K19 Cache File
-	'SCW' , # Movie Magic Screenwriter Document
+	'MML' , # Map Markup Language File
 	'PDPCMD' , # Pdplayer Command File
+	'SCW' , # Movie Magic Screenwriter Document
 	'WN' , # WriteNow Document
 	'FDS' , # Final Draft Secure Copy
 	'SW3' , # Scriptware Screenplay
@@ -373,10 +369,8 @@ set_text = {
 
 
 # noinspection SpellCheckingInspection
-set_data = set()
-
-# noinspection SpellCheckingInspection
 set_data = {
+	'GAMBL' , # Vernier Graphical Analysis Project
 	'TT20' , # TurboTax Canada 2020 Tax Return
 	'LDF' , # SQL Server Transaction Log File
 	'TXD' , # Game Texture Dictionary
@@ -394,51 +388,51 @@ set_data = {
 	'DAT' , # Data File
 	'PPSM' , # Microsoft PowerPoint Macro-Enabled Show
 	'TDB' , # Android Thumbnail Cache
-	'OBB' , # Android Opaque Binary Blob File
-	'RGO' , # RepliGo File
-	'PLW' , # PicoLog Data File
-	'TRK' , # CompeGPS Land Track File
-	'QUICKENDATA' , # Quicken Essentials for Mac Data File
+	'TOPC' , # TopicCrunch Project File
 	'POI' , # Magellan Maestro Point of Interest File
-	'MOSAIC' , # MacOSaiX Mosaic File
-	'KDC' , # Kaspersky Virus Database File
-	'WTB' , # Win-Test Binary Log
-	'STYK' , # Stykz Stick Figure
-	'ABCD' , # AudioVisual Book Data File
 	'NOT' , # Notation File
-	'DM2' , # Toad Data Modeler 2 File
-	'KPR' , # KPresenter Presentation
+	'TRK' , # CompeGPS Land Track File
+	'RGO' , # RepliGo File
+	'LDIF' , # LDAP Data Interchange Format File
+	'FSC' , # Practical Scriptwriter File
 	'NCORX' , # Adobe Encore Project
-	'PRDX' , # Presentations Document
-	'CAPT' , # Capito Data File
+	'SQR' , # SQL Program File
+	'KDC' , # Kaspersky Virus Database File
+	'T05' , # TaxCut 2005 Tax Return
+	'PLW' , # PicoLog Data File
+	'QB2017' , # QuickBooks 2017 for Mac Data File
+	'QUICKENDATA' , # Quicken Essentials for Mac Data File
+	'AZZ' , # AZZ Cardfile Database File
+	'MOSAIC' , # MacOSaiX Mosaic File
+	'ABCD' , # AudioVisual Book Data File
+	'EBUILD' , # Portage eBuild Script
+	'STYK' , # Stykz Stick Figure
+	'T20' , # H&R Block 2020 Tax Return
+	'KPR' , # KPresenter Presentation
+	'ALD' , # Dynamics AX Application Label Data File
+	'DM2' , # Toad Data Modeler 2 File
+	'TAX2010' , # TurboTax 2010 Tax Return
+	'AIFB' , # AIF Builder Project File
+	'WTB' , # Win-Test Binary Log
+	'VOK' , # PocketVok Vocabulary File
 	'BGT' , # Graphics Accounts Data File
+	'TA9' , # TaxAct 2019 Tax Return File
+	'DRL' , # Gerber Drill Rack File
+	'HDF' , # Hierarchical Data Format (Version 4)
 	'MMC' , # Microsoft Media Catalog
 	'WJR' , # ReGet Deluxe Data File
-	'AIFB' , # AIF Builder Project File
-	'T05' , # TaxCut 2005 Tax Return
-	'T20' , # H&R Block 2020 Tax Return
-	'EBUILD' , # Portage eBuild Script
-	'LDIF' , # LDAP Data Interchange Format File
-	'TAX2010' , # TurboTax 2010 Tax Return
-	'VOK' , # PocketVok Vocabulary File
-	'SQR' , # SQL Program File
-	'ALD' , # Dynamics AX Application Label Data File
-	'FSC' , # Practical Scriptwriter File
-	'QB2017' , # QuickBooks 2017 for Mac Data File
-	'HDF' , # Hierarchical Data Format (Version 4)
-	'TAX2023' , # TurboTax 2023 Tax Return
-	'FLO' , # RFFlow Flowchart File
-	'DRL' , # Gerber Drill Rack File
-	'SQ' , # Sysquake Program
-	'TA9' , # TaxAct 2019 Tax Return File
-	'H17' , # H&R Block Canada 2017 Tax Return
-	'H13' , # H&R Block Canada 2013 Tax Return
-	'RAL' , # WinRail Track Design File
-	'AZZ' , # AZZ Cardfile Database File
-	'IGC' , # International Gliding Commission Data File
-	'PPT' , # Microsoft PowerPoint Presentation (Legacy)
-	'TOPC' , # TopicCrunch Project File
 	'XFT' , # Adobe Form Designer 5.0 File
+	'TAX2023' , # TurboTax 2023 Tax Return
+	'RAL' , # WinRail Track Design File
+	'SQ' , # Sysquake Program
+	'IGC' , # International Gliding Commission Data File
+	'OBB' , # Android Opaque Binary Blob File
+	'H17' , # H&R Block Canada 2017 Tax Return
+	'FLO' , # RFFlow Flowchart File
+	'PRDX' , # Presentations Document
+	'CAPT' , # Capito Data File
+	'H13' , # H&R Block Canada 2013 Tax Return
+	'PPT' , # Microsoft PowerPoint Presentation (Legacy)
 	'BIN' , # Generic Binary File
 	'GGB' , # GeoGebra Worksheet
 	'PRS' , # Harvard Graphics Presentation
@@ -454,62 +448,62 @@ set_data = {
 	'DIF' , # Data Interchange Format
 	'JEF' , # Janome Embroidery Format File
 	'MLS' , # Milestones Simplicity File
-	'TBL' , # StarCraft Information Table
 	'OTLN' , # Opal Outline File
+	'TBL' , # StarCraft Information Table
 	'CDX' , # Compound Index File
-	'BLG' , # Windows Binary Performance Log File
 	'EXX' , # IBM Linkway MsgPut File
+	'BLG' , # Windows Binary Performance Log File
 	'CONTACT' , # Windows Contact File
 	'EDI' , # Electronic Data Interchange File
 	'VCS' , # vCalendar Event
 	'PC' , # Personal Composer File
-	'PPS' , # Microsoft PowerPoint Slide Show (Legacy)
-	'DPN' , # Depiction Data File
 	'OVF' , # Open Virtualization File
 	'ALI' , # Dynamics AX Label Index File
+	'DPN' , # Depiction Data File
+	'PPS' , # Microsoft PowerPoint Slide Show (Legacy)
 	'ODP' , # OpenDocument Presentation
 	'PCB' , # Printed Circuit Board Design File
 	'RFA' , # Revit Family File
-	'ROX' , # Roxio Project File
 	'CLP' , # CrazyTalk Clip File
+	'ROX' , # Roxio Project File
 	'ZMC' , # ZoneAlarm Quarantine File
 	'PKA' , # Packet Tracer Activity File
 	'OPJU' , # Origin Unicode Project
 	'VDF' , # AntiVir Virus Definitions File
-	'T12' , # At Home 2012 Tax Return
 	'LMS' , # LenMus Score File
 	'JPH' , # JProbe Memory Snapshot
+	'T12' , # At Home 2012 Tax Return
+	'NET' , # netViz Project File
 	'IP' , # IconPackager Theme File
-	'MAI' , # Microsoft Mail File
 	'LCM' , # Lipikar Custom Map File
+	'MAI' , # Microsoft Mail File
 	'WAB' , # Windows Address Book
 	'ENL' , # EndNote Library
 	'GRF' , # DPlot Graph File
 	'QRP' , # QuickReport File
-	'NET' , # netViz Project File
-	'GRADE' , # GradeStat Document
-	'ROADTRIP' , # Road Trip Planner File
 	'TAX2009' , # TurboTax 2009 Tax Return
-	'QUICKEN2015' , # Quicken 2015 Data File
+	'TDL' , # Tab Delineated Format File
+	'ZAP' , # ZoneAlarm Pro Data File
 	'TTK' , # Catalyst Translation Toolkit
 	'NDX' , # dBASE Index (Legacy)
-	'LIVEREG' , # Symantec Antivirus Session File
 	'DOCKZIP' , # ObjectDock File
-	'ZAP' , # ZoneAlarm Pro Data File
+	'QUICKEN2015' , # Quicken 2015 Data File
+	'GRADE' , # GradeStat Document
 	'VSX' , # Visio Stencil XML File
-	'TDL' , # Tab Delineated Format File
+	'LIVEREG' , # Symantec Antivirus Session File
+	'ROADTRIP' , # Road Trip Planner File
 	'UWL' , # User Word List File
 	'PHOTOSLIBRARY' , # Photos Library
 	'INK' , # Mimio Notebook
 	'TAR' , # Tape Archive
-	'PRJ' , # AIMMS Project File
-	'TRD' , # TrID Definitions Package
-	'DCMD' , # DiskCatalogMaker Thumbnail-Enabled Catalog
-	'FOB' , # Dynamics NAV Object Container File
-	'SDS' , # OpenOffice Chart
-	'CKT' , # CircuitMaker File
-	'XLF' , # XLIFF Document
 	'TCC' , # TimeCalc Classic Data File
+	'SDS' , # OpenOffice Chart
+	'FOB' , # Dynamics NAV Object Container File
+	'PRJ' , # AIMMS Project File
+	'XLF' , # XLIFF Document
+	'DCMD' , # DiskCatalogMaker Thumbnail-Enabled Catalog
+	'TRD' , # TrID Definitions Package
+	'CKT' , # CircuitMaker File
 	'JNT' , # Windows Journal File
 	'FCS' , # Flow Cytometry Standard File
 	'CAV' , # Comodo Virus Definitions File
@@ -517,210 +511,209 @@ set_data = {
 	'RP' , # Axure RP Project File
 	'PTF' , # Scrapbook Flair Template
 	'ACC' , # Graphics Accounts Data File
-	'PDX' , # Adobe Acrobat Index File
-	'OO3' , # OmniOutliner 3 File
-	'MDL' , # Rational Rose Model File
-	'FDB' , # Art Explosion Catalog
-	'MWF' , # MapGuide Author Map Window File
 	'IMT' , # My Time Data File
-	'RDB' , # N64 ROM Database
-	'PAB' , # Personal Address Book
+	'FDB' , # Art Explosion Catalog
 	'Q09' , # QuickTax 2009 Tax Return
-	'QPB' , # QuickBooks Point of Sale Data File
 	'PHB' , # Motorola Phone Book File
+	'PDX' , # Adobe Acrobat Index File
+	'MDL' , # Rational Rose Model File
+	'MWF' , # MapGuide Author Map Window File
+	'PAB' , # Personal Address Book
+	'OO3' , # OmniOutliner 3 File
+	'RDB' , # N64 ROM Database
+	'QPB' , # QuickBooks Point of Sale Data File
 	'IIF' , # Intuit Interchange Format File
 	'EMLXPART' , # Mail Message Attachment
-	'DVO' , # Cook'n Cookbook File
-	'U10' , # UFile 2010 Tax Return
-	'PCR' , # PCMark Vantage Benchmark File
-	'ACS' , # Agent Character File
+	'Q08' , # QuickTax 2008 Tax Return
 	'EGP' , # Easy Grade Pro Gradebook File
 	'T10' , # At Home 2010 Tax Return
 	'POTM' , # Microsoft PowerPoint Macro-Enabled Template
-	'Q08' , # QuickTax 2008 Tax Return
+	'DVO' , # Cook'n Cookbook File
+	'ACS' , # Agent Character File
+	'U10' , # UFile 2010 Tax Return
+	'PCR' , # PCMark Vantage Benchmark File
 	'KEYCHAIN' , # Mac OS X Keychain File
 	'RBT' , # LEGO MINDSTORMS NXT Program
 	'RSC' , # Symbian Application Compiled Resource File
 	'LIB' , # Generic Data Library
-	'3DR' , # 3DMark Results File
-	'UCCAPILOG' , # Microsoft UCC API Log File
 	'PFC' , # AOL Personal Filing Cabinet
 	'OTP' , # OpenDocument Presentation Template
+	'3DR' , # 3DMark Results File
+	'UCCAPILOG' , # Microsoft UCC API Log File
 	'SDF' , # Structure Data File
 	'BGL' , # Babylon Glossary File
 	'FDB' , # Portfolio Catalog
-	'HST' , # History File
-	'MBG' , # Microsoft Mailbag
 	'PJ2' , # xPlan Document
 	'BVP' , # VodaHost BlueVoda Project File
+	'L6T' , # Line 6 Tone File
+	'HST' , # History File
 	'RFO' , # RoboForm Option File
 	'PPF' , # Edgecam Pathtrace Part File
-	'WDF' , # Workshare Compare DeltaFile
 	'H12' , # At Home Canada 2012 Tax Return
-	'L6T' , # Line 6 Tone File
 	'DSZ' , # Orchida (OES) Embroidery File
+	'MBG' , # Microsoft Mailbag
+	'WDF' , # Workshare Compare DeltaFile
 	'KEY' , # Apple Keynote Presentation
 	'XLT' , # Microsoft Excel Spreadsheet Template (Legacy)
 	'PDB' , # Protein Data Bank File
 	'BOX' , # E-mail Mailbox
 	'IN' , # Input File
-	'PPSX' , # Microsoft PowerPoint Slide Show
 	'CRTX' , # Office 2007 Chart Template File
-	'BCM' , # Business Contact Manager File
-	'IDX' , # Navigation POI File
+	'PPSX' , # Microsoft PowerPoint Slide Show
 	'CMA' , # Coach Activity File
+	'IDX' , # Navigation POI File
+	'BCM' , # Business Contact Manager File
 	'GEDCOM' , # GEDCOM Genealogy File
 	'XML' , # XML File
 	'PKT' , # Packet Tracer Network Simulation Model
-	'QVW' , # QlikView Document
 	'VDB' , # Symantec Virus Database File
+	'QVW' , # QlikView Document
 	'RET' , # BusinessObjects Template
 	'RVT' , # Revit Project File
 	'TSV' , # Tab-Separated Values File
-	'FOX' , # InfoZoom Data File
 	'MMP' , # Master Album Maker Project
+	'FOX' , # InfoZoom Data File
 	'NOTEBOOK' , # SMART Notebook File
 	'SLX' , # MathWorks Simulink Model File
 	'SAV' , # SPSS Data File
 	'USR' , # SmartMusic Custom File
 	'XFD' , # XFD File
+	'DSY' , # Directory Synchronizer Project File
+	'DFPROJ' , # DVD Flick Project
+	'GRV' , # Office Groove File
 	'MNC' , # My Notes Center Notebook
 	'SC45' , # SuperCard Project File
-	'SEN' , # SenTest Data File
-	'XPT' , # SAS Transport File
-	'GRV' , # Office Groove File
-	'OEACCOUNT' , # Windows Mail Account File
 	'EV' , # Echoview File
-	'PDX' , # Product Data eXchange File
-	'DFPROJ' , # DVD Flick Project
-	'T18' , # H&R Block 2018 Tax Return
-	'LMX' , # Landmark Exchange File
-	'HDA' , # HotDocs Auto-Assemble File
-	'ABY' , # AOL Address Book File
-	'PKS' , # Oracle Package Spec File
-	'I5Z' , # IUCLID 5 Import/Export File
-	'DVDPROJ' , # iDVD Project File
-	'RCG' , # Recog Character Recognition Set
-	'MPKT' , # MOPEKS Trial File
-	'SVF' , # Serial Vector Format File
-	'DSY' , # Directory Synchronizer Project File
-	'II' , # IconWorkshop Extended Information File
-	'BCI' , # Belarc Advisor Report File
 	'GWK' , # GraphiCode PCB Job File
 	'PRO6PLX' , # ProPresenter 6 Playlist Bundle
+	'OEACCOUNT' , # Windows Mail Account File
+	'T18' , # H&R Block 2018 Tax Return
+	'II' , # IconWorkshop Extended Information File
+	'MPKT' , # MOPEKS Trial File
 	'SLP' , # Sisulizer Project File
+	'SVF' , # Serial Vector Format File
+	'HDA' , # HotDocs Auto-Assemble File
+	'RCG' , # Recog Character Recognition Set
+	'SEN' , # SenTest Data File
 	'AW' , # Answer Wizard File
 	'MNO' , # Macromedia Design Note
+	'LMX' , # Landmark Exchange File
+	'I5Z' , # IUCLID 5 Import/Export File
+	'PDX' , # Product Data eXchange File
+	'DVDPROJ' , # iDVD Project File
+	'XPT' , # SAS Transport File
+	'PKS' , # Oracle Package Spec File
+	'BCI' , # Belarc Advisor Report File
+	'ABY' , # AOL Address Book File
 	'RPT' , # Crystal Reports File
 	'OFT' , # Outlook File Template
 	'MPP' , # Microsoft Project File
 	'ONE' , # OneNote Document
 	'PAF' , # Personal Ancestral File
 	'OBJ' , # Relocatable Object Code
-	'QDF' , # Quicken Data File
+	'MOHO' , # Moho Animation Project
 	'KPF' , # Komodo Project File
 	'VOI' , # VOI Group File
-	'MOHO' , # Moho Animation Project
+	'QDF' , # Quicken Data File
 	'PPTM' , # Microsoft PowerPoint Macro-Enabled Presentation
-	'MOX' , # ExtendSim Simulation Software Model
-	'PKB' , # Oracle Package Body File
-	'OFC' , # Open Financial Connectivity File
 	'FLP' , # ActivPrimary Flipchart File
+	'OFC' , # Open Financial Connectivity File
+	'MOX' , # ExtendSim Simulation Software Model
 	'TRA' , # WinTrack Railroad Track File
+	'PKB' , # Oracle Package Body File
 	'VCF' , # vCard File
 	'EXIF' , # Exchangeable Image Information File
 	'SPS' , # SPSS Program File
+	'ANME' , # Anime Studio Document
+	'XLC' , # Microsoft Excel Chart
 	'PDS' , # Planetary Data System File
+	'SEO' , # SEO Note File
 	'FFWP' , # FormsForWeb Packet
+	'LVM' , # LabVIEW Measurement File
+	'MJK' , # Question File
 	'EFX' , # eFax Document
 	'ENEX' , # Evernote Archive
-	'MJK' , # Question File
-	'SEO' , # SEO Note File
-	'LVM' , # LabVIEW Measurement File
-	'ANME' , # Anime Studio Document
 	'IBA' , # iBooks Author Document
-	'XLC' , # Microsoft Excel Chart
 	'OFX' , # Open Financial Exchange File
-	'LBL' , # NiceLabel Template File
 	'GBR' , # Gerber File
+	'LBL' , # NiceLabel Template File
 	'LAS' , # LIDAR Data Exchange File
 	'STM' , # Exchange Streaming Media File
 	'WINDOWSLIVECONTACT' , # Windows Live Contacts File
 	'EMB' , # Wilcom Embroidery Design File
 	'CSV' , # Comma-Separated Values File
-	'ASND' , # Adobe Sound Document
 	'RTE' , # Revit Project Template
 	'QUICKEN2017' , # Quicken 2017 Data File
-	'TRS' , # WinTrack Railroad Track Text File
+	'QB2011' , # QuickBooks 2011 File
 	'GRK' , # Gradekeeper Class Gradebook File
+	'ASND' , # Adobe Sound Document
+	'T07' , # TaxCut 2007 Tax Return
+	'QB2013' , # QuickBooks 2013 File
+	'TRS' , # WinTrack Railroad Track Text File
+	'PTZ' , # E-Transcript Bundle File
+	'T13' , # H&R Block 2013 Tax Return
+	'FMAT' , # FMAT Runfile
 	'WGT' , # IMPS Data File
+	'PDAS' , # PDAStore Data Store File
+	'GDT' , # gretl Datafile
 	'HL' , # HeuristicLab Storage File
 	'MYI' , # MySQL MyISAM Index File
-	'GDT' , # gretl Datafile
-	'PDAS' , # PDAStore Data Store File
-	'FMAT' , # FMAT Runfile
-	'T07' , # TaxCut 2007 Tax Return
-	'QB2011' , # QuickBooks 2011 File
-	'PTZ' , # E-Transcript Bundle File
-	'QB2013' , # QuickBooks 2013 File
-	'T13' , # H&R Block 2013 Tax Return
 	'PST' , # Outlook Personal Information Store
 	'AAE' , # Sidecar Image Edit File
-	'TAX2018' , # TurboTax 2018 Tax Return
 	'RPP' , # REAPER Project File
 	'JRPRINT' , # JasperReports Print File
-	'WPC' , # WordPad Converter File
-	'GCW' , # Microsoft Mathematics Worksheet
+	'TAX2018' , # TurboTax 2018 Tax Return
 	'TPF' , # Transit NXT Pack Translation File
-	'XRDML' , # XRDML Data File
+	'GCW' , # Microsoft Mathematics Worksheet
+	'WPC' , # WordPad Converter File
 	'NPL' , # Nokia Playlist File
+	'XRDML' , # XRDML Data File
 	'CELTX' , # Celtx Project File
 	'POTX' , # Microsoft PowerPoint Presentation Template
 	'XSL' , # XML Stylesheet
-	'SLK' , # Symbolic Link File
-	'LP7' , # LP7 Digitally Signed File
-	'CLG' , # Collage Maker Project File
-	'OMP' , # Office Manager Document Archive
-	'XMCD' , # Mathcad Worksheet File
-	'PMO' , # Broderbund Print Meta Object File
 	'T19' , # H&R Block 2019 Tax Return
+	'OMP' , # Office Manager Document Archive
+	'CLG' , # Collage Maker Project File
+	'XMCD' , # Mathcad Worksheet File
 	'PXJ' , # RecordNow Project
+	'SLK' , # Symbolic Link File
+	'PMO' , # Broderbund Print Meta Object File
 	'GS' , # GemStone Document
-	'XPG' , # Autoplay Media Studio Exported Page
 	'4DV' , # 4D View Ultrasound File
+	'XPG' , # Autoplay Media Studio Exported Page
 	'MDM' , # HLM Multivariate Data Matrix File
 	'GPI' , # Garmin Point of Interest File
 	'IDX' , # HMI Historical Log Index File
-	'CDF' , # Common Data Format
-	'VXML' , # VoiceXML File
-	'MDSX' , # MEGA Saved Session
-	'TAX2015' , # TurboTax 2015 Tax Return
-	'CVN' , # CineVision Encoding Session
-	'FPSL' , # FileMaker Pro Snapshot Link
-	'TB' , # Tabbery Tab File
-	'TDT' , # THOR Data Tree File
 	'KPZ' , # Komodo Template File
+	'TDT' , # THOR Data Tree File
+	'CVN' , # CineVision Encoding Session
+	'MDSX' , # MEGA Saved Session
+	'CDF' , # Common Data Format
+	'FPSL' , # FileMaker Pro Snapshot Link
+	'TAX2015' , # TurboTax 2015 Tax Return
+	'TB' , # Tabbery Tab File
+	'VXML' , # VoiceXML File
 	'PRJ' , # Project File
 	'TBK' , # ToolBook File
 	'VCE' , # Visual CertExam Exam File
 	'GED' , # GEDCOM Genealogy Data File
-	'WB3' , # Corel Quattro Pro 7 and 8 File
-	'LSF' , # Logos Library System File
-	'STYKZ' , # Stykz Animation
 	'ER1' , # ERWin Entity Relationship Diagram
+	'WB3' , # Corel Quattro Pro 7 and 8 File
+	'STYKZ' , # Stykz Animation
+	'LSF' , # Logos Library System File
 	'CAP' , # Packet Capture File
 	'VCD' , # Value Change Dump File
 	'TAX2017' , # TurboTax 2017 Tax Return
 	'SIM' , # SAP Tutor File
-	'TEF' , # TablEdit Tablature
-	'DAM' , # DeltaMaster Analysis Model
 	'FXP' , # Adobe Flex Project File
 	'QB2014' , # QuickBooks 2014 File
+	'DAM' , # DeltaMaster Analysis Model
+	'TEF' , # TablEdit Tablature
 	'TWB' , # Tableau Workbook File
 	'OUT' , # Output File
 	'INX' , # Compiled Script
-	'RTE' , # Navigation Route
 	'ADCP' , # Adobe Device Central Project File
+	'RTE' , # Navigation Route
 	'MDJ' , # StarUML Model File
 	'TAX2013' , # TurboTax 2013 Tax Return
 	'ABP' , # AVS Barcode Profile
@@ -728,63 +721,63 @@ set_data = {
 	'CDX' , # ChemDraw Exchange File
 	'PTB' , # Power Tab File
 	'DCM' , # DiskCatalogMaker Catalog
-	'QMTF' , # Quicken Mac Transfer File
-	'SDP' , # Session Description Protocol File
-	'WEA' , # Ecotect Weather File
-	'DII' , # Summation Batch Load File
+	'T16' , # H&R Block 2016 Tax Return
 	'TE3' , # WinTrack Object File
+	'PSPD' , # PhotoSuite 5 Project File
 	'ID2' , # Windows Live Messenger Emoticon File
-	'RNQ' , # Renque Model File
-	'SAR' , # Sibelius Arrange Style
+	'T11' , # At Home 2011 Tax Return
+	'DSB' , # Wondershare DVD Slideshow Builder Project
+	'WEA' , # Ecotect Weather File
+	'WGT' , # XNBC Synaptic Weights File
+	'SDP' , # Session Description Protocol File
+	'MMP' , # MindManager Mind Map
 	'GNO' , # GenoPro Genealogy Tree File
-	'JDB' , # Symantec Endpoint Protection Update File
-	'SQD' , # SQ Data File
-	'XMLPER' , # LeCroy Binary Waveform File
+	'QMTF' , # Quicken Mac Transfer File
+	'DII' , # Summation Batch Load File
 	'TAX2008' , # TurboTax 2008 Tax Return
 	'CNA' , # Catena Project File
-	'NPT' , # Portfolio NetPublish Template
-	'OTL' , # NoteTab Outline File
-	'T11' , # At Home 2011 Tax Return
-	'PD4' , # Windows Live Photo Gallery Information File
-	'XPJ' , # RoboHelp HTML Project File
-	'T06' , # TaxCut 2006 Tax Return
-	'MMP' , # MindManager Mind Map
-	'PD5' , # Windows Live Photo Gallery Information File
-	'T16' , # H&R Block 2016 Tax Return
+	'LIX' , # Logos Library System File
+	'XMLPER' , # LeCroy Binary Waveform File
+	'RNQ' , # Renque Model File
+	'JDB' , # Symantec Endpoint Protection Update File
+	'SQD' , # SQ Data File
+	'PPF' , # Transit NXT Pack Project File
 	'VRD' , # Visio Report Definition File
-	'WGT' , # XNBC Synaptic Weights File
-	'XSLT' , # Extensible Stylesheet Language Transformations File
-	'XFO' , # XSL-FO Formatted Form
-	'EPF' , # Edgecam Educational Part File
-	'SCD' , # TurboTax Tax Schedule List
-	'HS2' , # HyperRESEARCH 2 Study File
-	'OR6' , # Lotus Organizer 6 File
+	'XDB' , # Symantec Virus Database File
+	'ITX' , # FileNet eForms Designer Template
 	'MEX' , # Macro Express File
 	'FOP' , # InfoZoom Protected Data File
+	'SCD' , # TurboTax Tax Schedule List
 	'DAS' , # DeltaMaster Analysis Session
 	'TDM' , # LabVIEW Binary Measurement File
+	'EPF' , # Edgecam Educational Part File
 	'PTN' , # PaperPort Thumbnail File
 	'XRP' , # RationalPlan Project File
-	'ROU' , # Gerber Route File
 	'PXL' , # Pocket Excel File
-	'XDB' , # Symantec Virus Database File
-	'LIX' , # Logos Library System File
+	'PD5' , # Windows Live Photo Gallery Information File
+	'XSLT' , # Extensible Stylesheet Language Transformations File
 	'T08' , # TaxCut 2008 Tax Return
-	'ITX' , # FileNet eForms Designer Template
-	'PSPD' , # PhotoSuite 5 Project File
-	'DSB' , # Wondershare DVD Slideshow Builder Project
-	'PPF' , # Transit NXT Pack Project File
-	'PKH' , # Oracle Package File
-	'IMA' , # Sage ACT! Email Message
-	'ULF' , # Universal List File
 	'BJO' , # TabRite Tablature File
+	'XFO' , # XSL-FO Formatted Form
+	'OR6' , # Lotus Organizer 6 File
+	'PD4' , # Windows Live Photo Gallery Information File
+	'XPJ' , # RoboHelp HTML Project File
+	'ULF' , # Universal List File
+	'ROU' , # Gerber Route File
 	'BRW' , # Calyx Point Borrower File
+	'HS2' , # HyperRESEARCH 2 Study File
+	'OTL' , # NoteTab Outline File
+	'T06' , # TaxCut 2006 Tax Return
+	'IMA' , # Sage ACT! Email Message
+	'PKH' , # Oracle Package File
+	'SAR' , # Sibelius Arrange Style
+	'NPT' , # Portfolio NetPublish Template
 	'PCAPNG' , # Pcap-NG Packet Capture File
 	'QIF' , # Quicken Interchange Format File
 	'SPV' , # SPSS Output Document
 	'QBW' , # QuickBooks for Windows Company File
-	'MCDX' , # Mathcad Prime Document
 	'XFDF' , # Adobe Acrobat XFDF File
+	'MCDX' , # Mathcad Prime Document
 	'CTF' , # WhereIsIt Catalog
 	'IES' , # IES Photometric Data File
 	'MCD' , # Mathcad Document
@@ -797,9 +790,9 @@ set_data = {
 	'MMF' , # Meal-Master Recipe File
 	'MDC' , # Multi Dimension Cube File
 	'DBD' , # DemoShield Project
-	'NDK' , # Lotus Notes Design Elements File
 	'DAL' , # DVD-lab Project File
 	'NP' , # Portfolio NetPublish File
+	'NDK' , # Lotus Notes Design Elements File
 	'FTW' , # Family Tree Maker File
 	'TAX2011' , # TurboTax 2011 Tax Return
 	'EXP' , # Export File
@@ -807,10 +800,10 @@ set_data = {
 	'FMC' , # FormConnect Form File
 	'MW' , # Maple Worksheet
 	'VDX' , # Microsoft Visio XML Drawing
-	'HML' , # HostMonitor TestList File
 	'MBX' , # Outlook Express Mailbox
-	'ITMSP' , # iTunes Store Package
 	'PNPROJ' , # Programmer's Notepad Project File
+	'HML' , # HostMonitor TestList File
+	'ITMSP' , # iTunes Store Package
 	'SLE' , # Sisulizer Package File
 	'SHW' , # Corel Presentation
 	'MWS' , # Maple Classic Worksheet
@@ -818,19 +811,19 @@ set_data = {
 	'VI' , # LabVIEW Virtual Instrument File
 	'EPW' , # EnergyPlus Weather Data File
 	'ESX' , # Xactimate Insurance Claims Estimate
-	'FLO' , # iGrafx FlowCharter File
-	'PHM' , # Pro Home Manager Data File
-	'DDC' , # DivX Descriptor File
 	'T09' , # At Home 2009 Tax Return
+	'LIVEUPDATE' , # Symantec LiveUpdate File
+	'PHM' , # Pro Home Manager Data File
+	'FLO' , # iGrafx FlowCharter File
+	'DDC' , # DivX Descriptor File
 	'TT12' , # TurboTax Canada 2012 Tax Return
 	'IGC' , # Anime List Builder Input File
-	'LIVEUPDATE' , # Symantec LiveUpdate File
 	'SGML' , # Standard Generalized Markup Language File
 	'CLM' , # MagicJack Call Log File
-	'XDNA' , # DNA Strider Sequence File
 	'ROD' , # Actuate Report Object Design File
-	'PJM' , # xPlan Model
+	'XDNA' , # DNA Strider Sequence File
 	'GRR' , # Gradekeeper Class Roster File
+	'PJM' , # xPlan Model
 	'QDP' , # Quick and Dandy Plotter File
 	'BCC' , # Calendar Creator File
 	'QB2012' , # QuickBooks 2012 File
@@ -839,27 +832,27 @@ set_data = {
 	'PXF' , # Transit XV Pack Project File
 	'GC' , # GraphClick File
 	'DDCX' , # DivX Descriptor 2 File
-	'ZDC' , # CD Catalog Expert Database File
 	'VTX' , # Visio Template XML File
+	'ZDC' , # CD Catalog Expert Database File
 	'KID' , # Kidspiration Document
 	'LGH' , # HMI Historical Log File
-	'OPX' , # FlipAlbum Photo Album File
-	'IXB' , # Ulead Disc Image
 	'KPX' , # Kid Pix Picture
+	'IXB' , # Ulead Disc Image
+	'OPX' , # FlipAlbum Photo Album File
 	'WNK' , # Wink Presentation
-	'DMSP' , # PhotoSuite Project File
 	'LSL' , # LightScribe Label
-	'ULZ' , # USBlyzer Data Capture File
-	'TDA' , # Palm To-Do File
+	'DMSP' , # PhotoSuite Project File
 	'QB2009' , # QuickBooks 2009 File
-	'OND' , # Lotus Notes Encapsulated Memo File
+	'TDA' , # Palm To-Do File
+	'ULZ' , # USBlyzer Data Capture File
 	'CSA' , # PNA Code Calset File
+	'OND' , # Lotus Notes Encapsulated Memo File
 	'FHC' , # FHC Data File
 	'TFA' , # TreeSoft CashFlow Analysis Data File
-	'TT13' , # TurboTax Canada 2013 Tax Return
-	'TPB' , # GROMACS Binary Input File
 	'TKFL' , # TKLinks Saver Favorite Links
+	'TT13' , # TurboTax Canada 2013 Tax Return
 	'SPUB' , # Disc Cover File
+	'TPB' , # GROMACS Binary Input File
 	'TDA' , # Java Application Thread Dump
 	'MBG' , # Mailbag Assistant Mailbox File
 	'BLB' , # Blob Data File
@@ -879,9 +872,6 @@ set_data = {
 	'IVT' , # Beyond 20/20 Table File
 }
 
-
-# noinspection SpellCheckingInspection
-set_audio = set()
 
 # noinspection SpellCheckingInspection
 set_audio = {
@@ -994,53 +984,53 @@ set_audio = {
 	'CUE' , # Cue Sheet File
 	'DM' , # DRM Delivery Message
 	'VAG' , # PlayStation Compressed Audio
-	'RNS' , # Reason Song File
 	'VYF' , # Samsung Digital Voice Recorder File
+	'RNS' , # Reason Song File
 	'UNI' , # MikMod UniMOD Module
 	'ACT' , # ADPCM Compressed Audio
 	'MXL' , # Compressed MusicXML File
 	'UAX' , # Unreal Audio Package
 	'SESX' , # Audition Session
 	'AC3' , # Audio Codec 3 File
-	'Q2' , # Winamp Equalizer Auto-Load Presets File
-	'Q1' , # Winamp Equalizer Presets File
-	'SSEQ' , # Nintendo DS Sound Sequence File
 	'NRT' , # Nokia Ringtone
+	'Q1' , # Winamp Equalizer Presets File
+	'ZPA' , # Vielklang Audio Metadata File
+	'Q2' , # Winamp Equalizer Auto-Load Presets File
+	'FRG' , # Sound Forge Pro Project
 	'VQF' , # TwinVQ Audio File
 	'ROL' , # Ad Lib Synthesized Instrument
-	'FRG' , # Sound Forge Pro Project
 	'GPK' , # WaveLab Audio Peak File
-	'ZPA' , # Vielklang Audio Metadata File
+	'SSEQ' , # Nintendo DS Sound Sequence File
 	'RMX' , # RealJukebox Format
 	'M3U8' , # UTF-8 M3U Playlist
 	'REX' , # ReCycle Loop File
 	'PKF' , # Adobe Audition Peak File
 	'FLM' , # FL Studio Mobile Project
 	'SIB' , # Sibelius Score
-	'RGRP' , # Pro Tools Region Group File
 	'SMF' , # Standard MIDI File
-	'LOGIC' , # Logic Pro Project File
+	'RGRP' , # Pro Tools Region Group File
 	'CTS' , # CrazyTalk Script File
-	'AOB' , # DVD-Audio Audio Object File
+	'LOGIC' , # Logic Pro Project File
 	'FTM' , # FamiTracker Module
-	'PTX' , # Pro Tools Session File
+	'AOB' , # DVD-Audio Audio Object File
 	'WAVE' , # WAVE Sound File
+	'PTX' , # Pro Tools Session File
 	'WFP' , # WaveFront Program File
 	'WMA' , # Windows Media Audio
+	'CIDB' , # iTunes CD Information File
+	'CKB' , # Cricket Audio Bank File
+	'5XE' , # Line 6 POD HD500X Edit Preset File
+	'PANDORA' , # Pandora Android App Executable
+	'ACD' , # ACID Project File
+	'TRAK' , # Traktor Content Pack File
 	'MPU' , # MPEG Layer 3 Audio File
 	'F32' , # Raw 32-Bit Audio File
-	'CIDB' , # iTunes CD Information File
-	'ISMA' , # IIS Smooth Streaming Audio File
-	'ACD' , # ACID Project File
-	'5XE' , # Line 6 POD HD500X Edit Preset File
-	'TRAK' , # Traktor Content Pack File
-	'S3I' , # Scream Tracker 3 Instrument
-	'PANDORA' , # Pandora Android App Executable
-	'SBI' , # Sound Blaster Instrument
 	'PCAST' , # iTunes Podcast File
-	'CKB' , # Cricket Audio Bank File
 	'SPH' , # NIST SPHERE Audio File
+	'ISMA' , # IIS Smooth Streaming Audio File
 	'WUS' , # WUTG Tagged Audio
+	'S3I' , # Scream Tracker 3 Instrument
+	'SBI' , # Sound Blaster Instrument
 	'3GA' , # 3GPP Audio File
 	'M4A' , # MPEG-4 Audio
 	'OGA' , # Ogg Vorbis Audio File
@@ -1049,32 +1039,31 @@ set_audio = {
 	'SWA' , # Shockwave Audio
 	'RAM' , # Real Audio Metadata File
 	'YOOKOO' , # Yookoo Player Playlist File
+	'MED' , # Amiga MED Sound File
+	'NML' , # Traktor Collection File
 	'W01' , # Yamaha SY Series Wave File
 	'OMA' , # Sony OpenMG Music File
-	'NML' , # Traktor Collection File
-	'MED' , # Amiga MED Sound File
-	'CAF' , # Core Audio File
-	'MOD' , # Music Module File
 	'XA' , # The Sims Audio File
-	'MUS' , # Minecraft Music File
-	'MOGG' , # Multitrack Ogg File
-	'WAX' , # Windows Media Audio Redirect
-	'AUP3' , # Audacity 3 Project File
-	'NOTE' , # Notessimo Composition
-	'H5B' , # POD HD500 Edit Bundle
-	'CWT' , # Cakewalk SONAR Template
-	'UW' , # Unsigned Word Audio File
+	'MOD' , # Music Module File
 	'B4S' , # Winamp Playlist File
+	'UW' , # Unsigned Word Audio File
+	'MUS' , # Minecraft Music File
+	'WAX' , # Windows Media Audio Redirect
+	'MOGG' , # Multitrack Ogg File
 	'FTMX' , # Finale 2014 Score Template
+	'NOTE' , # Notessimo Composition
+	'CWT' , # Cakewalk SONAR Template
+	'H5B' , # POD HD500 Edit Bundle
+	'AUP3' , # Audacity 3 Project File
 	'WRK' , # Cakewalk Music Project
 	'OPUS' , # Opus Audio
 	'INS' , # Adlib Tracker Instrument File
 	'M4B' , # MPEG-4 Audiobook
 	'SDAT' , # Nintendo DS Sound Data File
 	'OMF' , # Open Media Framework File
+	'MTP' , # MadTracker 2 Pattern
 	'WFM' , # Pro Tools Wave Cache File
 	'PTT' , # Pro Tools Session Template
-	'MTP' , # MadTracker 2 Pattern
 	'AIFF' , # Audio Interchange File Format
 	'MUX' , # Trackmania Music File
 	'SVD' , # Roland Patch File
@@ -1086,45 +1075,46 @@ set_audio = {
 	'MO3' , # MO3 Audio
 	'669' , # UNIS Composer 669 Module
 	'RSO' , # NXT Brick Audio File
+	'CAF' , # Core Audio File
 	'BNK' , # Adlib Instrument Bank
 	'XSPF' , # XML Shareable Playlist File
 	'LOF' , # Audacity File List
-	'DIG' , # Sound Designer Audio File
+	'IAA' , # INTUS Audio Archive
+	'PTM' , # PolyTracker Module
 	'WFB' , # WaveFront Sound Bank
-	'AGM' , # DTS Multi-channel Pro Packer File
+	'MPTM' , # OpenMPT Module
+	'SXT' , # Propellerhead Reason NN-XT Patch File
+	'NKX' , # Kontakt Monolith Container File
 	'DSF' , # Delusion Digital Sound File
+	'MBR' , # Zune Smooth Streaming File
 	'RTA' , # TrueRTA Project File
 	'MX4' , # Mixcraft 4 Audio Project
 	'BIDULE' , # Bidule Layout File
-	'VC3' , # VSampler Soundbank File
+	'DIG' , # Sound Designer Audio File
 	'WVC' , # WavPack Correction File
-	'IAA' , # INTUS Audio Archive
+	'VC3' , # VSampler Soundbank File
 	'DEWF' , # SoundEdit Recorded Instrument
 	'MX3' , # Mixcraft 3 Audio Project
-	'BDD' , # CARA Sound Radiation Data File
-	'MBR' , # Zune Smooth Streaming File
-	'NKX' , # Kontakt Monolith Container File
-	'SSND' , # Synclavier Sound File
-	'DSS' , # Digital Speech Standard File
-	'H4B' , # Line 6 POD HD400 Edit Bundle
-	'STAP' , # Soundtrack Pro Audio Project File
-	'PTM' , # PolyTracker Module
-	'SXT' , # Propellerhead Reason NN-XT Patch File
 	'PTS' , # Pro Tools Session
-	'AMF' , # Advanced Module File
-	'CDDA' , # CD Digital Audio File
-	'RTI' , # Real Tracker Instrument
 	'GPBANK' , # Guitar Pro Sound Bank File
-	'MX5TEMPLATE' , # Mixcraft 5 Audio Project Template
+	'VPL' , # Karaoke Player Playlist
+	'RTI' , # Real Tracker Instrument
+	'AGM' , # DTS Multi-channel Pro Packer File
+	'STAP' , # Soundtrack Pro Audio Project File
+	'MPDP' , # MixPad Project File
+	'DMSA' , # Music Disc Creator Project File
 	'BRSTM' , # BRSTM Audio Stream
 	'SOU' , # SBStudio II Sound File
-	'BNL' , # Talking Reading Pen Audio File
-	'DMSA' , # Music Disc Creator Project File
-	'MPDP' , # MixPad Project File
-	'A2P' , # Adlib Tracker II Pattern File
-	'MPTM' , # OpenMPT Module
-	'VPL' , # Karaoke Player Playlist
+	'H4B' , # Line 6 POD HD400 Edit Bundle
 	'CAFF' , # Core Audio File
+	'CDDA' , # CD Digital Audio File
+	'DSS' , # Digital Speech Standard File
+	'MX5TEMPLATE' , # Mixcraft 5 Audio Project Template
+	'SSND' , # Synclavier Sound File
+	'BNL' , # Talking Reading Pen Audio File
+	'AMF' , # Advanced Module File
+	'A2P' , # Adlib Tracker II Pattern File
+	'BDD' , # CARA Sound Radiation Data File
 	'MTF' , # Multi Tracker File
 	'ENC' , # Encore Musical Notation
 	'CDR' , # Raw CD Audio Data
@@ -1134,19 +1124,19 @@ set_audio = {
 	'AA' , # Audible Audio Book File
 	'CPR' , # Cubase Project
 	'VOX' , # Dialogic Voice Audio File
-	'BWW' , # Bagpipe Player File
 	'AGR' , # Ableton Groove File
+	'BWW' , # Bagpipe Player File
 	'CDA' , # CD Audio Track Shortcut
 	'SD' , # ESPS Sampled Data
 	'DS' , # LMMS DrumSynth File
 	'SNG' , # MIDI Song
-	'VPR' , # VOCALOID5 Project File
 	'ZVD' , # Zyxel Voice File
+	'VPR' , # VOCALOID5 Project File
 	'WPK' , # Nero Wave Editor File
 	'EMD' , # ABT Extended Module
 	'OMX' , # OtsAV Media Library Information File
-	'DTSHD' , # DTS-HD Master Audio File
 	'F4A' , # Adobe Flash Protected Audio File
+	'DTSHD' , # DTS-HD Master Audio File
 	'MUX' , # Myriad Stand-Alone Music Score
 	'LSO' , # Logic Audio Project
 	'AAC' , # Advanced Audio Coding File
@@ -1389,9 +1379,6 @@ set_audio = {
 
 
 # noinspection SpellCheckingInspection
-set_video = set()
-
-# noinspection SpellCheckingInspection
 set_video = {
 	'STR' , # YouTube Livestream Recording
 	'TTML' , # Timed Text Markup Language Subtitles File
@@ -1443,8 +1430,8 @@ set_video = {
 	'CLPI' , # Blu-ray Clip Information File
 	'FLC' , # FLIC Animation
 	'SBT' , # SBT Subtitle File
-	'SRT' , # SubRip Subtitle File
 	'DMX' , # Source Filmmaker Project
+	'SRT' , # SubRip Subtitle File
 	'M4S' , # MPEG-DASH Video Segment
 	'IFO' , # DVD-Video Disc Information File
 	'INP' , # Sony Camcorder Image Management File
@@ -1459,8 +1446,8 @@ set_video = {
 	'CAMPROJ' , # Camtasia Studio Project
 	'MVD' , # Movie Studio Movie
 	'IVR' , # Internet Video Recording
-	'VTT' , # Web Video Text Tracks File
 	'LSAV' , # Xiaomi Gallery Hidden Video
+	'VTT' , # Web Video Text Tracks File
 	'TRP' , # HD Video Transport Stream
 	'MPEG' , # MPEG Video
 	'M4U' , # MPEG-4 Playlist
@@ -1613,15 +1600,15 @@ set_video = {
 	'XVID' , # Xvid-Encoded Video File
 	'GTS' , # CaptiveWorks PVR Video File
 	'890' , # Cavena Subtitles File
+	'DDAT' , # DivX Temporary Video File
 	'G64X' , # Genetec Video File
 	'SAN' , # Smush Animation File
 	'MPG4' , # MPEG-4 Video File
+	'JDR' , # IROAD Dash Cam Video File
 	'D2V' , # DVD2AVI File
-	'DDAT' , # DivX Temporary Video File
 	'MPL' , # AVCHD Playlist File
 	'LVIX' , # Lightworks Video Index File
 	'AAF' , # Advanced Authoring Format File
-	'JDR' , # IROAD Dash Cam Video File
 	'VGZ' , # DigitalVDO Compressed Video File
 	'ISM' , # IIS Smooth Streaming Manifest File
 	'G64' , # Genetec Video File
@@ -1629,16 +1616,16 @@ set_video = {
 	'EXI' , # YouTube for Android Offline Video Index
 	'LRV' , # Low-resolution Video File
 	'F4V' , # Flash MP4 Video File
-	'TSP' , # Digital TV DVR Recording
+	'RSX' , # RED Metadata XML File
 	'VPROJ' , # VSDC Video Editor Project
 	'HDV' , # High Definition Video Format
 	'MP21' , # AXMEDIS MPEG-21 Object
 	'MOI' , # MOI Video File
 	'WM' , # Windows Media File
-	'M4F' , # Sony Network Camera Video
-	'MK3D' , # Matroska 3D Video File
 	'QTL' , # QuickTime Link File
-	'RSX' , # RED Metadata XML File
+	'MK3D' , # Matroska 3D Video File
+	'TSP' , # Digital TV DVR Recording
+	'M4F' , # Sony Network Camera Video
 	'XLMV' , # Xunlei Movie File
 	'DCK' , # Resolume Deck File
 	'JSS' , # JACOsub Subtitle File
@@ -1729,42 +1716,42 @@ set_video = {
 	'AVS' , # Application Visualization System File
 	'MPL' , # MPL2 Subtitles File
 	'PLPROJ' , # Adobe Prelude Project File
-	'SDV' , # Studio DV Project File
+	'ROQ' , # RoQ Full Motion Video
 	'SBZ' , # ShowBiz Project File
-	'DVX' , # DivX Video File
-	'VFZ' , # Creative Webcam Video Effects File
+	'SMK' , # Smacker Compressed Movie File
 	'DVT' , # Digital Video Transcript
 	'FPDX' , # Utilius Fairplay Project
-	'VBC' , # VodBurner Crude Video File
-	'TPR' , # TMPGEnc Project File
-	'TDA3MT' , # DivX Author Template File
-	'LFPACKAGE' , # LumaFusion Project Package
-	'SMK' , # Smacker Compressed Movie File
-	'CMPROJ' , # Camtasia macOS Project
-	'ALPX' , # ACDSee Luxea Video Editor Project
-	'ZM1' , # ZSNES Movie #1 File
-	'PGI' , # Video Recording File
-	'PEG' , # Callipeg Animation Project
-	'VDR' , # VirtualDub Signpost File
-	'M21' , # MPEG-21 File
 	'MPGINDEX' , # Adobe MPEG Index File
-	'TP0' , # Mascom PVR Video File
+	'EVO' , # HD DVD Video File
+	'TDA3MT' , # DivX Author Template File
+	'VFZ' , # Creative Webcam Video Effects File
 	'RCREC' , # LogMeIn Remote Control Session Recording
+	'FLH' , # FLIC Animation File
+	'RVL' , # muvee Reveal X Project File
+	'PGI' , # Video Recording File
+	'TP0' , # Mascom PVR Video File
+	'VDR' , # VirtualDub Signpost File
+	'ALPX' , # ACDSee Luxea Video Editor Project
+	'M21' , # MPEG-21 File
+	'M21' , # AXMEDIS MPEG-21 File
+	'SUB' , # VobSub Subtitles File
+	'DVX' , # DivX Video File
 	'IVF' , # Indeo Video Format File
-	'ISMC' , # Smooth Streaming Client Manifest File
+	'PEG' , # Callipeg Animation Project
 	'VIDEOMELD' , # VideoMeld Project
 	'BMK' , # PowerDVD MovieMark File
-	'ROQ' , # RoQ Full Motion Video
-	'HKM' , # Havok Movie File
-	'PXV' , # Pixbend Media File
-	'RVL' , # muvee Reveal X Project File
-	'SUB' , # VobSub Subtitles File
-	'M21' , # AXMEDIS MPEG-21 File
-	'AMV' , # Actions Media Video
-	'RVID' , # Snapz Pro X Recorded Video File
-	'EVO' , # HD DVD Video File
-	'FLH' , # FLIC Animation File
+	'TPR' , # TMPGEnc Project File
+	'LFPACKAGE' , # LumaFusion Project Package
 	'CMMTPL' , # Camtasia MenuMaker Template
+	'SDV' , # Studio DV Project File
+	'PXV' , # Pixbend Media File
+	'RVID' , # Snapz Pro X Recorded Video File
+	'ISMC' , # Smooth Streaming Client Manifest File
+	'AMV' , # Actions Media Video
+	'VBC' , # VodBurner Crude Video File
+	'CMPROJ' , # Camtasia macOS Project
+	'HKM' , # Havok Movie File
+	'ZM1' , # ZSNES Movie #1 File
 	'INSV' , # Insta360 Panoramic Video
 	'WTV' , # Windows Recorded TV Show File
 	'AEGRAPHIC' , # Adobe After Effects Graphic
@@ -1776,91 +1763,90 @@ set_video = {
 	'FFM' , # FFmpeg Stream File
 	'DAD' , # IMS200 Video Record File
 	'PAR' , # Dedicated Micros DVR Recording
-	'RMD' , # RED Metadata File
+	'QTM' , # Apple QuickTime Movie
 	'PNS' , # Pelco CCTV Video File
 	'YOG' , # Outerra Captured Video File
-	'QTM' , # Apple QuickTime Movie
-	'WOT' , # WebEx Recording File
+	'RMD' , # RED Metadata File
 	'PVR' , # Wintal PVR Video File
-	'CLK' , # ClickView Video File
+	'WOT' , # WebEx Recording File
+	'TTXT' , # MPEG-4 Timed Text Subtitles File
 	'NSV' , # Nullsoft Streaming Video File
 	'CREC' , # Lync Video File
-	'TTXT' , # MPEG-4 Timed Text Subtitles File
-	'VIX' , # Lightworks Video Index File
+	'CLK' , # ClickView Video File
 	'XEL' , # Expression Encoder Live Encoding File
+	'VIX' , # Lightworks Video Index File
 	'THP' , # Wii/GameCube Video File
+	'DV-AVI' , # Microsoft DV-AVI Video File
 	'FCPROJECT' , # Final Cut Pro X Project File
 	'XFL' , # Animate Uncompressed Animation
-	'SMI' , # SMIL Presentation
 	'PSSD' , # PhotoSuite Slide Show File
-	'DV-AVI' , # Microsoft DV-AVI Video File
+	'SMI' , # SMIL Presentation
 	'AV' , # Video Surveillance File
 	'VSE' , # AVTECH CCTV Video
 	'SSA' , # Sub Station Alpha Subtitle File
 	'GIFV' , # GIF Video File
 	'GCS' , # Cineform Studio Video Project
-	'M1PG' , # iFinish Video Clip
-	'BLZ' , # TeamViewer Blizz Session File
-	'QSV' , # iQIYI Video File
-	'BYU' , # Brigham Young University Movie File
-	'VLAB' , # VisionLab Studio Project File
 	'TOD' , # JVC Everio Video Capture File
-	'SEQ' , # NorPix StreamPix Sequence
-	'VS4' , # AVTECH CCTV Video Surveillance File
-	'FCARCH' , # Final Cut Pro Archive
+	'BYU' , # Brigham Young University Movie File
 	'PROQC' , # ProPresenter Quartz Composition
-	'IMOVIEMOBILE' , # iOS iMovie Project
-	'VFW' , # Video for Windows
+	'M1PG' , # iFinish Video Clip
 	'BS4' , # Mikogo Session Video Recording
+	'VFW' , # Video for Windows
+	'IMOVIEMOBILE' , # iOS iMovie Project
+	'QSV' , # iQIYI Video File
+	'SEQ' , # NorPix StreamPix Sequence
 	'LVF' , # DVR LVF Video File
+	'BLZ' , # TeamViewer Blizz Session File
+	'FCARCH' , # Final Cut Pro Archive
+	'VS4' , # AVTECH CCTV Video Surveillance File
+	'VLAB' , # VisionLab Studio Project File
 	'MOD' , # Camcorder Recorded Video File
-	'MPLS' , # Blu-ray Movie Playlist File
 	'MODD' , # Sony Video Analysis File
 	'KUX' , # Youku KUX Video
+	'MPLS' , # Blu-ray Movie Playlist File
 	'VIEWLET' , # Qarbon Viewlet
 	'QTZ' , # Quartz Composer File
 	'VDO' , # VDOLive Media File
 	'VF' , # VEGAS Movie Studio Project
-	'AECAP' , # After Effects Text Template
 	'PRO4DVD' , # ProPresenter DVD Clips Document
-	'AXM' , # AXMEDIS Object
-	'FLX' , # FLIC Animation
-	'DIF' , # Digital Interface Format
-	'CMREC' , # Camtasia Recording
 	'AXP' , # Pinnacle Studio Movie Project
-	'MXV' , # MAGIX Video
 	'IMOVIEPROJECT' , # iMovie Project
 	'H265' , # H.265 Video
+	'AXM' , # AXMEDIS Object
+	'CMREC' , # Camtasia Recording
+	'FLX' , # FLIC Animation
+	'MXV' , # MAGIX Video
 	'VEM' , # Meta Media Video E-Mail File
-	'EL8' , # Electa Live Classroom Session Recording
+	'AECAP' , # After Effects Text Template
 	'WSVE' , # Wondershare Filmora for Mac Project File
 	'SPRYZIP' , # LumaFusion Legacy Project
-	'CMMP' , # Camtasia MenuMaker Project
 	'AXV' , # Annodex Video File
+	'CMMP' , # Camtasia MenuMaker Project
 	'DLX' , # Sony VDU Video File
 	'JTS' , # Cyberlink AVCHD Video File
+	'DIF' , # Digital Interface Format
 	'XEJ' , # Expression Encoder Job File
 	'EZT' , # EZTitles Subtitles File
-	'USF' , # Universal Subtitles Format File
 	'PRO' , # ProPresenter Export File
 	'EXP' , # DX Series Exported Video File
+	'USF' , # Universal Subtitles Format File
 	'SMI' , # SAMI Subtitles File
 	'FBZ' , # FlashBack Screen Recorder Movie
-	'MOFF' , # Sony Video Data File
 	'DMSS' , # VideoWave SlideShow Project File
+	'MOFF' , # Sony Video Data File
 	'VCV' , # ViewCave Video File
-	'EYETV' , # EyeTV Recording File
 	'PVA' , # PVA Video File
+	'EYETV' , # EyeTV Recording File
 	'MQV' , # Sony Movie Format
 	'AVS' , # AviSynth Script
 	'RCPROJECT' , # iMovie '08 Project
-	'WGI' , # Wildgame Innovations Video File
-	'SVI' , # Samsung Video File
 	'EYE' , # Eyemail Video Recording File
+	'SVI' , # Samsung Video File
+	'WGI' , # Wildgame Innovations Video File
 	'AVR' , # EverFocus Recording File
 	'SKM' , # SK Telecom 3GP Video
 	'MVY' , # Video easy Project File
-	'CAM' , # MSN Messenger Webcam Recording
+	'EL8' , # Electa Live Classroom Session Recording
 	'H266' , # H.266 (VVC) Video
 	'ANYDESK' , # AnyDesk Remote Session Recording
 	'RTS' , # RealPlayer Streaming Media
@@ -1869,9 +1855,10 @@ set_video = {
 	'MEPJ' , # Movavi Video Editor Project
 	'WFSP' , # Wondershare Fantashow Project
 	'CAMTEMPLATE' , # Camtasia Template
-	'STL' , # European Broadcasting Union Subtitles File
-	'VSR' , # CPCAM CCTV Recording
 	'VP5' , # On2 VP5 Video File
+	'STL' , # European Broadcasting Union Subtitles File
+	'CAM' , # MSN Messenger Webcam Recording
+	'VSR' , # CPCAM CCTV Recording
 	'CIP' , # Cavena Subtitles File
 	'CX3' , # CMS Recorded Video File
 	'VMLF' , # VAIO Video File
@@ -1897,21 +1884,18 @@ set_video = {
 
 
 # noinspection SpellCheckingInspection
-set_3d_image = set()
-
-# noinspection SpellCheckingInspection
 set_3d_image = {
 	'BBMODEL' , # Blockbench 3D Model
 	'HIPNC' , # Houdini Apprentice File
 	'GH' , # Grasshopper Binary Definition
+	'VRM' , # Virtual Reality Model
 	'CRZ' , # Compressed Poser Character Rigging File
 	'MESH' , # Godot Engine 3D Mesh File
-	'IAVATAR' , # iClone Avatar
-	'DDP' , # DreamPlan Home Design Project
 	'MD5ANIM' , # id Tech 4 Model Animation File
-	'PART' , # PartDesigner Part
+	'DDP' , # DreamPlan Home Design Project
 	'IRR' , # Irrlicht 3D Scene
-	'VRM' , # Virtual Reality Model
+	'PART' , # PartDesigner Part
+	'IAVATAR' , # iClone Avatar
 	'C4D' , # Cinema 4D Model
 	'DUF' , # DAZ User File
 	'FSH' , # Fragment Shader File
@@ -1921,20 +1905,20 @@ set_3d_image = {
 	'MAKERBOT' , # MakerBot Print File
 	'M3D' , # 3D Model File
 	'IV' , # Open Inventor Scene Graph File
-	'DSV' , # DAZ Studio UV Mapping File
-	'THING' , # MakerBot Thing File
-	'ATM' , # Vue Atmospheres File
 	'PHY' , # 3ds Max Physique File
 	'ZT' , # Mental Ray Image Depth File
 	'MC5' , # Poser 5 Material File
+	'ATM' , # Vue Atmospheres File
 	'CMDB' , # Ansys CFD Mesh
+	'DSV' , # DAZ Studio UV Mapping File
+	'THING' , # MakerBot Thing File
 	'PMX' , # MikuMikuDance Model File
 	'CFG' , # Cal3D Model Configuration File
 	'SMD' , # Valve Studiomdl Data File
 	'MDL' , # Warcraft 3 3D Model Text File
+	'XAF' , # 3ds Max XML Animation File
 	'FX' , # Direct3D Effects File
 	'MIX' , # 3ds Max Motion Mixer File
-	'XAF' , # 3ds Max XML Animation File
 	'LXF' , # LEGO Digital Designer Model File
 	'X' , # DirectX Model File
 	'NM' , # Space Engine Nebula Model File
@@ -1942,11 +1926,11 @@ set_3d_image = {
 	'P3D' , # Peak3D 3D Graphics File
 	'AN8' , # Anim8or File
 	'MTZ' , # Compressed MetaStream Scene File
-	'MDX' , # Warcraft 3 Model File
 	'USD' , # Universal Scene Description Format
+	'MDX' , # Warcraft 3 Model File
 	'3DS' , # 3D Studio Scene
-	'PSA' , # Unreal Engine Skeletal Animation File
 	'AMF' , # Additive Manufacturing File
+	'PSA' , # Unreal Engine Skeletal Animation File
 	'VOX' , # Voxlap Voxel Model File
 	'FLT' , # OpenFlight Scene Description File
 	'CSO' , # Compiled Shader Object File
@@ -1956,46 +1940,45 @@ set_3d_image = {
 	'GLTF' , # GL Transmission Format File
 	'3MF' , # 3D Manufacturing File
 	'OBP' , # Bryce Object File
-	'MESH' , # 3D Mesh Model
 	'WFT' , # GTA 4 Car Model File
-	'MD5MESH' , # id Tech 4 3D Mesh File
-	'N3D' , # Nuclear 3D File
-	'P3L' , # Adobe Photoshop Light Preset File
-	'PRM' , # Re-Volt Model File
-	'P4D' , # Pix4D Project
-	'TRACE' , # TRACES 3D Scene
-	'BR7' , # Bryce 7 Scene File
-	'MD5CAMERA' , # id Tech 4 Model Camera File
-	'IVE' , # OpenSceneGraph Binary File
-	'3DXML' , # Dassault Systemes 3D XML File
-	'HDZ' , # Compressed Poser Hand Pose File
-	'KFM' , # Gamebryo 3D Model File
-	'REALITY' , # Reality 3D Scene Format
-	'ATL' , # Artlantis 3D Scene File
-	'PPZ' , # Compressed Poser Prop File
-	'CCP' , # CopperCube JavaScript File
-	'GMF' , # Leadwerks Game Model File
+	'MESH' , # 3D Mesh Model
 	'DAE' , # Digital Asset Exchange File
+	'P4D' , # Pix4D Project
+	'MD5CAMERA' , # id Tech 4 Model Camera File
+	'P3L' , # Adobe Photoshop Light Preset File
+	'HDZ' , # Compressed Poser Hand Pose File
+	'PRM' , # Re-Volt Model File
+	'3DXML' , # Dassault Systemes 3D XML File
+	'REALITY' , # Reality 3D Scene Format
+	'GMF' , # Leadwerks Game Model File
+	'IVE' , # OpenSceneGraph Binary File
+	'TRACE' , # TRACES 3D Scene
+	'N3D' , # Nuclear 3D File
+	'BR7' , # Bryce 7 Scene File
+	'MD5MESH' , # id Tech 4 3D Mesh File
+	'ATL' , # Artlantis 3D Scene File
 	'MA' , # Maya ASCII Scene
-	'IRRMESH' , # Irrlicht Static Mesh File
-	'VPD' , # MikuMikuDance Vocaloid Pose Data File
-	'TME' , # Bryce Time File
-	'ANIMSET' , # FaceFX Animation Set File
+	'GHX' , # Grasshopper XML Definition
 	'FACEFX' , # FaceFX Actor File
 	'E57' , # LIDAR Point Cloud Data File
-	'3D4' , # Stereo CAD-3D 2.0 Image File
 	'T3D' , # Swift 3D Document
+	'ANIMSET' , # FaceFX Animation Set File
+	'CCP' , # CopperCube JavaScript File
 	'PLY' , # Polygon Model
-	'MHM' , # MakeHuman Model
-	'BIP' , # Character Studio Biped File
-	'V3D' , # Visual3D.NET Data File
-	'SHAPR' , # Shapr3D Model
-	'STEL' , # Stella Polyhedron
-	'LLM' , # Linden Lab Mesh File
-	'PP2' , # Poser Prop File
-	'GHX' , # Grasshopper XML Definition
-	'GRS' , # Gravity Sketch Sketch File
 	'TILT' , # Tilt Brush Sketch
+	'GRS' , # Gravity Sketch Sketch File
+	'PP2' , # Poser Prop File
+	'TME' , # Bryce Time File
+	'LLM' , # Linden Lab Mesh File
+	'PPZ' , # Compressed Poser Prop File
+	'MHM' , # MakeHuman Model
+	'STEL' , # Stella Polyhedron
+	'VPD' , # MikuMikuDance Vocaloid Pose Data File
+	'SHAPR' , # Shapr3D Model
+	'IRRMESH' , # Irrlicht Static Mesh File
+	'V3D' , # Visual3D.NET Data File
+	'BIP' , # Character Studio Biped File
+	'3D4' , # Stereo CAD-3D 2.0 Image File
 	'SH3D' , # Sweet Home 3D Design
 	'XMF' , # Cal3D XML Mesh File
 	'Z3D' , # ZModeler 3D File
@@ -2013,53 +1996,53 @@ set_3d_image = {
 	'LND' , # 3D Landscape File
 	'SDB' , # SAP2000 Model File
 	'IGI' , # Indigo Image File
-	'GLSL' , # GLSL Shader File
 	'PL0' , # 3D Home Architect Foundation Floor Plan
+	'GLSL' , # GLSL Shader File
 	'X3G' , # 3D Print File
 	'LXO' , # Modo 3D Image
 	'DWF' , # Design Web Format File
 	'PKG' , # CoCreate OneSpace Modeling Package
 	'USDZ' , # Universal Scene Description Zipped Format
-	'ANM' , # 3D Animation File
 	'P5D' , # Planner 5D Project
-	'FCP' , # Phantasy Star Online 2 Female Cast File
-	'CG' , # Cg Program
+	'ANM' , # 3D Animation File
 	'MNM' , # Character Studio Marker Name File
+	'CG' , # Cg Program
+	'FCP' , # Phantasy Star Online 2 Female Cast File
 	'ANIM' , # Unity Animation File
-	'BLK' , # BLK360 Data File
-	'PRC' , # Product Representation Compact File
-	'MGF' , # Materials and Geometry Format
 	'MXM' , # Maxwell Material File
+	'MGF' , # Materials and Geometry Format
 	'MEB' , # PRO100 3D Interior Catalog Element
+	'PRC' , # Product Representation Compact File
+	'BLK' , # BLK360 Data File
 	'DN' , # Adobe Dimension Document
 	'DES' , # Corel Designer File
 	'TRI' , # FaceGen Polygonal Model File
 	'MB' , # Maya Binary Scene
-	'OFF' , # Object File Format
 	'A8S' , # Anim8or Script
+	'MRML' , # 3D Slicer Scene Description File
+	'OFF' , # Object File Format
 	'SH3F' , # Sweet Home 3D Model Library
 	'CHR' , # CryENGINE Character File
-	'SPV' , # SPIR-V Module
 	'CG3' , # Cabri 3D Document
-	'MRML' , # 3D Slicer Scene Description File
+	'SIS' , # arivis ImageCore File
+	'SPV' , # SPIR-V Module
+	'P3M' , # Adobe Photoshop Material Preset File
+	'XSI' , # Softimage XSI 3D Image
 	'MQO' , # Metasequoia Document
 	'MXS' , # Maxwell Studio Scene File
-	'XSI' , # Softimage XSI 3D Image
-	'SIS' , # arivis ImageCore File
-	'P3M' , # Adobe Photoshop Material Preset File
 	'3DM' , # Rhino 3D Model
 	'HIP' , # Houdini Project File
 	'SC4MODEL' , # SimCity 4 Model File
-	'M3G' , # Mobile 3D Graphics 3D Model
 	'A2C' , # Alice Object File
+	'M3G' , # Mobile 3D Graphics 3D Model
 	'PMD' , # Poser Binary Morph File
 	'NIF' , # Gamebryo Model File
-	'MDD' , # Point Oven Deformation Data File
 	'VSH' , # Vertex Shader File
+	'MDD' , # Point Oven Deformation Data File
 	'B3D' , # Blitz3D Entity Model File
 	'A3D' , # Alternativa Player 3D Export File
-	'ALBUM' , # GLC_Player Album File
 	'3DP' , # 123D Catch Photo Scene Data File
+	'ALBUM' , # GLC_Player Album File
 	'MS3D' , # MilkShape 3D Model
 	'BIF' , # Bifrost Mesh Cache
 	'HRZ' , # Compressed Poser Hair File
@@ -2070,12 +2053,12 @@ set_3d_image = {
 	'TCN' , # Techne Model File
 	'DSA' , # DAZ Studio 3+ Script
 	'GLB' , # Binary GL Transmission Format File
+	'BLD' , # Skyscraper Simulator Building Script
 	'MSH' , # Godot Engine 3D Mesh File
 	'ARFX' , # Spark AR Effect
 	'MCZ' , # Compressed Poser Material File
 	'FBX' , # Autodesk FBX Interchange File
 	'WRP' , # Geomagic 3D Wrap File
-	'BLD' , # Skyscraper Simulator Building Script
 	'SHP' , # 3D Studio Shape
 	'OL' , # Valve Hammer Object Layout File
 	'3DL' , # LightConverse 3D Model File
@@ -2085,21 +2068,22 @@ set_3d_image = {
 	'CGFX' , # CgFX Shader File
 	'AREXPORT' , # Spark AR Effects Package
 	'FG' , # FaceGen Project File
-	'CHR' , # 3ds Max Characters File
-	'W3D' , # Adobe Shockwave 3D File
 	'U3D' , # Universal 3D File
+	'W3D' , # Adobe Shockwave 3D File
+	'CHR' , # 3ds Max Characters File
 	'GEO' , # VRML Geography File
 	'CMOD' , # Celestia Model
-	'GMT' , # rFactor Model File
-	'UMS' , # Rune 3D Mesh File
 	'VISUAL_PROCESSED' , # World of Tanks 3D Model Surface File
-	'KTZ' , # Kahootz Project File
-	'VS' , # Vertex Shader File
-	'NXS' , # Nexus 3D Model
-	'XR' , # Xuver 3D Scene File
-	'ARM' , # ArmorPaint Asset
-	'PAR' , # Solid Edge Part File
 	'VROID' , # VRoid Studio Avatar
+	'UMS' , # Rune 3D Mesh File
+	'KTZ' , # Kahootz Project File
+	'ARM' , # ArmorPaint Asset
+	'GMT' , # rFactor Model File
+	'VS' , # Vertex Shader File
+	'XR' , # Xuver 3D Scene File
+	'KFM' , # Gamebryo 3D Model File
+	'NXS' , # Nexus 3D Model
+	'PAR' , # Solid Edge Part File
 	'GRN' , # Granny 3D File
 	'MC' , # Molecular Constructor Molecule File
 	'MCX-8' , # Mastercam X8 Model
@@ -2326,9 +2310,6 @@ set_3d_image = {
 
 
 # noinspection SpellCheckingInspection
-set_raster_image = set()
-
-# noinspection SpellCheckingInspection
 set_raster_image = {
 	'BIF' , # Ventana Whole Slide Image
 	'JXL' , # JPEG XL Image
@@ -2374,19 +2355,19 @@ set_raster_image = {
 	'PSP' , # Pixel Studio Project
 	'NWM' , # Sony NWM Display Screen File
 	'CT' , # Scitex Continuous Tone Image
-	'SLD' , # AutoCAD Slide File
+	'WIC' , # Java Wavelet Image
 	'IPV' , # ibis Paint Artwork
 	'LINEA' , # Linea Sketch Drawing
 	'JLS' , # JPEG-LS Image
 	'PAM' , # Portable Arbitrary Map Image
 	'SKTZ' , # Sony Sketch Drawing
-	'WIC' , # Java Wavelet Image
-	'SKITCH' , # Skitch Image
-	'OC4' , # openCanvas 4 Event File
-	'IPICK' , # iPick Football Image
-	'APS' , # Greeting Card Studio Project File
-	'OPLC' , # Nokia Operator Logo File
 	'PCX' , # Paintbrush Bitmap Image File
+	'SKITCH' , # Skitch Image
+	'SLD' , # AutoCAD Slide File
+	'IPICK' , # iPick Football Image
+	'OPLC' , # Nokia Operator Logo File
+	'OC4' , # openCanvas 4 Event File
+	'APS' , # Greeting Card Studio Project File
 	'CLIP' , # Clip Studio Paint Illustration
 	'KRA' , # Krita Image Document
 	'PM' , # Unix XV Graphic File
@@ -2405,277 +2386,276 @@ set_raster_image = {
 	'XCF' , # GIMP Image File
 	'FITS' , # Flexible Image Transport System File
 	'WBZ' , # Webshots Download Picture File
-	'LZP' , # LazPaint Image
-	'PSDX' , # Photoshop Touch Document
 	'73I' , # TI-73 Screenshot File
+	'LZP' , # LazPaint Image
 	'WBC' , # Webshots Collection File
+	'PSDX' , # Photoshop Touch Document
 	'DJVU' , # DjVu Image
 	'LSA' , # Xiaomi Gallery Hidden Photo
-	'USERTILE-MS' , # Windows 8 User Tile File
 	'PPF' , # Picture Publisher Image File
-	'CDC' , # AutoCAD DesignCenter Preview Cache File
 	'CPC' , # CPC Compressed Image File
+	'CDC' , # AutoCAD DesignCenter Preview Cache File
+	'USERTILE-MS' , # Windows 8 User Tile File
 	'TIFF' , # Tagged Image File Format
 	'BMP' , # Bitmap Image
-	'PMG' , # Adobe Photoshop Photomerge Panoramic Composition File
 	'OZJ' , # MU Online Image File
+	'PMG' , # Adobe Photoshop Photomerge Panoramic Composition File
 	'ACCOUNTPICTURE-MS' , # Windows 8 Account Picture File
 	'CAN' , # Canon Navigator Fax Document
 	'RGF' , # LEGO MINDSTORMS EV3 Robot Graphics File
 	'PBM' , # Portable Bitmap Image
 	'2BP' , # Pocket PC Bitmap Image File
-	'JPC' , # JPEG 2000 Code Stream File
-	'SNAG' , # Snagit for Windows Capture
-	'ECW' , # Enhanced Compression Wavelet Image
-	'TM2' , # PlayStation 2 Texture Image Map
 	'CDG' , # Compact Disc Plus Graphics Image
+	'SNAG' , # Snagit for Windows Capture
 	'MDP' , # FireAlpaca Image
 	'STEX' , # Godot Engine 3 StreamTexture File
+	'TM2' , # PlayStation 2 Texture Image Map
+	'ECW' , # Enhanced Compression Wavelet Image
+	'JPC' , # JPEG 2000 Code Stream File
 	'MPF' , # Microsoft Media Package FIle
 	'PI2' , # Portrait Innovations Photo
-	'PX' , # Pixel Image File
-	'VNA' , # JVC JLIP Image
 	'PDD' , # Adobe PhotoDeluxe Image
+	'VNA' , # JVC JLIP Image
+	'PX' , # Pixel Image File
 	'AWD' , # Microsoft Fax Document
 	'PFI' , # PhotoFiltre Studio Image
 	'PSPIMAGE' , # PaintShop Pro Image
 	'NOL' , # Nokia Operator Logo File
+	'KFX' , # Kofax Image File
 	'PNI' , # Popnoggin Image File
+	'CMR' , # U.S. Sectional Chart Map File
+	'URT' , # Utah Raster Toolkit File
+	'PNC' , # Panasonic Network Camera Image
 	'XBM' , # X BitMap Graphic
-	'MSP' , # Microsoft Paint Bitmap Image
+	'PIXELA' , # Pixela Project
 	'NLM' , # Nokia Logo File
 	'DRZ' , # Draz Paint Image
-	'PNC' , # Panasonic Network Camera Image
-	'KFX' , # Kofax Image File
-	'CMR' , # U.S. Sectional Chart Map File
 	'FF' , # Farbfeld Image
-	'PIXELA' , # Pixela Project
-	'URT' , # Utah Raster Toolkit File
-	'ICN' , # Windows Icon File
+	'MSP' , # Microsoft Paint Bitmap Image
 	'HEIC' , # High Efficiency Image Format
+	'ICN' , # Windows Icon File
 	'RPF' , # Rich Pixel Format File
+	'TG4' , # Tiled Group 4 Raster Image File
+	'DGT' , # DST Thumbnail File
 	'VRIMG' , # V-Ray Image File
 	'TN' , # LG Phone Image
-	'DGT' , # DST Thumbnail File
-	'TG4' , # Tiled Group 4 Raster Image File
 	'APNG' , # Animated Portable Network Graphic
 	'JNG' , # JPEG Network Graphic
-	'FBM' , # Fuzzy Bitmap Image
-	'FIL' , # Symbian Application Logo File
-	'VPE' , # Photoshop Vanishing Point Export File
 	'FPX' , # FlashPix Bitmap Image File
+	'FIL' , # Symbian Application Logo File
 	'JPF' , # JPEG 2000 Image
-	'SPP' , # Serif PhotoPlus Picture File
-	'FAC' , # FACE Image File
 	'RSR' , # Poser Model Preview File
 	'ASEPRITE' , # Aseprite Sprite File
+	'VPE' , # Photoshop Vanishing Point Export File
+	'FBM' , # Fuzzy Bitmap Image
+	'FAC' , # FACE Image File
+	'SPP' , # Serif PhotoPlus Picture File
 	'DTW' , # Desktop Wallpaper
 	'PAT' , # Pattern File
 	'PGM' , # Portable Gray Map Image
 	'JPE' , # JPEG Image
 	'PPM' , # Portable Pixmap Image
-	'IWI' , # Infinity Ward Texture File
-	'BMQ' , # Re-Volt Mipmap File
-	'KTX' , # Khronos Texture
 	'I3D' , # Houdini Image 3D File
-	'GIM' , # PlayStation Portable Image File
+	'IWI' , # Infinity Ward Texture File
+	'KTX' , # Khronos Texture
 	'PTG' , # ArtRage Painting
-	'MDP' , # MediBang Paint Pro Image
+	'BMQ' , # Re-Volt Mipmap File
+	'GIM' , # PlayStation Portable Image File
 	'PSP' , # PaintShop Pro Image
+	'MDP' , # MediBang Paint Pro Image
 	'TIF' , # Tagged Image File
 	'THM' , # Video Thumbnail File
 	'PSB' , # Photoshop Large Document Format
-	'CAN' , # Canvas Painting
-	'OTB' , # Nokia Over The Air Bitmap Image
-	'ART' , # Visual Paradigm Online Artwork
-	'OZT' , # MU Online Image File
-	'CTEX' , # Godot Engine 4 Compressed Texture
+	'HIF' , # High Efficiency Image Format
 	'JBIG2' , # JBIG2
-	'SPH' , # MikuMikuDance Sphere Mapping File
-	'WBM' , # Wireless Bitmap Image
+	'CTEX' , # Godot Engine 4 Compressed Texture
 	'WB2' , # Webshots Picture File
+	'OTB' , # Nokia Over The Air Bitmap Image
+	'MPO' , # Multi Picture Object File
+	'VRPHOTO' , # VR Photo Image
+	'AVIFS' , # AVIF Image Sequence
+	'ART' , # Visual Paradigm Online Artwork
+	'WBMP' , # Wireless Bitmap Image
+	'LB' , # Lens Blur Project File
 	'BMZ' , # Compressed Bitmap Image
+	'LMNR' , # Luminar 2018 Project File
+	'VIFF' , # Visualization Image File Format
 	'LJP' , # Lossless JPEG Image
-	'SPA' , # MikuMikuDance Sphere Mapping File
+	'PIC' , # Houdini Raster Image
+	'G3N' , # Zetafax Fax Image
 	'CALS' , # CALS Raster Graphic File
 	'GMBCK' , # Game Maker Background Image File
 	'PP5' , # Picture Publisher 5 Image File
+	'SPH' , # MikuMikuDance Sphere Mapping File
+	'CAN' , # Canvas Painting
 	'J2K' , # JPEG 2000 Image
-	'LB' , # Lens Blur Project File
-	'HIF' , # High Efficiency Image Format
-	'1SC' , # Bio-Rad Quantity One Gel Image
-	'G3N' , # Zetafax Fax Image
-	'CPD' , # Compressed PhotoDefiner Image File
-	'VRPHOTO' , # VR Photo Image
 	'KTX2' , # Khronos Texture 2.0
-	'MPO' , # Multi Picture Object File
-	'VIFF' , # Visualization Image File Format
-	'PXO' , # Pixelorama Project
+	'CPD' , # Compressed PhotoDefiner Image File
+	'1SC' , # Bio-Rad Quantity One Gel Image
+	'WBM' , # Wireless Bitmap Image
+	'OZT' , # MU Online Image File
+	'SPA' , # MikuMikuDance Sphere Mapping File
 	'WB0' , # Webshots Picture File
+	'ZIF' , # Zoomify Image Format File
 	'PNS' , # PNG Stereo Image
 	'JXR' , # JPEG XR Image
 	'GIH' , # GIMP Image Hose File
-	'AVIFS' , # AVIF Image Sequence
-	'WBMP' , # Wireless Bitmap Image
-	'ZIF' , # Zoomify Image Format File
-	'PIC' , # Houdini Raster Image
-	'LMNR' , # Luminar 2018 Project File
+	'ABM' , # Photo Album
 	'SIG' , # Broderbund Sign File
 	'ARR' , # Amber Graphic
 	'PIC' , # Generic Picture File
 	'INFO' , # ZoomBrowser Image Index File
 	'PGF' , # Progressive Graphics File
-	'ABM' , # Photo Album
 	'SIG' , # QuickTac SIG File
 	'HDP' , # HD Photo File
 	'PJPG' , # Progressive JPEG Image
-	'LBM' , # Deluxe Paint Bitmap Image
 	'CIMG' , # CImg Image File
-	'BTI' , # Nintendo Texture File
+	'LBM' , # Deluxe Paint Bitmap Image
 	'PICTCLIPPING' , # Picture Clipping File
-	'CE' , # ComputerEyes Image
 	'FACE' , # FACE Graphic File
+	'CE' , # ComputerEyes Image
+	'BTI' , # Nintendo Texture File
 	'SAI2' , # PaintTool SAI Version 2 Image
 	'JP2' , # JPEG 2000 Core Image
 	'RTL' , # Raster Transfer Language File
 	'TEX' , # Texture File
-	'JPX' , # JPEG 2000 Image File
 	'PXM' , # Pixelmator Image
-	'DJV' , # DjVu Image
+	'JPX' , # JPEG 2000 Image File
 	'JPG2' , # JPEG 2000 Image
-	'QTIF' , # QuickTime Image File
-	'CPT' , # Corel PHOTO-PAINT Image
-	'VDA' , # Targa Bitmap Image File
-	'RIFF' , # Painter Raster Image
+	'DJV' , # DjVu Image
+	'GBR' , # GIMP Brush File
 	'PE4' , # Photo Explorer Thumbnail Archive
-	'PNT' , # MacPaint File
-	'PVR' , # POWERVR Texture File
-	'AGP' , # ArtGem Project File
-	'ILBM' , # Interleaved Bitmap Image
-	'OTI' , # OpenDocument Image Template
+	'VDA' , # Targa Bitmap Image File
+	'OC3' , # openCanvas 3 Event File
 	'OCI' , # openCanvas Image
+	'PVR' , # POWERVR Texture File
+	'ILBM' , # Interleaved Bitmap Image
+	'CPT' , # Corel PHOTO-PAINT Image
+	'RIFF' , # Painter Raster Image
+	'PNT' , # MacPaint File
+	'QTIF' , # QuickTime Image File
+	'OTI' , # OpenDocument Image Template
 	'RCL' , # Recolored Project File
 	'PZS' , # PhotoSuite Slide Show File
 	'LIF' , # Leica Image File
-	'OC3' , # openCanvas 3 Event File
+	'AGP' , # ArtGem Project File
 	'KDI' , # KD Player Skin Image File
-	'GBR' , # GIMP Brush File
 	'UFO' , # Ulead File Object
 	'TIF' , # GeoTIFF Image
 	'001' , # Fax File
 	'VSS' , # Visio Stencil File
 	'SID' , # MrSID Image
+	'INT' , # SGI Integer Image
 	'GRO' , # Graphic Object Bitmap
 	'SUP' , # Subtitle Bitmap File
-	'INT' , # SGI Integer Image
+	'GP4' , # CCITT Group 4 Fax File
 	'RLI' , # RealWorld Graphics Layered Image
-	'APD' , # ACDSee Photo Document
-	'S2MV' , # StarCraft 2 Map Preview File
-	'AWD' , # Artweaver Document
 	'GGR' , # GIMP Gradient File
 	'CIT' , # Intergraph CCITT Image
-	'PRW' , # Artlantis Shader Preview File
-	'AIS' , # ACDSee Image Sequence File
-	'WB1' , # Webshots Picture File
 	'SFC' , # Motic Microscope Image
+	'S2MV' , # StarCraft 2 Map Preview File
+	'AWD' , # Artweaver Document
+	'PRW' , # Artlantis Shader Preview File
+	'WB1' , # Webshots Picture File
+	'APD' , # ACDSee Photo Document
 	'JIA' , # Digital Photo Navigator Album
 	'DM4' , # DigitalMicrograph 4 Image
-	'GP4' , # CCITT Group 4 Fax File
+	'AIS' , # ACDSee Image Sequence File
 	'INSP' , # Insta360 Panoramic Image
 	'PXD' , # Pixlr Layered Image
 	'JPG_LARGE' , # Twitter Large JPEG Image
 	'DCM' , # DICOM Image
 	'AVIF' , # AVIF Image
-	'THUMB' , # JAlbum Thumbnail File
+	'PCD' , # Kodak Photo CD Image
 	'MCS' , # Mathcad Image
 	'V' , # Subsampled Raw YUV Image
-	'PCD' , # Kodak Photo CD Image
-	'WI' , # Wavelet Image
 	'WDP' , # Windows Media Photo File
-	'MBM' , # Kerbal Space Program Texture File
+	'THUMB' , # JAlbum Thumbnail File
 	'PROCREATE' , # Procreate Artwork
-	'NEO' , # NeoChrome Bitmap Image
+	'MBM' , # Kerbal Space Program Texture File
+	'WI' , # Wavelet Image
 	'HPI' , # Hemera Photo Objects Image File
+	'NEO' , # NeoChrome Bitmap Image
 	'JIF' , # JPEG Interchange Format Image
-	'RAS' , # Sun Raster Graphic
 	'NCD' , # Nero CoverDesigner File
-	'WMP' , # Windows Media Photo File
-	'BMC' , # Bitmap Cache File
-	'SNAGPROJ' , # Snagit for Mac Capture
+	'RAS' , # Sun Raster Graphic
 	'BMX' , # Siemens Mobile Animations File
+	'BMC' , # Bitmap Cache File
+	'WMP' , # Windows Media Photo File
+	'SNAGPROJ' , # Snagit for Mac Capture
 	'RIF' , # Painter Raster Image
 	'QMG' , # Samsung Theme Graphics File
 	'ICA' , # Image Object Content Architecture File
 	'PSE' , # Photoshop Elements Photo Project
-	'JFI' , # JPEG File Interchange Image
-	'KODAK' , # Kodak Photo CD File
-	'SPE' , # WinSpec CCD Capture File
 	'ITHMB' , # iPod and iPhone Photo Thumbnails File
+	'JFI' , # JPEG File Interchange Image
 	'ORA' , # OpenRaster Image File
+	'SPE' , # WinSpec CCD Capture File
+	'KODAK' , # Kodak Photo CD File
 	'CIN' , # Kodak Cineon Bitmap Image
 	'SUN' , # Sun Raster Graphic
 	'ZIF' , # Zooming Image Format File
 	'MSK' , # Paint Shop Pro Mask File
-	'PXZ' , # Pixlr Zipped Layered Image
 	'RGB' , # RGB Bitmap
+	'PXZ' , # Pixlr Zipped Layered Image
 	'SDR' , # SmartDraw Drawing
 	'TARGA' , # Targa Graphic
 	'MAX' , # PaperPort Scanned Document
-	'GMSPR' , # Game Maker Sprite File
+	'SRF' , # Garmin Vehicle Image
 	'POP' , # Samsung Popcon Character File
+	'PP4' , # Picture Publisher Bitmap File
+	'PC1' , # Degas Elite Low Res Image File
+	'GMSPR' , # Game Maker Sprite File
 	'IVUE' , # Live Picture IVUE Image
 	'WPB' , # openCanvas 1.1 Image
-	'GPD' , # Graphic PhotoDefiner Image File
 	'PC2' , # Degas Elite Medium Res Image File
-	'PC1' , # Degas Elite Low Res Image File
-	'SRF' , # Garmin Vehicle Image
-	'PP4' , # Picture Publisher Bitmap File
+	'GPD' , # Graphic PhotoDefiner Image File
 	'T2B' , # CyBook Thumbnail Image
 	'PJP' , # Progressive JPEG Image
-	'SKM' , # SketchUp Material File
-	'SKY' , # Photoshop Sky Replacement Preset
-	'PYXEL' , # Pyxel Image Document
-	'WBP' , # Webshots Collection File
-	'AVB' , # Microsoft Comic Chat Character
-	'OZB' , # MU Online Image File
-	'PZA' , # PhotoSuite Album File
-	'HDRP' , # HDRtist Pro Document
-	'OC5' , # openCanvas 5 Event File
-	'PIXADEX' , # Pixadex Icon
-	'MYL' , # MyLogo Maker Image
-	'FPOS' , # Photo Pos Pro Image
-	'SPJ' , # Microsoft ICE Panorama Project
-	'GCDP' , # Greeting Card Studio Design Project
-	'360' , # 360desktop Panorama File
-	'KRA~' , # Krita Image Backup
-	'BM2' , # Subspace Bitmap File
-	'JBIG' , # Joint Bi-level Image Group File
-	'MONOPIC' , # Monodraw Picture
-	'SVSLIDE' , # Sakura VisionTek Slide Image
-	'PSXPRJ' , # PhotoScape X Project
-	'AFX' , # Auto FX PhotoGraphic Edges Image
-	'IPX' , # IPIX Image
-	'FSTHUMB' , # Filmora Thumbnail
-	'MONOSNIPPET' , # Monodraw Snippet
-	'J2C' , # JPEG 2000 Code Stream
-	'CD5' , # Chasys Draw Image File
-	'PICNC' , # Houdini 3D Compositing Image
-	'MIX' , # Microsoft Image Exchange File
-	'AB3' , # PhotoImpact 3 Album
-	'QTI' , # QuickTime Image File
-	'MBM' , # Multi Bitmap File
-	'TJP' , # Tiled JPEG File
-	'CID' , # Navigator Chart Image Description File
-	'DMI' , # BYOND Dream Maker Icon File
-	'PBS' , # PixBuilder Studio Image
 	'XWD' , # X Windows Dump Image
-	'DPX' , # Digital Picture Exchange File
+	'AB3' , # PhotoImpact 3 Album
+	'FPOS' , # Photo Pos Pro Image
+	'PZA' , # PhotoSuite Album File
+	'DMI' , # BYOND Dream Maker Icon File
+	'SKM' , # SketchUp Material File
 	'JBF' , # Paint Shop Pro Browser Cache File
+	'JBIG' , # Joint Bi-level Image Group File
+	'PICNC' , # Houdini 3D Compositing Image
+	'MYL' , # MyLogo Maker Image
+	'TJP' , # Tiled JPEG File
+	'J2C' , # JPEG 2000 Code Stream
+	'FSTHUMB' , # Filmora Thumbnail
+	'PIXADEX' , # Pixadex Icon
+	'HDRP' , # HDRtist Pro Document
+	'QTI' , # QuickTime Image File
+	'WBP' , # Webshots Collection File
+	'PYXEL' , # Pyxel Image Document
+	'OZB' , # MU Online Image File
+	'SPJ' , # Microsoft ICE Panorama Project
+	'PBS' , # PixBuilder Studio Image
+	'MONOPIC' , # Monodraw Picture
+	'AVB' , # Microsoft Comic Chat Character
+	'DPX' , # Digital Picture Exchange File
+	'SKY' , # Photoshop Sky Replacement Preset
+	'MBM' , # Multi Bitmap File
+	'KRA~' , # Krita Image Backup
+	'MIX' , # Microsoft Image Exchange File
+	'PSXPRJ' , # PhotoScape X Project
+	'BM2' , # Subspace Bitmap File
+	'360' , # 360desktop Panorama File
+	'MONOSNIPPET' , # Monodraw Snippet
+	'IPX' , # IPIX Image
+	'CD5' , # Chasys Draw Image File
+	'AFX' , # Auto FX PhotoGraphic Edges Image
+	'CID' , # Navigator Chart Image Description File
+	'SVSLIDE' , # Sakura VisionTek Slide Image
+	'GCDP' , # Greeting Card Studio Design Project
+	'OC5' , # openCanvas 5 Event File
 	'AGIF' , # Active GIF Creator Project
 	'ART' , # AOL Compressed Image File
 	'PXR' , # Pixar Image File
-	'DCX' , # Zsoft Multi-Page Paintbrush File
 	'BSS' , # Resident Evil Background Images File
+	'DCX' , # Zsoft Multi-Page Paintbrush File
 	'PANO' , # Camera Panoramic Picture
 	'PSF' , # PhotoStudio File
 	'ZVI' , # Zeiss Vision Image
@@ -2683,13 +2663,13 @@ set_raster_image = {
 	'TEXTURE' , # Diesel Engine Game Texture File
 	'9.PNG' , # NinePatchDrawable Image
 	'RGBA' , # RGBA Bitmap
-	'DT2' , # Windows Live Messenger Emoticon Image File
-	'BW' , # Black and White SGI Image File
 	'CUT' , # Dr. Halo Bitmap Image File
+	'BW' , # Black and White SGI Image File
 	'PSPBRUSH' , # PaintShop Pro Brush File
+	'DT2' , # Windows Live Messenger Emoticon Image File
 	'DICOM' , # DICOM Image
-	'APX' , # Ability Photopaint Studio Image
 	'SGD' , # GeneSnap Image File
+	'APX' , # Ability Photopaint Studio Image
 	'SVA' , # Manga Browser Comic File
 	'MAC' , # MacPaint Image
 	'JIFF' , # JPEG Image File Format
@@ -2697,144 +2677,142 @@ set_raster_image = {
 	'NCR' , # NCR Image
 	'DDT' , # Age of Mythology Textures File
 	'CPG' , # Manga Studio Page File
-	'FPPX' , # Microsoft Fresh Paint Painting File
-	'SEP' , # Separated Image File
-	'RLE' , # Run Length Encoded Bitmap
-	'PAC' , # STAD Graphic File
 	'U' , # Subsampled Raw YUV Image
-	'KIC' , # Kodak Compressed Image File
-	'DIC' , # DICOM Image
+	'PAC' , # STAD Graphic File
 	'8XI' , # TI-83/84 Plus Picture File
+	'RLE' , # Run Length Encoded Bitmap
+	'FPPX' , # Microsoft Fresh Paint Painting File
+	'KIC' , # Kodak Compressed Image File
+	'SEP' , # Separated Image File
+	'DIC' , # DICOM Image
 	'GFIE' , # Greenfish Icon Editor Pro Graphic
-	'SHG' , # Segmented Hyper-Graphic
-	'NDPI' , # Hamamatsu TIFF-like Slide Image
-	'PAP' , # PanoramaStudio Project File
-	'ODI' , # OpenDocument Image
 	'RCU' , # RealWorld Layered Cursor Image
+	'CAL' , # CALS Raster Graphic
+	'JB2' , # JBIG2 Image
+	'SHG' , # Segmented Hyper-Graphic
+	'PXO' , # Pixelorama Project
 	'SCN' , # Bio-Rad Gel Image
 	'JTF' , # JPEG Tagged Interchange Format
-	'JB2' , # JBIG2 Image
-	'CAL' , # CALS Raster Graphic
-	'SKYPEEMOTICONSET' , # Skype Emoticon Set File
+	'ODI' , # OpenDocument Image
+	'NDPI' , # Hamamatsu TIFF-like Slide Image
+	'PAP' , # PanoramaStudio Project File
 	'QIF' , # QuickTime Image File
+	'SKYPEEMOTICONSET' , # Skype Emoticon Set File
 	'CAM' , # CASIO Digital Camera Picture File
 	'JFIF' , # JPEG File Interchange Format
 	'INK' , # Pantone Reference File
 	'SFW' , # Seattle FilmWorks Image
-	'MXI' , # Maxwell Image
-	'SVS' , # Aperio ScanScope Slide Image
-	'JBR' , # Paint Shop Pro Brushes File
 	'OE6' , # openCanvas 6 Event File
-	'MIFF' , # Magick Image
-	'SCN' , # Leica Whole Slide Image
-	'PNM' , # Portable Any Map Image
-	'YUV' , # YUV Encoded Image File
+	'SOB' , # OpenOffice.org Impress Bitmap Styles File
 	'AIC' , # Advanced Image Coding File
 	'JPD' , # Joint PhotoDefiner Image
 	'TPS' , # TexturePacker Sprite Sheet File
 	'EPP' , # Canon Easy-PhotoPrint Image File
-	'SOB' , # OpenOffice.org Impress Bitmap Styles File
+	'MXI' , # Maxwell Image
+	'PNM' , # Portable Any Map Image
+	'YUV' , # YUV Encoded Image File
 	'TUB' , # PaintShop Pro Picture Tube
-	'SBP' , # Sketchbook Express iCloud Image
-	'ACORN' , # Acorn Image
 	'UGA' , # Ulead GIF Animator File
+	'SVS' , # Aperio ScanScope Slide Image
+	'MIFF' , # Magick Image
+	'ACORN' , # Acorn Image
+	'SCN' , # Leica Whole Slide Image
+	'SBP' , # Sketchbook Express iCloud Image
+	'JBR' , # Paint Shop Pro Brushes File
 	'JWL' , # Roxio Jewel Case File
 	'RVG' , # RVG X-ray Image
-	'IVR' , # Image Worlds File
 	'UGOIRA' , # Ugoira Animated Image File
 	'MRB' , # Multiple Resolution Bitmap File
+	'IVR' , # Image Worlds File
 	'SCT' , # Scitex Continuous Tone Image
 	'MAT' , # Vue Material File
 	'MIC' , # Image Composer File
-	'MIPMAPS' , # Mipmap Texture File
-	'WVL' , # Wavelet Image
-	'PTK' , # Puntotek Embroidery Design File
+	'HR' , # TRS-80 Image
 	'PTX' , # Pentax RAW Image File
-	'PJPEG' , # Progressive JPEG Image
+	'PTK' , # Puntotek Embroidery Design File
 	'RSB' , # Red Storm Bitmap File
 	'PI1' , # Degas Low Resolution Image File
-	'DDB' , # Device Dependent Bitmap
 	'SMP' , # Xionics SMP Image
-	'HR' , # TRS-80 Image
+	'WVL' , # Wavelet Image
+	'DDB' , # Device Dependent Bitmap
+	'PJPEG' , # Progressive JPEG Image
+	'MIPMAPS' , # Mipmap Texture File
 	'OMF' , # OMF Interchange Image File
 	'BS' , # Printfox Bitmap Image
 	'RRI' , # RealWorld Image
 	'SGI' , # Silicon Graphics Image
 	'JBG' , # Joint Bi-level Image Group File
 	'ADC' , # Scanstudio 16 Color Image
-	'C4' , # JEDMICS Image File
 	'Y' , # Subsampled Raw YUV Image
+	'C4' , # JEDMICS Image File
 	'CSF' , # Content Sealed Format
 	'MRXS' , # MIRAX Virtual Slide File
-	'PSPTUBE' , # PaintShop Pro Picture Tube File
-	'DC2' , # Kodak Photo-Enhancer File
-	'BRN' , # Cube Graphics File
-	'ICPR' , # IconUtils Project File
-	'TRIF' , # Tiled Raster Interchange Format
-	'VDOC' , # VinylMaster Document
-	'CPX' , # Corel CMX Compressed File
-	'MIP' , # Multiple Image Print File
-	'FSYMBOLS-ART' , # FSymbols Draw ASCII Art
-	'PSDB' , # PixelStyle Image
-	'DINO' , # Dinopixel Drawing
-	'PAL' , # Dr. Halo Color Palette File
-	'JAS' , # Paint Shop Pro Compressed Graphic
-	'THM' , # GoPro Thumbnail Image
-	'PXICON' , # CandyBar Icon
 	'ACR' , # American College of Radiology File
-	'PC3' , # Degas Elite High Res Image File
-	'RIC' , # NXT Image File
+	'PAL' , # Dr. Halo Color Palette File
+	'MIP' , # Multiple Image Print File
+	'GFB' , # GIFBlast Compressed Image File
+	'TRIF' , # Tiled Raster Interchange Format
 	'AAI' , # Dune HD AAI Image
-	'PFR' , # Paint Shop Pro Picture Frame File
-	'DM3' , # DigitalMicrograph Image
-	'COLZ' , # Adobe Collage File
+	'PE4' , # PhotoImpact Thumbnail Cache
+	'PSPFRAME' , # PaintShop Pro Picture Frame File
 	'FAX' , # Fax Document
-	'WBD' , # Webshots Picture File
+	'INV' , # Invivo Image
+	'PSPTUBE' , # PaintShop Pro Picture Tube File
+	'PSDB' , # PixelStyle Image
+	'DC6' , # Diablo II Graphics File
 	'BMF' , # Binary Material File
 	'LDOC' , # CutOut Project
+	'NCT' , # Nero CoverDesigner Template
+	'CPX' , # Corel CMX Compressed File
+	'NPSD' , # NPS Image Editor Document
+	'FSYMBOLS-ART' , # FSymbols Draw ASCII Art
+	'GVRS' , # Gridfour Virtual Raster Store Image
 	'OIR' , # FV3000 Specimen Image
 	'PALM' , # Palm OS Bitmap Image
-	'G3F' , # Zetafax Fax Image
-	'NCT' , # Nero CoverDesigner Template
-	'INV' , # Invivo Image
-	'UPF' , # Panono Unstitched Panorama Format
-	'PSPFRAME' , # PaintShop Pro Picture Frame File
-	'VMU' , # NanoZoomer Uncompressed Virtual Microscope Specimen
-	'NPSD' , # NPS Image Editor Document
-	'GVRS' , # Gridfour Virtual Raster Store Image
-	'T2K' , # Canfield Image File
-	'XFACE' , # X-Face Image
-	'DC6' , # Diablo II Graphics File
-	'PE4' , # PhotoImpact Thumbnail Cache
-	'QPTIFF' , # Vectra Whole Slide Image
-	'GFB' , # GIFBlast Compressed Image File
+	'WBD' , # Webshots Picture File
 	'VIC' , # VICAR Image
+	'RIC' , # NXT Image File
+	'PFR' , # Paint Shop Pro Picture Frame File
+	'PC3' , # Degas Elite High Res Image File
+	'VDOC' , # VinylMaster Document
+	'JAS' , # Paint Shop Pro Compressed Graphic
+	'DC2' , # Kodak Photo-Enhancer File
+	'COLZ' , # Adobe Collage File
+	'ICPR' , # IconUtils Project File
+	'XFACE' , # X-Face Image
+	'T2K' , # Canfield Image File
+	'BRN' , # Cube Graphics File
+	'QPTIFF' , # Vectra Whole Slide Image
+	'G3F' , # Zetafax Fax Image
+	'UPF' , # Panono Unstitched Panorama Format
+	'PXICON' , # CandyBar Icon
+	'THM' , # GoPro Thumbnail Image
+	'VMU' , # NanoZoomer Uncompressed Virtual Microscope Specimen
+	'DINO' , # Dinopixel Drawing
+	'DM3' , # DigitalMicrograph Image
 	'FRM' , # Painter Frame Stack File
 	'DVL' , # Dalim Virtual Library File
 	'SCN' , # TreePaint Image
-	'SID' , # ScanIt Document
+	'CPS' , # Corel Photo House File
 	'CPBITMAP' , # iOS Wallpaper Image
+	'SID' , # ScanIt Document
 	'TSR' , # TIFF Simple Rare File
 	'KPG' , # Kai's Power Goo Graphic
-	'CPS' , # Corel Photo House File
-	'PTS' , # PTGui Project File
-	'BRT' , # Bryce Textures File
-	'WPE' , # openCanvas 1.1 Event File
-	'TLA' , # Tune Styler Startup Logo
-	'PIX' , # BRL-CAD Raw Image File
 	'PTX' , # Paint Shop Pro Texture File
+	'PIX' , # BRL-CAD Raw Image File
 	'VST' , # Targa Bitmap Image
+	'BRT' , # Bryce Textures File
+	'TLA' , # Tune Styler Startup Logo
+	'WPE' , # openCanvas 1.1 Event File
+	'PTS' , # PTGui Project File
 	'RGB' , # Q0 Image
 	'BLKRT' , # Block Artist Image File
-	'IC3' , # High Resolution Imagic Graphics File
 	'IC2' , # Medium Resolution Imagic Graphics File
 	'IC1' , # Low Resolution Imagic Graphics File
 	'IPHOTOPROJECT' , # iPhoto Print Project
+	'IC3' , # High Resolution Imagic Graphics File
 }
 
-
-# noinspection SpellCheckingInspection
-set_vector_image = set()
 
 # noinspection SpellCheckingInspection
 set_vector_image = {
@@ -2902,40 +2880,41 @@ set_vector_image = {
 	'OTG' , # OpenDocument Graphic Template
 	'AC6' , # ArtCut 6 Document
 	'PMG' , # PageMaker Group File
-	'SVM' , # StarView Metafile
 	'PEN' , # Logitech io2 Drawing
+	'SVM' , # StarView Metafile
 	'AIT' , # Adobe Illustrator Template
 	'PLT' , # AutoCAD Plotter Document
+	'RDL' , # MicroStation Redline File
+	'PD' , # FlexiSIGN 5 Plotter Document
+	'SCV' , # ScanVec CASmate Sign File
+	'FT8' , # FreeHand 8 Template
+	'HPGL' , # HP Graphics Language Plotter File
 	'PIXIL' , # Pixilart Project
+	'MGTX' , # MindGenius XML Template File
 	'WPG' , # WordPerfect Graphic
 	'PUPPET' , # Adobe Character Animator Puppet
 	'SXD' , # StarOffice Drawing
-	'FT8' , # FreeHand 8 Template
-	'PD' , # FlexiSIGN 5 Plotter Document
-	'HPGL' , # HP Graphics Language Plotter File
-	'SCV' , # ScanVec CASmate Sign File
-	'RDL' , # MicroStation Redline File
 	'CDX' , # CorelDRAW Compressed File
 	'ESC' , # EasySignCut Pro Project
 	'HPG' , # HPGL Plot File
 	'PICT' , # Picture File
-	'VECTORNATOR' , # Vectornator Drawing
-	'HVIF' , # Haiku Vector Icon File
 	'CDTX' , # ConceptDraw DIAGRAM XML Template
+	'HVIF' , # Haiku Vector Icon File
+	'VECTORNATOR' , # Vectornator Drawing
 	'FIG' , # Xfig Drawing
 	'DIA' , # Dia Diagram File
 	'GSD' , # Graphtec Vector Graphics File
 	'MP' , # LaTeX MetaPost File
 	'CLARIFY' , # Clarify Document
+	'ASY' , # Asymptote Module
 	'MGC' , # Microsoft Clip Organizer Media Catalog
 	'FH11' , # FreeHand 11 Drawing File
 	'SKETCH' , # Sketch Drawing
-	'ASY' , # Asymptote Module
 	'VML' , # Vector Markup Language File
 	'IMD' , # Microsoft VisioModeler File
 	'YDR' , # YouiDraw Drawing Project
-	'TPL' , # Canvas Template
 	'JSL' , # Corel PaintShop Pro Shape Library
+	'TPL' , # Canvas Template
 	'IDEA' , # Adobe Ideas Document
 	'CVS' , # Canvas 3 Drawing File
 	'CDDZ' , # ConceptDraw DIAGRAM Document
@@ -2946,7 +2925,6 @@ set_vector_image = {
 	'SK1' , # sK1 Vector Graphic File
 	'MAKER' , # Adobe Character Animator Puppet Maker Template
 	'EPGZ' , # Pencil Project File
-	'MGTX' , # MindGenius XML Template File
 	'FH3' , # FreeHand 3 Drawing File
 	'FH5' , # FreeHand 5 Drawing File
 	'MMAT' , # MindManager Map Template
@@ -3051,9 +3029,6 @@ set_vector_image = {
 	'NAP' , # NAP Metafile
 }
 
-
-# noinspection SpellCheckingInspection
-set_page_layout = set()
 
 # noinspection SpellCheckingInspection
 set_page_layout = {
@@ -3174,10 +3149,10 @@ set_page_layout = {
 	'ILDOC' , # QuickSilver Document
 	'FDD' , # FormDocs Document
 	'INDD' , # Adobe InDesign Document
+	'QXD' , # QuarkXPress Document
 	'PSR' , # Powersoft Report File
 	'TEMPLATE' , # Pages Template
 	'HFD' , # HotDocs Form Document
-	'QXD' , # QuarkXPress Document
 	'XZFX' , # ZipLogix ZipForm File
 	'MAX' , # OmniPage Scanned Document
 	'OPD' , # OmniPage Document
@@ -3375,9 +3350,6 @@ set_page_layout = {
 
 
 # noinspection SpellCheckingInspection
-set_spreadsheet = set()
-
-# noinspection SpellCheckingInspection
 set_spreadsheet = {
 	'PRESTO' , # Presto Project Spreadsheet
 	'FODS' , # OpenDocument Flat XML Spreadsheet
@@ -3432,10 +3404,10 @@ set_spreadsheet = {
 	'12M' , # Lotus 1-2-3 SmartMaster File
 	'MAR' , # Mariner Calc Spreadsheet
 	'XLSMHTML' , # Microsoft Excel MIME HTML Spreadsheet
+	'WKQ' , # Quattro Pro for DOS Spreadsheet File
 	'OGW' , # Origin Workbook File
 	'ESS' , # EasySpreadsheet Spreadsheet
 	'EDX' , # Edraw XML FIle
-	'WKQ' , # Quattro Pro for DOS Spreadsheet File
 	'AWS' , # Ability Spreadsheet File
 	'WKS' , # Works Spreadsheet
 	'FCS' , # First Choice Spreadsheet
@@ -3450,9 +3422,6 @@ set_spreadsheet = {
 	'WLS' , # 602Tab Spreadsheet
 }
 
-
-# noinspection SpellCheckingInspection
-set_database = set()
 
 # noinspection SpellCheckingInspection
 set_database = {
@@ -3530,43 +3499,44 @@ set_database = {
 	'DB.CRYPT8' , # WhatsApp Encrypted Database File
 	'CRYPT8' , # WhatsApp Encrypted Database File
 	'DBF' , # Database File
-	'DCB' , # Concordance Database File
-	'FM' , # FileMaker Database
 	'FLEXOLIBRARY' , # Final Cut Pro Library Database
-	'PX' , # PC-Axis Statistical Database
-	'FDB' , # Firebird Database File
-	'MUSICDB' , # Apple Music Library
 	'MDW' , # Access Workgroup
+	'MUSICDB' , # Apple Music Library
+	'FDB' , # Firebird Database File
+	'PX' , # PC-Axis Statistical Database
+	'FM' , # FileMaker Database
+	'DCB' , # Concordance Database File
 	'HDB' , # HansaWorld Database File
 	'DBS' , # SQLBase Database File
 	'ACCDB' , # Access 2007 Database
-	'USR' , # FileMaker Pro Database File
 	'CRYPT15' , # WhatsApp Encrypted Database File
+	'USR' , # FileMaker Pro Database File
 	'FRM' , # MySQL Database Format File
-	'XLD' , # Microsoft Excel Database
 	'MAR' , # Microsoft Access Report
+	'XLD' , # Microsoft Excel Database
 	'ADP' , # Access Data Project
-	'DB-JOURNAL' , # SQLite Rollback Journal File
 	'CRYPT7' , # WhatsApp Encrypted Database File
+	'DB-JOURNAL' , # SQLite Rollback Journal File
 	'PDM' , # PowerDesigner Database File
 	'SDF' , # SQL Server Compact Database File
-	'CRYPT1' , # WhatsApp Encrypted Database File
 	'SDB' , # ServerBoss Database File
 	'MAV' , # Access View File
+	'CRYPT1' , # WhatsApp Encrypted Database File
+	'SCX' , # FoxPro Form
 	'DSN' , # Database Source Name File
 	'ADF' , # ACT! Data File
 	'CRYPT14' , # WhatsApp Encrypted Database File
 	'FP7' , # FileMaker Pro 7+ Database
+	'CRYPT10' , # WhatsApp Encrypted Database File
+	'AQ' , # Ancestral Quest Database File
+	'AC' , # Ancestral Quest Collaborative Database File
 	'NNT' , # Eudora Address Book File
 	'LUMINAR' , # Luminar 4 Catalog Database
 	'GRDB' , # Gramps Database File
-	'AQ' , # Ancestral Quest Database File
-	'ABX' , # WordPerfect Address Book
-	'CRYPT10' , # WhatsApp Encrypted Database File
-	'MMBAK' , # Money Manager Expense & Budget Backup
 	'EXB' , # Evernote Database File
 	'MBTILES' , # Mapbox Tileset
-	'AC' , # Ancestral Quest Collaborative Database File
+	'MMBAK' , # Money Manager Expense & Budget Backup
+	'ABX' , # WordPerfect Address Book
 	'IBD' , # MySQL InnoDB Table
 	'TNFP' , # Tonfotos People Information Database
 	'PQA' , # Palm Query Application
@@ -3580,38 +3550,37 @@ set_database = {
 	'CRYPT6' , # WhatsApp Encrypted Database File
 	'FDB' , # Microsoft Dynamics NAV Database File
 	'4DD' , # 4th Dimension Database Data File
-	'VVV' , # Virtual Volumes View Catalog
 	'KDB' , # Keypass Database File
 	'FPT' , # FileMaker Pro Database Memo File
+	'VVV' , # Virtual Volumes View Catalog
 	'MAW' , # Access Data Access Page
-	'SCX' , # FoxPro Form
-	'SDB' , # MonKey Office SQLite Database File
-	'RPD' , # RIB Project Database File
 	'NDF' , # SQL Server Secondary Database File
+	'RPD' , # RIB Project Database File
+	'SDB' , # MonKey Office SQLite Database File
 	'CHCK' , # Microsoft Exchange Server Database Check File
 	'DB-SHM' , # SQLite Database Shared Memory File
 	'CRYPT' , # WhatsApp Encrypted Database
 	'FMP12' , # FileMaker Pro 12 Database
+	'RODX' , # Ancestry Genealogical Database File
+	'LGC' , # SimpleK Database File
+	'MDN' , # Blank Access Database Template
+	'CDB' , # CardScan Contacts Database
+	'IHX' , # IN-HEH Timeline Database
 	'LWX' , # Lightwright Database File
 	'MAQ' , # Microsoft Access Query
-	'CDB' , # CardScan Contacts Database
-	'RODX' , # Ancestry Genealogical Database File
-	'IB' , # InterBase Database
-	'LGC' , # SimpleK Database File
 	'NWDB' , # Neat Database File
-	'MDN' , # Blank Access Database Template
-	'IHX' , # IN-HEH Timeline Database
+	'IB' , # InterBase Database
 	'MYD' , # MySQL Database Data File
 	'CRYPT9' , # WhatsApp Encrypted Database File
 	'SDB' , # SparkleDB Database File
 	'ACCDR' , # Access Runtime Application
 	'CRYPT5' , # WhatsApp Encrypted Database File
 	'WDB' , # Microsoft Works Database
-	'ABCDDB' , # Apple Address Book Contact List 
-	'RMGC' , # RootsMagic Data File
 	'REALM' , # Realm Database
-	'DQY' , # Microsoft Excel Query
+	'ABCDDB' , # Apple Address Book Contact List 
 	'UDB' , # Dynamics AX User Database File
+	'DQY' , # Microsoft Excel Query
+	'RMGC' , # RootsMagic Data File
 	'MAF' , # Microsoft Access Form
 	'ORA' , # Oracle Database Configuration File
 	'BAK' , # Microsoft SQL Server Database Backup
@@ -3620,13 +3589,13 @@ set_database = {
 	'CAT' , # Advanced Disk Catalog Database
 	'TPS' , # Clarion TopSpeed Data File
 	'PDB' , # Palm Desktop Database File
-	'SDY' , # StarMoney User Database File
+	'MDBHTML' , # Microsoft Access Database HTML File
 	'RCTD' , # RabbitCT Dataset
+	'SDC' , # Paragon Dictionary Database File
+	'SDY' , # StarMoney User Database File
 	'DB2' , # dBASE II Database
 	'CMA' , # TM1 Exported Cube File
 	'DAD' , # RemObjects Data Abstract Driver File
-	'MDBHTML' , # Microsoft Access Database HTML File
-	'SDC' , # Paragon Dictionary Database File
 	'BACPAC' , # Compressed Microsoft SQL Database
 	'TSD' , # Tamino Schema
 	'ADB' , # Alpha Five Database File
@@ -3656,13 +3625,13 @@ set_database = {
 	'MFD' , # Music Finder Database
 	'JET' , # JET Database File
 	'TMD' , # MySQL Temporary Database File
+	'^^^' , # Pervasive.SQL Database File
 	'MUD' , # Textease Multi User Database
 	'MDT' , # GeoMedia Access Database Template
 	'CKP' , # SQL Server Checkpoint File
 	'DSK' , # Simple IDs Database
 	'RSD' , # RealSQLDatabase File
 	'FP4' , # FileMaker Pro 4 Database
-	'^^^' , # Pervasive.SQL Database File
 	'ODL' , # OneDrive Event Log
 	'NS2' , # Lotus Notes 2 Database
 	'DADIAGRAMS' , # RemObjects Data Abstract Data Diagrams File
@@ -3703,9 +3672,6 @@ set_database = {
 	'R2D' , # Borland Reflex Database
 }
 
-
-# noinspection SpellCheckingInspection
-set_executable = set()
 
 # noinspection SpellCheckingInspection
 set_executable = {
@@ -3827,47 +3793,48 @@ set_executable = {
 	'EPK' , # LG Firmware Package
 	'PAF' , # Portable Application Installer File
 	'MS' , # Maxwell Script
-	'ATMX' , # Automation Anywhere Task
-	'PYO' , # Python Optimized Code
-	'HMS' , # HostMonitor Script File
 	'89Z' , # TI-89 Program
-	'SREC' , # S-record File
-	'FRS' , # Flash Renamer Script
 	'TIAPP' , # TiTanium App
-	'APPLESCRIPT' , # AppleScript File
+	'PYO' , # Python Optimized Code
+	'SREC' , # S-record File
+	'HMS' , # HostMonitor Script File
+	'PYZ' , # Python Application Zip File
+	'FRS' , # Flash Renamer Script
 	'UVM' , # UnitVM Executable File
+	'APPLESCRIPT' , # AppleScript File
+	'ATMX' , # Automation Anywhere Task
 	'OTM' , # Outlook Macro File
-	'MSL' , # Magick Scripting Language File
 	'ACTC' , # Action(s) Collection File
-	'N' , # Neko Bytecode File
+	'MSL' , # Magick Scripting Language File
 	'MRP' , # Mythroad Platform File
+	'N' , # Neko Bytecode File
 	'WIDGET' , # Yahoo! Widget
-	'WIZ' , # Microsoft Wizard File
 	'CSH' , # C Shell Script
+	'WIZ' , # Microsoft Wizard File
 	'BEAM' , # Compiled Erlang File
 	'MRC' , # mIRC Script File
 	'PRG' , # Program File
+	'OSX' , # PowerPC Executable File
+	'SCT' , # Windows Scriptlet
 	'SPR' , # FoxPro Generated Screen File
 	'CYW' , # Rbot.CYW Worm File
-	'SCT' , # Windows Scriptlet
-	'OSX' , # PowerPC Executable File
 	'MCR' , # JitBit Macro Recorder Macro
-	'EBM' , # EXTRA! Basic Macro
 	'MCR' , # Tecplot Macro
-	'TIPA' , # TrollStore IPA File
+	'EBM' , # EXTRA! Basic Macro
 	'TMS' , # Telemate Script
-	'FAS' , # QuickSilver Fast Save Lisp File
-	'PRG' , # GEM Application
-	'FKY' , # FoxPro Macro
-	'XQT' , # SuperCalc Macro File
+	'TIPA' , # TrollStore IPA File
 	'YGH' , # YGH Trojan Executable
+	'FKY' , # FoxPro Macro
+	'PRG' , # GEM Application
+	'XQT' , # SuperCalc Macro File
+	'FAS' , # QuickSilver Fast Save Lisp File
 	'APP' , # Symbian OS Application
+	'MXE' , # Macro Express Playable Macro
 	'ACTM' , # AutoCAD Action Macro File
 	'UDF' , # Microsoft Excel User-defined Function
-	'MXE' , # Macro Express Playable Macro
-	'SEED' , # Linux Preseed File
-	'IPK' , # webOS TV Application
 	'KIX' , # KiXtart Script File
+	'IPK' , # webOS TV Application
+	'SEED' , # Linux Preseed File
 	'KX' , # KiXtart Tokenized Script File
 	'VBSCRIPT' , # Visual Basic Script
 	'APP' , # FoxPro Generated Application
@@ -3878,10 +3845,10 @@ set_executable = {
 	'GS' , # Geosoft Script
 	'E_E' , # Renamed EXE File
 	'JSE' , # JScript Encoded File
-	'HPF' , # HP9100A Program File
 	'PRG' , # Commander X16 Program
-	'PXO' , # LG Mobile Phone Executable File
+	'HPF' , # HP9100A Program File
 	'LS' , # LightWave LScript Source Code
+	'PXO' , # LG Mobile Phone Executable File
 	'MS' , # 3ds Max Script
 	'DMC' , # Medical Manager Script
 	'SCPTD' , # AppleScript Script Bundle
@@ -3891,8 +3858,8 @@ set_executable = {
 	'S2A' , # SEAL2 Application
 	'MHM' , # Microsoft Hardware Macro
 	'WPK' , # WordPerfect Macro
-	'XYS' , # XYplorer Script File
 	'ITA' , # VTech InnoTab Application File
+	'XYS' , # XYplorer Script File
 	'EHAM' , # ExtraHAM Executable File
 	'QIT' , # QIT Trojan Horse File
 	'ARSCRIPT' , # ArtRage Script
@@ -3902,35 +3869,34 @@ set_executable = {
 	'MEM' , # Macro Editor Macro
 	'WSF' , # Windows Script File
 	'EBACMD' , # EBA Command Center Data File
-	'MAM' , # Microsoft Access Macro
-	'NCL' , # NirCmd Script File
-	'UPX' , # Ultimate Packer for eXecutables File
 	'KSH' , # Unix Korn Shell Script
 	'DXL' , # Rational DOORS Script
-	'BTM' , # 4DOS Batch File
+	'NCL' , # NirCmd Script File
+	'MAM' , # Microsoft Access Macro
+	'UPX' , # Ultimate Packer for eXecutables File
 	'HAM' , # HAM Executable File
-	'MIO' , # MioEngine Application File
+	'BTM' , # 4DOS Batch File
+	'VDO' , # Heathen Virus File
 	'GPU' , # GP2X Utility Program
 	'IPF' , # SMS Installer Script
-	'VDO' , # Heathen Virus File
+	'MIO' , # MioEngine Application File
 	'EXOPC' , # ExoPC Application
 	'DS' , # TWAIN Data Source
 	'MAC' , # Application Macro File
 	'SBS' , # SPSS Script
-	'RFS' , # Reflection FTP Client Script
-	'CFS' , # CFS Console Program
 	'ASB' , # Alphacam Stone VB Macro File
+	'RFS' , # Reflection FTP Client Script
 	'STS' , # #TASK Script File
+	'CFS' , # CFS Console Program
 	'QPX' , # Visual FoxPro Compiled Query Program
 	'WPM' , # WordPerfect Macro File
-	'RPG' , # DTPS Robot Program
 	'P' , # MATLAB P-Code File
 	'AFMACRO' , # Affinity Photo Macro File
 	'PVD' , # Instalit Script
 	'AFMACROS' , # Affinity Photo Macros File
 	'UW8' , # MicroW8 Cartridge File
 	'MLAPPINSTALL' , # MATLAB App Installation Package
-	'PYZ' , # Python Application Zip File
+	'RPG' , # DTPS Robot Program
 	'ORE' , # Ore Executable File
 	'EZT' , # EZT Malicious Worm File
 	'MAMC' , # Murgee Auto Mouse Click Script
@@ -3939,9 +3905,6 @@ set_executable = {
 	'BNS' , # Compiled Rabbit Network Script
 }
 
-
-# noinspection SpellCheckingInspection
-set_game = set()
 
 # noinspection SpellCheckingInspection
 set_game = {
@@ -4001,15 +3964,15 @@ set_game = {
 	'REZ' , # LithTech Game Engine Resource
 	'YDC' , # Yu-Gi-Oh! Card Deck File
 	'SII' , # SCS Software Game Data
-	'MIS' , # Marble Blast Mission File
 	'MCWORLD' , # Minecraft World Backup
+	'MIS' , # Marble Blast Mission File
 	'MAE' , # My Avatar Editor Character File
 	'FORGE' , # Ubisoft Game Data File
 	'W3M' , # Warcraft 3 Map File
 	'B' , # Grand Theft Auto 3 Saved Game File
 	'PACKAGE' , # Electronic Arts Game Package File
-	'MCR' , # Minecraft Region File
 	'NDS' , # Nintendo DS Game ROM
+	'MCR' , # Minecraft Region File
 	'MPM' , # Max Payne Mod
 	'UNR' , # Unreal Level Map
 	'YDR' , # Yu-Gi-Oh! Power of Chaos Replay File
@@ -4049,25 +4012,25 @@ set_game = {
 	'LTX' , # S.T.A.L.K.E.R. Properties File
 	'LMU' , # RPG Maker Map File
 	'TOR' , # Star Wars: The Old Republic Asset File
-	'GB' , # Game Boy ROM File
 	'UNITYPACKAGE' , # Unity Asset Package
 	'SCS' , # SimCity Societies Saved Game File
 	'RVDATA' , # RPG Maker VX Data File
 	'CGZ' , # Cube Map File
 	'3DSX' , # Nintendo 3DS Homebrew Launcher File
 	'AM1' , # Adventure Maker 
-	'WOWSREPLAY' , # World of Warships Replay File
 	'ZS0' , # ZSNES Slot 0 Saved State File
+	'WOWSREPLAY' , # World of Warships Replay File
 	'BO2' , # Minecraft BO2 Object File
 	'DSG' , # Doom Saved Game
 	'PWF' , # Counter-Strike PODBot Waypoint File
 	'BSP' , # Quake or Source Engine Game Map
+	'GB' , # Game Boy ROM File
 	'SC2SAVE' , # Blizzard StarCraft 2 Saved Game
 	'BIN' , # Sega Genesis Game ROM
 	'PGN' , # Portable Game Notation File
 	'WAD' , # Nintendo Wii Game Data File
-	'VDF' , # Valve Data File
 	'PAK' , # Video Game Package
+	'VDF' , # Valve Data File
 	'DAT_NEW' , # Minecraft World Level File
 	'SAVE' , # The Sims 4 Save File
 	'CRP' , # Cities: Skylines Colossal Raw Asset Package
@@ -4180,6 +4143,7 @@ set_game = {
 	'MAHJONGTITANSSAVE-MS' , # Mahjong Titans Saved Game
 	'NRO' , # Nintendo Switch Executable File
 	'BIF' , # BioWare Infinity Engine File
+	'BPS' , # BPS Patch File
 	'SGM' , # VisualBoyAdvance Saved Game
 	'BFG' , # Big Fish Games Application File
 	'RXDATA' , # RMXP Data File
@@ -4192,8 +4156,8 @@ set_game = {
 	'ESM' , # Fallout 3 Master File
 	'GDSHADER' , # Godot Engine Shader File
 	'SAD' , # Black & White Audio File
-	'AGE3REC' , # Age of Empires 3 Recording
 	'VFS0' , # Metro 2033 Sound File
+	'AGE3REC' , # Age of Empires 3 Recording
 	'XCI' , # NX Card Image File
 	'VOL' , # Video Game Archive
 	'UDK' , # Unreal Engine Map File
@@ -4203,7 +4167,6 @@ set_game = {
 	'BRF' , # X-Wing Mission Briefing
 	'68K' , # SEGA Mega Drive & Genesis Classics ROM File
 	'WOTBREPLAY' , # World of Tanks Blitz Replay
-	'BPS' , # BPS Patch File
 	'SMZIP' , # StepMania Package
 	'UC' , # UnrealScript Class
 	'FSSAVE' , # Flight Simulator X Games Explorer File
@@ -4211,6 +4174,7 @@ set_game = {
 	'COURSE' , # Super Mario ReMaker Course File
 	'MWL' , # Super Mario World Level
 	'CHD' , # Compressed Hunks of Data File
+	'SCX' , # Microsoft Game Scenario File
 	'FOMOD' , # Fallout Mod Archive
 	'AIN' , # Source Engine Compiled AI Nodegraph File
 	'WBT' , # Toribash Help File
@@ -4218,7 +4182,6 @@ set_game = {
 	'FGD' , # Forge Game Data File
 	'LMP' , # Quake Engine Lump File
 	'CBV' , # ChessBase Database File
-	'SCX' , # Microsoft Game Scenario File
 	'USA' , # Unreal Saved Game File
 	'PUP' , # PlayStation 4 or 5 Update File
 	'SID' , # Steam Game Data Backup File
@@ -4230,60 +4193,61 @@ set_game = {
 	'IBT' , # Texture and Model File
 	'JMF' , # Jackhammer Project
 	'GBASKIN' , # Game Boy Advance Controller Skin File
-	'Z3' , # Z-machine Z-code Version 3 File
+	'ZS1' , # ZSNES Slot 1 Saved State File
 	'ENG' , # Chess Engine
 	'SRM' , # Super Nintendo ROM Save
 	'LDW' , # Virtual Villagers Saved Game File
 	'DMB' , # BYOND Game Executable
-	'MSTXT' , # Message Studio Text File
-	'ZS1' , # ZSNES Slot 1 Saved State File
-	'DEK' , # LackeyCCG Card Deck File
 	'DM_83' , # Wolfenstein 1.02 Demo Movie File
+	'MSTXT' , # Message Studio Text File
+	'Z3' , # Z-machine Z-code Version 3 File
 	'PROJECT' , # Defold Project Settings File
+	'DEK' , # LackeyCCG Card Deck File
 	'BIK' , # Video Game Movie File
 	'SQF' , # ArmA Script
-	'TIM' , # The Incredible Machine Level
 	'BLZ' , # N-Gage Mobile Video Game File
+	'TIM' , # The Incredible Machine Level
 	'SSC' , # StepMania Song File
-	'FML' , # WWE RAW Character File
 	'NSZ' , # Compressed Nintendo Submission Package
+	'FML' , # WWE RAW Character File
 	'RAW' , # Dolphin Virtual SD Card
 	'ESL' , # Elder Scrolls Light Master File
 	'LSS' , # LiveSplit Splits
 	'MAP' , # Halo Map File
 	'BUS' , # OMSI Bus Configuration File
-	'MCAPM' , # Minecraft Anvil PocketMine Data File
 	'ZTD' , # Zoo Tycoon Data Archive
+	'MCAPM' , # Minecraft Anvil PocketMine Data File
 	'SCM' , # CLEO Compiled Script
 	'RVPROJ' , # RPG Maker VX Project File
 	'SAV' , # Mass Effect 3 Saved Game
 	'DUC' , # Action Replay Max DS Save File
-	'XEN' , # Guitar Hero III Data File
 	'AGE3XREC' , # Age of Empires 3: The WarChiefs Recording
-	'GDI' , # Dreamcast Gigabyte Disc Image
+	'XEN' , # Guitar Hero III Data File
 	'DL' , # Zoo Tycoon 2 Data File
+	'GDI' , # Dreamcast Gigabyte Disc Image
 	'WORLD' , # Terraria Mobile World File
 	'TED' , # Alamo Map File
 	'EMD' , # Fritz TableBase
-	'YDK' , # Yu-Gi-Oh! Deck File
-	'PKX' , # Decrypted 3DS Pokémon Save File
 	'BLS' , # Blockland Saved Game File
-	'MD3' , # Quake 3 3D Model
-	'FCS' , # FCEUX Save State File
-	'NGAGE' , # N-Gage Game File
-	'NGP' , # NeoGeo Pocket ROM
-	'UNITYPROJ' , # Unity 3D Project
-	'SGA' , # Relic Entertainment Game Archive
-	'CSB' , # CRIWARE Sound Bank
-	'ZMAP' , # Zombies Ate My Neighbors Map File
-	'ADT' , # World of Warcraft Map File
 	'STA' , # MAME Saved State File
 	'RFM' , # rFactor Modification File
-	'VCM' , # Vice City Mod Manager File
-	'DV2' , # Divinity 2 Data File
-	'BRRES' , # Wii BRRES Resource Package
-	'UXX' , # Unreal Tournament Cache
+	'ADT' , # World of Warcraft Map File
+	'MD3' , # Quake 3 3D Model
+	'SGA' , # Relic Entertainment Game Archive
+	'YDK' , # Yu-Gi-Oh! Deck File
 	'AUD' , # Westwood Studios Audio
+	'UNITYPROJ' , # Unity 3D Project
+	'ZMAP' , # Zombies Ate My Neighbors Map File
+	'VCM' , # Vice City Mod Manager File
+	'SCX' , # Game Scenario File
+	'PKX' , # Decrypted 3DS Pokémon Save File
+	'NGP' , # NeoGeo Pocket ROM
+	'CSB' , # CRIWARE Sound Bank
+	'BRRES' , # Wii BRRES Resource Package
+	'DV2' , # Divinity 2 Data File
+	'NGAGE' , # N-Gage Game File
+	'UXX' , # Unreal Tournament Cache
+	'FCS' , # FCEUX Save State File
 	'PSSG' , # EGO Engine Textures File
 	'IPS' , # Internal Patching System Patch File
 	'SC2BANK' , # StarCraft 2 Bank File
@@ -4291,11 +4255,11 @@ set_game = {
 	'TIGER' , # Tomb Raider Game Data Archive
 	'0' , # M3 DS Real Saved Game
 	'IMG' , # Grand Theft Auto Data File
-	'NARC' , # Nintendo DS Archive File
 	'HUM' , # OMSI Human Configuration File
+	'NARC' , # Nintendo DS Archive File
 	'UKX' , # Unreal Animation Package
-	'H3M' , # Heroes 3 Map File
 	'BGL' , # Flight Simulator Scenery File
+	'H3M' , # Heroes 3 Map File
 	'UPS' , # UPS Patch File
 	'FAR' , # The Sims Archive File
 	'DOL' , # GameCube Executable File
@@ -4303,7 +4267,6 @@ set_game = {
 	'UT3' , # Unreal Tournament 3 Map File
 	'WZ' , # Warzone 2100 Data File
 	'FOS' , # Fallout Save
-	'SCX' , # Game Scenario File
 	'ZIP' , # MAME Game ROM
 	'SWC' , # Super Nintendo Wild Card ROM File
 	'STORMREPLAY' , # Heroes of the Storm Replay File
@@ -4348,9 +4311,9 @@ set_game = {
 	'LL' , # List & Label Preview File
 	'001' , # Snes9x Slot 2 Saved State
 	'ERF' , # BioWare Entity Resource File
+	'BIN' , # GOG.com Game Data File
 	'HPS' , # HPL Script
 	'VOB' , # Live for Speed Car File
-	'BIN' , # GOG.com Game Data File
 	'LOVE' , # LÖVE Game Package
 	'SHADER' , # Unity Shader Asset
 	'BO3' , # Minecraft BO3 Object
@@ -4447,9 +4410,6 @@ set_game = {
 	'NSBCA' , # Nintendo DS Model Animation File
 }
 
-
-# noinspection SpellCheckingInspection
-set_cad = set()
 
 # noinspection SpellCheckingInspection
 set_cad = {
@@ -4589,114 +4549,114 @@ set_cad = {
 	'ART' , # ArtCAM Model
 	'DWG' , # AutoCAD Drawing
 	'CATPART' , # CATIA V5 Part File
-	'LTL' , # Luminaire Data File
-	'PRJPCBSTRUCTURE' , # Altium Designer PCB Project Structure
-	'GXC' , # General CADD Pro Component
-	'123' , # PCB123 Circuit Board Design
-	'ANY' , # AnyRail Layout Plan
-	'SAB' , # ACIS SAB Model
-	'CYP' , # Home Designer Pro Project File
-	'HSC' , # Aspen HYSYS Simulation File
-	'ACT' , # Alma CAD/CAM Document
-	'TSF' , # Strater Template File
-	'UNT' , # AutoCAD Unit Definition File
-	'CAM' , # FastCAM CAM File
-	'GX' , # FlashForge 3D Printing File
-	'GXM' , # General CADD Pro Macro File
-	'EZD' , # EzCad2 Laser Engraving Design
-	'MODFEM' , # Femap Model
+	'HSF' , # HOOPS Stream Format File
 	'LIBPKG' , # Altium Designer Integrated Library Package
+	'123' , # PCB123 Circuit Board Design
+	'CYP' , # Home Designer Pro Project File
+	'SAB' , # ACIS SAB Model
+	'EZD' , # EzCad2 Laser Engraving Design
+	'ACT' , # Alma CAD/CAM Document
+	'HSC' , # Aspen HYSYS Simulation File
+	'GXC' , # General CADD Pro Component
 	'DFX' , # Drafix CAD File
+	'MODFEM' , # Femap Model
+	'ANY' , # AnyRail Layout Plan
+	'PRJPCBSTRUCTURE' , # Altium Designer PCB Project Structure
+	'LTL' , # Luminaire Data File
+	'GX' , # FlashForge 3D Printing File
+	'UNT' , # AutoCAD Unit Definition File
+	'GXM' , # General CADD Pro Macro File
+	'CAM' , # FastCAM CAM File
+	'TSF' , # Strater Template File
 	'DXF' , # Drawing Exchange Format File
 	'STEP' , # STEP 3D Model
 	'MCD' , # MiniCAD Design File
-	'XISE' , # Xilinx ISE Project File
 	'PRT' , # Unigraphics Part File
+	'XISE' , # Xilinx ISE Project File
 	'TAK' , # TAK 2000 Thermal Model File
 	'JBC' , # Jam STAPL Byte-Code File
-	'NC1' , # Mastercam Numerical Control File
 	'MP7' , # Multisim 7 Project File
+	'NC1' , # Mastercam Numerical Control File
 	'PSF' , # AutoCAD PostScript Patterns File
 	'RRA' , # vRigger Rigging Gear File
 	'EASM' , # eDrawings Assembly File
-	'CDL' , # CADKEY Wireframe Design File
 	'CGR' , # CATIA Graphical Representation File
-	'JAM' , # Jam STAPL File
+	'CDL' , # CADKEY Wireframe Design File
 	'PRG' , # PC-DMIS Part Program File
+	'JAM' , # Jam STAPL File
+	'EWB' , # Electronics Workbench Circuit Design File
 	'FNC' , # QuickCAM 3D CNC File
 	'TCD' , # TurboCAD Mac Deluxe Drawing
-	'EWB' , # Electronics Workbench Circuit Design File
 	'DGK' , # Delcam 3D Model File
 	'DXX' , # AutoCAD Drawing Interchange Attribute File
-	'PRO' , # KiCad Project
 	'WDP' , # AutoCAD Electrical Project File
+	'PRO' , # KiCad Project
 	'CFF' , # Common File Format
 	'ICS' , # IronCAD 3D Scene
 	'IPT' , # Inventor Part
-	'XBF' , # XCAF Binary 3D Model
 	'RED' , # CADViewer Redline Markup File
-	'DXE' , # AutoCAD Data Extraction Template
 	'ELD' , # Eulumdat Formatted Luminaire Data File
-	'DSNWRK' , # Altium Designer Workspace File
+	'LIZD' , # Live Interior 3D Compressed Document
+	'G3D' , # GOM 3D File
 	'ULD' , # Unified Luminaire Data File
 	'TCM' , # TurboCAD Mac Drawing
-	'LIZD' , # Live Interior 3D Compressed Document
+	'XBF' , # XCAF Binary 3D Model
+	'DSNWRK' , # Altium Designer Workspace File
+	'DXE' , # AutoCAD Data Extraction Template
 	'EZP' , # AutoCAD Ecscad Project Backup File
-	'G3D' , # GOM 3D File
 	'G' , # BRL-CAD Geometry File
 	'BPM' , # Bizagi Process Modeler
-	'OPJ' , # OrCAD Project File
 	'NGC' , # Xilinx Generated Netlist File
 	'ARD' , # ArtiosCAD Workspace File
+	'OPJ' , # OrCAD Project File
 	'SCH' , # EAGLE Schematics File
+	'TOPVIW' , # TopSolid'Viewer Document
 	'DLX' , # DIALux Document
 	'CATDRAWING' , # CATIA V5 Drawing
-	'TOPVIW' , # TopSolid'Viewer Document
 	'SEW' , # Home Embroidery Format
 	'LDT' , # Eulumdat Formatted Luminaire Data File
 	'CAM' , # Gerber CAM Job File
+	'IDW' , # Inventor Drawing
+	'IPN' , # Inventor Presentation
 	'A2L' , # ASAP2 ECU Description File
 	'123C' , # Autodesk 123C Drawing
-	'IPN' , # Inventor Presentation
-	'IDW' , # Inventor Drawing
 	'WDF' , # Wintech Drawing File
 	'DC' , # DesignCAD Design File
 	'BRD' , # KiCad PCB Design File
 	'PHO' , # Gerber Photoplot File
 	'CNC' , # CNC Machine Tool Path
-	'DRWDOT' , # SolidWorks Drawing Template
 	'GXD' , # General CADD Pro Drawing
-	'HSF' , # HOOPS Stream Format File
-	'GCD' , # Generic CADD Drawing File
-	'DRG' , # AllyCAD Drawing File
+	'DRWDOT' , # SolidWorks Drawing Template
 	'BXL' , # Accelerated Designs PCB Library File
+	'DRG' , # AllyCAD Drawing File
 	'TSC' , # TINA Design File
+	'GCD' , # Generic CADD Drawing File
 	'2D' , # VersaCAD 2D Drawing File
 	'MIN' , # MAX Interchange Notation File
-	'GEO' , # TruTops Geometry File
 	'PRT' , # Solid Edge Part File
-	'3W' , # XYZprinting Sliced Model File
 	'LAY6' , # Sprint Layout 6 PCB Layout File
-	'MS11' , # Multisim 11 Circuit Design File
-	'BIT' , # Xilinx Bitstream File
+	'3W' , # XYZprinting Sliced Model File
+	'GEO' , # TruTops Geometry File
 	'SCH' , # KiCad Schematic File
+	'BIT' , # Xilinx Bitstream File
 	'FPD' , # Front Panel Designer Project
+	'MS11' , # Multisim 11 Circuit Design File
 	'DFT' , # Solid Edge Draft Document
-	'SLDDRW' , # SolidWorks Drawing
 	'CNC' , # PartMaster CNC File
+	'SLDDRW' , # SolidWorks Drawing
 	'RDF' , # Relux Project File
 	'DCD' , # DesignCAD Drawing
 	'OLB' , # OrCAD Symbol Library File
 	'CDDX' , # Circuit Diagram Document
+	'LIA' , # P-CAD ASCII Library file 
+	'DRW' , # Personal Designer Drawing File
 	'FZM' , # Fritzing Module File
-	'BREP' , # BRep 3D Model File
-	'MS12' , # Multisim 12 Circuit Design File
-	'PM3' , # Crouzet Logic Software M3 File
+	'NPL' , # Xilinx ISE 5-6 Project File
 	'EQN' , # GAL Equation File
 	'IFCXML' , # Industry Foundation Classes XML File
-	'DRW' , # Personal Designer Drawing File
-	'LIA' , # P-CAD ASCII Library file 
-	'NPL' , # Xilinx ISE 5-6 Project File
+	'PM3' , # Crouzet Logic Software M3 File
+	'MS12' , # Multisim 12 Circuit Design File
+	'BREP' , # BRep 3D Model File
 	'BPMC' , # Bizagi Process Modeler Collaboration
 	'NEU' , # Pro/ENGINEER Neutral File
 	'IC3D' , # IC3D Scene File
@@ -4783,11 +4743,10 @@ set_cad = {
 	'BSW' , # StruWalker 3D Model
 	'SMG' , # SolidWorks Composer File
 	'PRJMBD' , # Altium Designer Multi-board Project
-	'IQP' , # IntelliQuilter Pattern
+	'PIPD' , # PIPE-FLO Demo Project File
 	'PWD' , # Solid Edge Weldment Document
 	'DRA' , # OrCAD Drawing File
 	'QPM' , # Quick Pallet Maker Input Data
-	'MP9' , # Multisim 9 Project File
 	'EZC' , # AutoCAD Ecscad Components Backup File
 	'MS9' , # Multisim 9 Circuit Design File
 	'MS7' , # Multisim 7 Circuit Design File
@@ -4795,37 +4754,35 @@ set_cad = {
 	'DXO' , # DesignXOver Speaker Circuit Design File
 	'SMT' , # Autodesk Shape Manager Text File
 	'STA' , # Vectorworks Design Template
+	'IQP' , # IntelliQuilter Pattern
 	'FM' , # FeatureCAM Part
-	'PIPD' , # PIPE-FLO Demo Project File
 	'BBCDX' , # BobCAD-CAM Document
+	'PPA' , # Archicad Teamwork Project Archive
 	'CKT' , # KeyCreator Design Template
 	'CYG' , # Home Design Object
 	'AD_PRT' , # Alibre Design Part
 	'IDCL' , # Inventor Desktop Content Library File
 	'RCV' , # RoofCon Viewer Project File
+	'BSWX' , # BIMReview 3D Model
 	'PBB' , # Protobot Beta Project
 	'L3B' , # LEGO 3D Model File
-	'PPA' , # Archicad Teamwork Project Archive
-	'BSWX' , # BIMReview 3D Model
-	'BPZ' , # Easy Blue Print Symbol Library
+	'MP9' , # Multisim 9 Project File
 	'SCH' , # ExpressSCH Schematics File
+	'BPZ' , # Easy Blue Print Symbol Library
 	'MOD' , # Femap Model
 	'DSG' , # Control Studio Document
-	'DC2' , # DevCad Cam Pro Document
-	'SST' , # Artec Studio Project
 	'IFCZIP' , # Compessed IFC File
+	'SST' , # Artec Studio Project
+	'DC2' , # DevCad Cam Pro Document
 	'HCP' , # HydroCAD Project File
 	'UPF' , # Unified Power Format File
 	'CEL' , # MicroStation Cell Library
 	'MOD' , # Archicad Module
-	'FCD' , # FastCAD DOS Drawing
 	'CMP' , # Generic CADD Component File
+	'FCD' , # FastCAD DOS Drawing
 	'PCA' , # Archicad Teamwork Draft Archive
 }
 
-
-# noinspection SpellCheckingInspection
-set_gis = set()
 
 # noinspection SpellCheckingInspection
 set_gis = {
@@ -4898,8 +4855,8 @@ set_gis = {
 	'ADF' , # ESRI ArcInfo Binary Grid Format
 	'IMI' , # Magellan Map File
 	'RMP' , # Magellan Raster Map File
-	'GSR' , # Golden Software Reference File
 	'GPX' , # GPS Exchange File
+	'GSR' , # Golden Software Reference File
 	'REF' , # IDRISI Raster Image Reference File
 	'GPS' , # Survey Pro Coordinate File
 	'RDF' , # ArcGIS Report Document File
@@ -5011,9 +4968,6 @@ set_gis = {
 	'DVC' , # IDRISI Vector Definition File
 }
 
-
-# noinspection SpellCheckingInspection
-set_web = set()
 
 # noinspection SpellCheckingInspection
 set_web = {
@@ -5161,25 +5115,25 @@ set_web = {
 	'CFM' , # ColdFusion Markup File
 	'CER' , # Internet Security Certificate
 	'VRML' , # VRML File
-	'PAGE' , # HybridJava Web Page
 	'DBM' , # ColdFusion Server File
-	'AWM' , # AllWebMenus Project File
-	'MJML' , # Mailjet Markup Language File
 	'DOTHTML' , # Microsoft Word HTML Document Template
-	'WML' , # Wireless Markup Language File
 	'COMPRESSED' , # WordCompress Compacted Webpage
+	'MJML' , # Mailjet Markup Language File
+	'PAGE' , # HybridJava Web Page
+	'AWM' , # AllWebMenus Project File
+	'WML' , # Wireless Markup Language File
 	'MHT' , # MHTML Web Archive
 	'XHT' , # XHTML File
 	'JSPX' , # XML Jakarta Server Page
 	'PSP' , # PL/SQL Server Page
 	'JSONL' , # JSON Lines File
-	'SHTM' , # HTML Server Side Include File
 	'MAFF' , # Mozilla Archive Format File
-	'SITEMAP' , # ASP.NET Site Map File
-	'DML' , # DynaScript File
+	'SHTM' , # HTML Server Side Include File
 	'TPL' , # PrestaShop Template File
-	'ITMS' , # iTunes Music Store Link File
+	'DML' , # DynaScript File
 	'JSS' , # JavaScript Style Sheet File
+	'ITMS' , # iTunes Music Store Link File
+	'SITEMAP' , # ASP.NET Site Map File
 	'XHTML' , # Extensible Hypertext Markup Language File
 	'UCF' , # WebEx Media File
 	'WPP' , # WebPlus Project File
@@ -5189,17 +5143,17 @@ set_web = {
 	'DISCOMAP' , # DISCO Discovery Output File
 	'SASS' , # Syntactically Awesome StyleSheets File
 	'STC' , # Contribute Connection Key File
-	'HXS' , # Help 2 Compiled Help File
 	'XBL' , # Extensible Binding Language File
+	'HXS' , # Help 2 Compiled Help File
+	'HYPE' , # Hype Document
+	'CSP' , # Concept Server Page
 	'NDJSON' , # Newline Delimited JSON File
 	'ZVZ' , # Possible Virus File
-	'CSP' , # Concept Server Page
-	'HYPE' , # Hype Document
 	'HDML' , # Handheld Device Markup Language File
 	'JHTML' , # Java HTML Web Page
 	'XWS' , # Xara Web Designer Graphic
-	'SVC' , # WCF Web Service File
 	'PUB' , # Public Key File
+	'SVC' , # WCF Web Service File
 	'PRF' , # PICS Rules File
 	'ESPROJ' , # Espresso Project File
 	'PRIVATE' , # OpenSSL Private Key
@@ -5290,13 +5244,9 @@ set_web = {
 
 
 # noinspection SpellCheckingInspection
-set_plugin = set()
-
-# noinspection SpellCheckingInspection
 set_plugin = {
 	'APLG' , # Audials Plug-in
 	'AMXX' , # AMX Mod X Plugin File
-	'MILK' , # MilkDrop Winamp Plug-in Preset
 	'ASI' , # ASI Mod Script
 	'CCIP' , # Curse Client Install Package
 	'REZ' , # Escape Velocity Plug-in File
@@ -5317,6 +5267,7 @@ set_plugin = {
 	'ECF' , # Outlook Add-in
 	'FB2K-COMPONENT' , # Foobar2000 Component Install File
 	'OIV' , # OpenIV Mod Package File
+	'MILK' , # MilkDrop Winamp Plug-in Preset
 	'VBOX-EXTPACK' , # Oracle VM VirtualBox Extension Pack
 	'MDE' , # Compiled Access Add-in File
 	'INX' , # Inkscape Extension Descriptor File
@@ -5365,23 +5316,23 @@ set_plugin = {
 	'BKZ' , # BaKoMa TeX Installation Module
 	'XSIADDON' , # Softimage Add-on File
 	'XLAM' , # Microsoft Excel Macro-Enabled Add-In
-	'QTX' , # QuickTime Extension
 	'XLV' , # Microsoft Excel Visual Basic Module
+	'QTX' , # QuickTime Extension
 	'PLUGIN' , # Adobe Photoshop Plug-in
 	'VST3' , # VST 3 Audio Plug-in
 	'8LI' , # Photoshop Scripting Plug-in
 	'BUNDLE' , # macOS Loadable Bundle
 	'AIP' , # Adobe Illustrator Plug-in
+	'LNG' , # Acrobat Language Plugin
 	'MXADDON' , # Maxthon Add-On File
 	'WLL' , # Microsoft Word Add-in File
-	'LNG' , # Acrobat Language Plugin
 	'SUBLIME-PACKAGE' , # Sublime Text Package File
 	'AVX' , # ArcView Extension File
-	'TKO' , # AMX Software Module File
 	'NET' , # FileMaker Networking Module
+	'TKO' , # AMX Software Module File
 	'PLUGIN' , # Mac OS X Plugin
 	'JSXBIN' , # Binary ExtendScript Script File
-	'RPM' , # RealPlayer Plug-in
+	'RPM' , # RealPlayer Plugin
 	'XLL' , # Microsoft Excel Add-in
 	'P64' , # 64-bit Windows IDA Plugin Module
 	'RHP' , # Rhino Plug-in
@@ -5402,21 +5353,21 @@ set_plugin = {
 	'APD' , # Eclipse Plugin Descriptor File
 	'MXP' , # Adobe Extension Package
 	'AIX' , # MIT App Inventor Extension
-	'AAUI' , # Acrobat User Interface File
 	'BRM' , # Bryce Plug-in File
+	'AAUI' , # Acrobat User Interface File
 	'8BE' , # PhotoDeluxe Plug-in
 	'FSB' , # Form•Z Compiled Script
 	'FXT' , # Finale Plug-in
-	'PPA' , # Microsoft PowerPoint Add-in
 	'NBP' , # NeoBook Plugin File
-	'MMIP' , # MediaMonkey Installation Package
 	'IBPLUGIN' , # Interface Builder Plug-in
-	'FWACTION' , # Freeway Action File
-	'8BY' , # PhotoDeluxe Plug-in
-	'IADCOMPONENT' , # iAd Producer Plugin Component File
 	'PPAM' , # Microsoft PowerPoint 2007 Add-In
-	'APL' , # ACDSee Plugin File
+	'MMIP' , # MediaMonkey Installation Package
 	'DLU' , # 3ds Max Utility Plug-in File
+	'PPA' , # Microsoft PowerPoint Add-in
+	'APL' , # ACDSee Plugin File
+	'IADCOMPONENT' , # iAd Producer Plugin Component File
+	'8BY' , # PhotoDeluxe Plug-in
+	'FWACTION' , # Freeway Action File
 	'DPM' , # Pro Tools Plugin File
 	'ARX' , # AutoCAD Runtime Extension File
 	'FMX' , # FileMaker Plug-in
@@ -5431,107 +5382,104 @@ set_plugin = {
 	'SPE' , # SPSS Extension
 	'DBX' , # AutoCAD Database Extension File
 	'APE' , # AVS Plugin Effects File
-	'VDPLUGIN' , # VirtualDub Plugin File
-	'8BC' , # Photoshop 5.0 Plug-in
-	'PLN' , # Adobe InDesign Plug-in
-	'EBAPLUGIN' , # EBA Command Center Plug-in
 	'ROCK' , # Rockbox Plug-in
+	'EBAPLUGIN' , # EBA Command Center Plug-in
+	'PLN' , # Adobe InDesign Plug-in
 	'Q9S' , # Mr. Contrast Photoshop Plug-In
+	'VDPLUGIN' , # VirtualDub Plugin File
 	'IADSTYLE' , # iAd Producer Plugin Style Template
-	'Q1Q' , # LunarCell Photoshop Plug-in
+	'8BC' , # Photoshop 5.0 Plug-in
 	'APEXT' , # AudioPipes Extension
-	'OFX' , # OpenFX Plugin
+	'PLX64' , # 64-bit Linux IDA Plugin Module
+	'DFP' , # Fusion Plugin File
+	'FWACTIONB' , # Freeway Action Bundle File
 	'FMPLUGIN' , # FileMaker Plug-in
+	'BZPLUG' , # AfterShot Pro Plugin Bundle
 	'ZPI' , # DivX Connected Plug-in File
 	'RXT' , # Retrospect Backup Extension
-	'LRPLUGIN' , # Adobe Lightroom Classic Plug-in
-	'FWACTIONB' , # Freeway Action Bundle File
-	'RPLIB' , # Axure RP Widget Library File
+	'MODE' , # Coda Syntax Mode File
+	'TMBUNDLE' , # TextMate Bundle File
 	'ASEPRITE-EXTENSION' , # Aseprite Extension
 	'NVDA-ADDON' , # NVDA Add-On
-	'TMBUNDLE' , # TextMate Bundle File
 	'MLTBX' , # MATLAB Toolbox Package
-	'BBLM' , # BBEdit Language Module
-	'8BL' , # Photoshop Plug-in
-	'FLT' , # Graphics Filter
+	'OFX' , # OpenFX Plugin
 	'PLG' , # Sibelius Plug-in
-	'MODE' , # Coda Syntax Mode File
-	'PLX64' , # 64-bit Linux IDA Plugin Module
+	'FLT' , # Graphics Filter
+	'8BL' , # Photoshop Plug-in
+	'LRPLUGIN' , # Adobe Lightroom Classic Plug-in
 	'QTR' , # QuickTime Extension Resource
 	'OSAX' , # AppleScript Scripting Addition
-	'BZPLUG' , # AfterShot Pro Plugin Bundle
-	'DFP' , # Fusion Plugin File
+	'BBLM' , # BBEdit Language Module
+	'RPLIB' , # Axure RP Widget Library File
+	'Q1Q' , # LunarCell Photoshop Plug-in
 	'SPD' , # SPSS Custom Dialog File
 	'INDESIGNPLUGIN' , # Adobe InDesign Plug-in
 	'XLA' , # Microsoft Excel Add-In File
-	'PPMOD' , # Papers Please Mod File
 	'T3X' , # TYPO3 Compressed Extension
+	'PPMOD' , # Papers Please Mod File
 	'FS' , # Mac OS X File System Plug-in
-	'XBA' , # OpenOffice Basic Module File
 	'ABA' , # Avant Browser Add-on File
+	'XBA' , # OpenOffice Basic Module File
 	'QAR' , # QlikView Extension
-	'FPI' , # Foxit Reader Plugin
 	'Q2Q' , # Flexify Photoshop Plug-in
-	'CODAPLUGIN' , # Coda Plug-in
+	'FPI' , # Foxit Reader Plugin
 	'PSET' , # Adobe InDesign Plug-in Set File
 	'WBM' , # Webmin Module
+	'CODAPLUGIN' , # Coda Plug-in
 	'SUGAR' , # Espresso Plug-in
 	'ADDON' , # CFS Console Add-on
 	'P' , # LightWave Plug-in
-	'CCX' , # Click & Create Extension
-	'ZLB' , # Form•Z Symbol Library File
-	'Q8R' , # Flood Photoshop Plug-in
-	'M2P' , # Maxthon 2 Browser Plugin File
-	'MOX' , # Montax Imposer Template Document
 	'LRMODULE' , # Adobe Lightroom Module
-	'PLX' , # 32-bit Linux IDA Plugin Module
-	'CST' , # Gary Gadget Plug-in
-	'XCODEPLUGIN' , # Xcode Plug-in
+	'ZLB' , # Form•Z Symbol Library File
 	'BRO' , # Bryce Plug-in
+	'CCX' , # Click & Create Extension
+	'PLX' , # 32-bit Linux IDA Plugin Module
 	'IDEPLUGIN' , # Xcode IDE Plug-in
+	'MOX' , # Montax Imposer Template Document
+	'M2P' , # Maxthon 2 Browser Plugin File
+	'Q8R' , # Flood Photoshop Plug-in
+	'XCODEPLUGIN' , # Xcode Plug-in
+	'CST' , # Gary Gadget Plug-in
 	'QLGENERATOR' , # Quick Look Generator File
 	'CVT' , # Canvas External Tool File
-	'Q9R' , # Glitterato Photoshop Plug-In
-	'SO-ABI' , # Cocoa AbiWord Plug-in
 	'QPX' , # QuickTime Player Extension
+	'SO-ABI' , # Cocoa AbiWord Plug-in
+	'Q9R' , # Glitterato Photoshop Plug-In
 	'DVTPLUGIN' , # Xcode DVT Plug-in
 	'ABI' , # AbiWord Plug-in
 	'LUAC' , # Compiled Lua Script
-	'AFZPLUG' , # AfterShot Pro Plugin Archive
 	'XNT' , # QuarkXPress Extension File
-	'XADD' , # Expression Web Add-in
-	'SA9' , # Hue and Cry Photoshop Plug-in
-	'COLORPICKER' , # Color Picker Plugin
-	'TBP' , # Autodesk Topobase File
-	'PBA' , # OpenOffice.org Basic Protected Module File
 	'Q5R' , # Melancholytron Photoshop Plug-in
+	'SA9' , # Hue and Cry Photoshop Plug-in
 	'BRI' , # Bryce Plug-in File
-	'LRWEBENGINE' , # Adobe Lightroom Web Gallery File
-	'ASEPRITE-DATA' , # Aseprite Theme Auxillary File
-	'IADACTION' , # iAd Producer Plugin Action Template
-	'IADPLUG' , # iAd Producer Plugin
-	'DMKIT' , # Drumaxx Drum Kit
-	'ATX' , # Animation Master Plugin File
-	'XCPLUGIN' , # Xcode Plug-in
+	'AFZPLUG' , # AfterShot Pro Plugin Archive
 	'WOWSL' , # WOW Slider
+	'PBA' , # OpenOffice.org Basic Protected Module File
+	'TBP' , # Autodesk Topobase File
+	'XADD' , # Expression Web Add-in
+	'COLORPICKER' , # Color Picker Plugin
+	'LRWEBENGINE' , # Adobe Lightroom Web Gallery File
+	'ATX' , # Animation Master Plugin File
+	'ASEPRITE-DATA' , # Aseprite Theme Auxillary File
 	'SYN' , # TextPad Syntax File
+	'XCPLUGIN' , # Xcode Plug-in
+	'IADPLUG' , # iAd Producer Plugin
+	'IADACTION' , # iAd Producer Plugin Action Template
+	'DMKIT' , # Drumaxx Drum Kit
 	'RPI' , # Render Plug-in
 	'ARPACK' , # ArtRage Package
 	'REV' , # LiveCode Plugin
-	'COX' , # Click & Create Extension
 	'FZP' , # Form•Z Plug-in
-	'MPE1' , # MediaPortal 1 Extension
+	'COX' , # Click & Create Extension
 	'MAT' , # V-Ray Materials File
 	'MFW' , # MobileFrame Workflow Pack File
+	'MPE1' , # MediaPortal 1 Extension
 	'WIE' , # WordPress Widget Export File
 	'EXV' , # Adobe Extension Script
 	'Q7Q' , # India Ink Photoshop Plug-in
 	'Q4Q' , # Solar Cell Photoshop Plug-in
 }
 
-
-# noinspection SpellCheckingInspection
-set_font = set()
 
 # noinspection SpellCheckingInspection
 set_font = {
@@ -5600,24 +5548,21 @@ set_font = {
 
 
 # noinspection SpellCheckingInspection
-set_system = set()
-
-# noinspection SpellCheckingInspection
 set_system = {
 	'RMT' , # Router Firmware File
 	'ADMX' , # Group Policy Administrative Template File
 	'VGA' , # VGA Display Driver
+	'SHSH2' , # iOS SHSH Blob
 	'HVE' , # Windows Registry Hive File
 	'AML' , # ACPI Machine Language File
 	'REG' , # Registry File
-	'SHSH2' , # iOS SHSH Blob
 	'CUR' , # Windows Cursor Image
 	'REGTRANS-MS' , # Registry Transaction Log File
 	'CLB' , # COM+ Catalog File
 	'ANI' , # Windows Animated Cursor
 	'WDGT' , # Dashboard Widget
-	'EDJ' , # Enlightenment Theme File
 	'NT' , # Windows NT Startup File
+	'EDJ' , # Enlightenment Theme File
 	'ICNS' , # macOS Icon Resource
 	'DLL' , # Dynamic Link Library
 	'DESKTHEMEPACK' , # Windows 8 Desktop Theme Pack File
@@ -5628,21 +5573,21 @@ set_system = {
 	'DVD' , # DOS Device Driver
 	'FTF' , # FlashTool Firmware File
 	'IOPLIST' , # Mac OS X IOPLIST File
-	'THEME' , # Microsoft Plus! Desktop Theme
 	'VX_' , # Compressed Virtual Device Driver File
+	'THEME' , # Microsoft Plus! Desktop Theme
 	'HIV' , # Windows Registry Hive File
 	'MOD' , # GRUB Module
-	'LNK' , # Windows Shortcut
 	'MDMP' , # Windows Minidump
+	'LNK' , # Windows Shortcut
 	'ELF' , # Executable and Linkable Format File
 	'SEARCHCONNECTOR-MS' , # Windows Search Connector File
-	'EBD' , # Windows EBD System File
 	'LOCKFILE' , # Mac OS X PLIST Lock File
+	'EBD' , # Windows EBD System File
 	'HTT' , # Hypertext Template
 	'QVM' , # Q Virtual Machine
 	'SYS' , # Windows System File
-	'PCK' , # System Center Configuration Manager Package File
 	'SFCACHE' , # ReadyBoost Cache File
+	'PCK' , # System Center Configuration Manager Package File
 	'ICO' , # Icon File
 	'MANIFEST' , # Windows Application Manifest File
 	'FIRM' , # Boot9Strap 3DS Firmware File
@@ -5654,18 +5599,18 @@ set_system = {
 	'PROP' , # Android Build Properties File
 	'MUI' , # Multilingual User Interface File
 	'ETL' , # Microsoft Event Trace Log File
-	'BASHRC' , # Bash Non-Interactive Login Shell File
-	'CGZ' , # Linux Drivers Archive
-	'TIMER' , # Systemd Unit Configuration File
-	'MENU' , # macOS Menu Extra
-	'RC1' , # Samsung Mobile Device Firmware File
-	'THA' , # Windows Thai Noise-Words List File
-	'H1S' , # Windows Assistance Platform Help File
-	'PWL' , # Windows Password List
-	'ZONE.IDENTIFIER' , # Windows Zone Identifier File
 	'PREFPANE' , # Mac OS X System Preference Pane
-	'WLU' , # Windows Legacy Update
+	'RC1' , # Samsung Mobile Device Firmware File
+	'BASHRC' , # Bash Non-Interactive Login Shell File
+	'THA' , # Windows Thai Noise-Words List File
+	'ZONE.IDENTIFIER' , # Windows Zone Identifier File
+	'PWL' , # Windows Password List
 	'LM' , # Language Model File
+	'CGZ' , # Linux Drivers Archive
+	'MENU' , # macOS Menu Extra
+	'H1S' , # Windows Assistance Platform Help File
+	'WLU' , # Windows Legacy Update
+	'TIMER' , # Systemd Unit Configuration File
 	'MAPIMAIL' , # Send To Mail Recipient
 	'CM0013' , # Samsung Smart TV Index File
 	'MSC' , # Microsoft Management Console Snap-in Control File
@@ -5678,57 +5623,57 @@ set_system = {
 	'FX' , # ReadyBoot Trace File
 	'ADM' , # Administrative Template File
 	'INF_LOC' , # Windows Driver Information Cache File
-	'LFS' , # Samsung Phone params.lfs File
 	'MUI_CCCD5AE0' , # Hid User Library
+	'LFS' , # Samsung Phone params.lfs File
 	'MLC' , # Microsoft Language Interface Pack
 	'SDB' , # Application Compatibility Database
 	'C32' , # Syslinux COM32 Module
 	'CAB' , # Windows Cabinet File
 	'ITEMDATA-MS' , # Windows 8 Start Screen Item Data File
-	'FOTA' , # Firmware Over-the-Air File
-	'MSSTYLES' , # Windows XP Style
 	'DRPM' , # Delta RPM File
+	'MSSTYLES' , # Windows XP Style
+	'FOTA' , # Firmware Over-the-Air File
 	'MOBILECONFIG' , # Apple Mobile Configuration File
-	'PIT' , # Samsung Phone Firmware File
 	'3FS' , # Puppy Linux Save State File
+	'PIT' , # Samsung Phone Firmware File
 	'SYS' , # Motorola Cell Phone Driver
+	'73U' , # TI-73 Explorer Operating System File
 	'PNF' , # Precompiled INF File
 	'TRX_DLL' , # Windows Startup File
 	'MTZ' , # MIUI Theme
-	'73U' , # TI-73 Explorer Operating System File
 	'BASH_PROFILE' , # Bash Interactive Login Shell File
-	'NLS' , # Microsoft National Language Support File
-	'LIBRARY-MS' , # Windows Library Description File
-	'SBN' , # Cisco IP Phone Firmware File
-	'WEBPNP' , # Web Point and Print File
 	'HHK' , # HTML Help Index
+	'NLS' , # Microsoft National Language Support File
+	'WEBPNP' , # Web Point and Print File
+	'SBN' , # Cisco IP Phone Firmware File
+	'LIBRARY-MS' , # Windows Library Description File
 	'208' , # ASUS Notebook BIOS 208 Update File
 	'BCD' , # Windows Boot Configuration Data File
 	'0' , # Shared Library Link File
 	'DIT' , # Active Directory Information Tree File
 	'MBR' , # Master Boot Record File
-	'DTHUMB' , # Android Data Thumbnail
 	'INS' , # Internet Naming Service File
+	'DTHUMB' , # Android Data Thumbnail
 	'DIAGCAB' , # Troubleshooting Pack Cabinet File
-	'PLASMOID' , # Plasma Widget
 	'IMG3' , # iPhone IMG3 File
+	'PLASMOID' , # Plasma Widget
 	'NLT' , # Windows Transliteration File
 	'DRV' , # Device Driver
 	'PS2' , # Microsoft Search Catalog Index File
 	'PDR' , # Windows Port Driver
 	'HDMP' , # Windows Heap Dump
 	'CI' , # Windows Content Indexer Catalog File
-	'0' , # Android CA Digital Certificate
 	'POL' , # Windows Policy File
+	'0' , # Android CA Digital Certificate
+	'NB0' , # Device Boot Loader Image
 	'SDT' , # Siemens Desktop Theme File
 	'PPD' , # PostScript Printer Description File
-	'NB0' , # Device Boot Loader Image
 	'CAT' , # Windows Catalog File
 	'CPL' , # Windows Control Panel Item
-	'SBF' , # Android System File
 	'BIO' , # BIOS File
-	'CANNEDSEARCH' , # Apple Predefined Search
 	'SAVEDSEARCH' , # Spotlight Saved Search
+	'SBF' , # Android System File
+	'CANNEDSEARCH' , # Apple Predefined Search
 	'WDF' , # Windows Driver Foundation File
 	'1' , # Unix Section 1 Manual Page
 	'VXD' , # Virtual Device Driver
@@ -5737,8 +5682,8 @@ set_system = {
 	'CM0012' , # Configuration Management File
 	'HLP' , # Windows Help File
 	'JOB' , # Windows Task Scheduler Job File
-	'LOG2' , # Windows Registry Hive Log 2 File
 	'PAT' , # DiskStation Manager Installation File
+	'LOG2' , # Windows Registry Hive Log 2 File
 	'SQM' , # Service Quality Monitoring File
 	'AX' , # DirectShow Filter
 	'8CU' , # TI-84 Plus C Operating System File
@@ -5752,61 +5697,62 @@ set_system = {
 	'IDX' , # Index File
 	'8XU' , # TI-83 and TI-84 Plus Operating System File
 	'PRF' , # Windows System File
-	'IME' , # Windows Input Method Editor File
 	'CONFIGPROFILE' , # Apple Configuration Profile
+	'IME' , # Windows Input Method Editor File
 	'ODEX' , # Optimized Dalvik Executable
 	'ADML' , # Group Policy Language-Specific Administrative Template
 	'LST' , # GRUB Boot List File
 	'DATABASE_UUID' , # Android Stale Thumbnails Identifier
-	'SHSH' , # iPhone/iPod Touch SHSH Blob File
-	'EMERALD' , # Emerald Theme
-	'SCHEMAS' , # GConf Schema Definition File
-	'DFU' , # iOS DFU File
-	'TDZ' , # Drobo Firmware File
 	'PANIC' , # Kernel Panic File
-	'DUB' , # Windows Spelling Dictionary Identifier
-	'CPQ' , # Compaq OEM Disc Configuration File
-	'SWP' , # Swap File
-	'FFX' , # Microsoft Find Fast Index
-	'NTFS' , # NTFS Partition File
-	'89U' , # TI-89 Titanium Operating System File
-	'JOURNAL' , # Linux Journald Event Log
-	'UTV' , # SmartCast TV Firmware Update
-	'B84' , # TI-84 Plus CE Bundle Image
-	'LEX' , # Spelling Dictionary File
+	'SCHEMAS' , # GConf Schema Definition File
 	'CHG' , # Windows Net Logon File
+	'EMERALD' , # Emerald Theme
+	'TDZ' , # Drobo Firmware File
+	'CPQ' , # Compaq OEM Disc Configuration File
+	'NTFS' , # NTFS Partition File
+	'LEX' , # Spelling Dictionary File
+	'DFU' , # iOS DFU File
+	'JOURNAL' , # Linux Journald Event Log
+	'SWP' , # Swap File
+	'DUB' , # Windows Spelling Dictionary Identifier
+	'89U' , # TI-89 Titanium Operating System File
+	'B84' , # TI-84 Plus CE Bundle Image
+	'UTV' , # SmartCast TV Firmware Update
+	'SHSH' , # iPhone/iPod Touch SHSH Blob File
+	'FFX' , # Microsoft Find Fast Index
 	'386' , # Windows Virtual Device Driver
 	'BLF' , # CLFS Base Log File
 	'WER' , # Windows Error Report
 	'AOS' , # ARCHOS PCtablet Firmware File
 	'KO' , # Linux Kernel Module File
 	'HCD' , # Samsung Android Firmware File
-	'SAVER' , # Mac OS X Screen Saver
 	'3' , # Unix Section 3 Manual Page
+	'SAVER' , # Mac OS X Screen Saver
 	'MUM' , # Windows Vista Update Package
 	'PROFILE' , # Bash Shell Profile
 	'HHC' , # HTML Help Table of Contents
 	'ADV' , # Audio Driver File
-	'PROVISIONPROFILE' , # Apple Provision Profile
-	'CHK' , # Netgear Router Firmware File
 	'PRINTEREXPORT' , # Windows Printer Migration File
-	'STR' , # Windows Screensaver File
 	'GROUP' , # Windows Contacts Group File
-	'DIMAX' , # DiMAX Firmware Image File
-	'KDZ' , # LG Mobile Device Firmware
+	'CHK' , # Netgear Router Firmware File
 	'METADATA_NEVER_INDEX' , # Spotlight Never Index File
 	'IM4P' , # IMG4 Payload File
-	'DEVICEMETADATA-MS' , # Device Metadata Package
+	'PROVISIONPROFILE' , # Apple Provision Profile
+	'KDZ' , # LG Mobile Device Firmware
+	'STR' , # Windows Screensaver File
+	'DIMAX' , # DiMAX Firmware Image File
 	'KWI' , # Toyota Entune Update File
-	'CAP' , # ASUS BIOS Update File
+	'DEVICEMETADATA-MS' , # Device Metadata Package
 	'BMK' , # Windows Help Bookmarks
+	'CAP' , # ASUS BIOS Update File
 	'PID' , # Creative Driver File
 	'RUF' , # Samsung DVD and Blu-ray Player Firmware File
+	'TRASH' , # ChromeOS Trash Storage
 	'ATAHD' , # ATA Hard Drive Flag File
 	'NBH' , # ROM Update Utility Image File
+	'FFO' , # Find Fast Document Properties Cache
 	'GRP' , # Windows Program Manager Group
 	'MI4' , # Audio Player Firmware File
-	'FFO' , # Find Fast Document Properties Cache
 	'PRT' , # Printer Driver File
 	'CPI' , # Codepage Information File
 	'SPL' , # Windows Print Spool File
@@ -5823,13 +5769,12 @@ set_system = {
 	'CUSTOMDESTINATIONS-MS' , # Windows Jump List File
 	'CPR' , # Windows Phone Display Settings File
 	'TRASHINFO' , # Linux Trash Metadata File
+	'SEFW' , # Secure Element Firmware
 	'EFIRES' , # EFI Image File
 	'HPJ' , # Help Project File
-	'ESCOPY' , # ES File Explorer File Manager Temporary File
-	'MUN' , # Windows System Resource Archive
 	'RCV' , # BIOS Recovery File
+	'ESCOPY' , # ES File Explorer File Manager Temporary File
 	'OZIP' , # OPPO Smartphone Firmware Update
-	'SEFW' , # Secure Element Firmware
 	'FTR' , # IRIX File Type Rules File
 	'CHT' , # Windows Chinese Traditional Noise-Word List File
 	'CHS' , # Windows Chinese Noise-Word List File
@@ -5840,23 +5785,23 @@ set_system = {
 	'EVT' , # Windows Event Viewer Log File
 	'BK2' , # Windows Indexing Service Data File
 	'DLX' , # Renamed DLL File
+	'MUN' , # Windows System Resource Archive
 	'CMO' , # ASUS BIOS File
 	'SIN' , # Sony Xperia Firmware File
-	'TBRES' , # Microsoft Store TokenBroker Cache File
 	'SPRX' , # Signed PlayStation Relocatable Executable
 	'SCF' , # Shell Command File
-	'DIAGPKG' , # Troubleshooting Pack File
 	'IFW' , # INTUS Firmware File
+	'DIAGPKG' , # Troubleshooting Pack File
 	'UCE' , # Windows UCE System File
 	'GMMP' , # WCS Gamut Map Model Profile
 	'MEM' , # Parallels Desktop Memory Dump File
 	'NETWORKCONNECT' , # Apple Network Connect Document
-	'BOM' , # Mac OS X Bill of Materials File
 	'XFB' , # Xserve RAID Firmware Binary File
+	'BOM' , # Mac OS X Bill of Materials File
 	'WGZ' , # S60 Web Runtime Widget Package
-	'TRASH' , # ChromeOS Trash Storage
 	'KC' , # macOS Kernel Extension Boot File
 	'MMV' , # Magnex Firmware File
+	'TBRES' , # Microsoft Store TokenBroker Cache File
 	'ISDATA' , # Icon Services Data
 	'TRASHES' , # macOS USB Flash Drive Trash Folder
 	'SO.0' , # Unix Shared Library File
@@ -5928,9 +5873,6 @@ set_system = {
 	'IM4M' , # IMG4 Manifest
 }
 
-
-# noinspection SpellCheckingInspection
-set_settings = set()
 
 # noinspection SpellCheckingInspection
 set_settings = {
@@ -6111,18 +6053,18 @@ set_settings = {
 	'CLG' , # Windows Catalog File
 	'DSX' , # DAZ Studio XML File
 	'CPX' , # Oracle ADF Binding Context File
-	'DICPROOF' , # Microsoft Dictionary Proofing File
-	'UCT' , # UC Browser Theme File
-	'GPS' , # GenePix Settings File
 	'DIRECTORY' , # KDE Folder View Properties File
+	'UCT' , # UC Browser Theme File
+	'DICPROOF' , # Microsoft Dictionary Proofing File
+	'GPS' , # GenePix Settings File
 	'PTF' , # PSP Theme File
 	'EMM' , # MindMaple Map
 	'MSM' , # Windows Installer Merge Module
-	'KYS' , # Adobe Photoshop Keyboard Shortcuts File
-	'WCZ' , # Chameleon Clock Wallpaper File
-	'OEM' , # OEM Setup File
 	'CTB' , # AutoCAD Color-Based Plot Style File
+	'KYS' , # Adobe Photoshop Keyboard Shortcuts File
 	'ICD' , # Installable Client Driver File
+	'OEM' , # OEM Setup File
+	'WCZ' , # Chameleon Clock Wallpaper File
 	'PLIST' , # Property List
 	'FD' , # LaTeX Font Definition File
 	'VBOX' , # Oracle VM VirtualBox Settings File
@@ -6260,6 +6202,7 @@ set_settings = {
 	'MCW' , # Monitor Calibration Wizard File
 	'DCP' , # Adobe DNG Camera Profile
 	'JDF' , # Adobe Acrobat Job Definition File
+	'UPF' , # MicroStation User Preferences File
 	'DSW' , # Visual C++ 6 Workspace File
 	'COMP' , # Fusion Composition File
 	'PDP' , # Palo Alto Software Plan Component File
@@ -6271,7 +6214,6 @@ set_settings = {
 	'THMX' , # Office 2007 Theme
 	'SL' , # Software License File
 	'EXE4J' , # Exe4j Configuration File
-	'UPF' , # MicroStation User Preferences File
 	'FMP' , # AutoCAD Font Map File
 	'NPFX' , # Norton Internet Security Firewall Settings File
 	'HME' , # Windows Mobile Theme File
@@ -6438,9 +6380,6 @@ set_settings = {
 
 
 # noinspection SpellCheckingInspection
-set_encoded = set()
-
-# noinspection SpellCheckingInspection
 set_encoded = {
 	'BHX' , # BinHex Encoded File
 	'ECD' , # Encrypted Cryptee Document
@@ -6523,56 +6462,56 @@ set_encoded = {
 	'MME' , # Multi-Purpose Internet Mail
 	'EDOC' , # Electronically Certified Document
 	'RENSENWARE' , # Rensenware Encrypted File
+	'QSCX' , # QSCX Ransomware Encrypted File
 	'HOOP' , # HOOP Ransomware Encrypted File
 	'MSE' , # 3ds Max Encrypted MAXScript File
-	'QSCX' , # QSCX Ransomware Encrypted File
 	'EOC' , # EncryptOnClick Encrypted File
 	'SQZ' , # digitalSQZ Encrypted File
 	'B2A' , # Btoa Encoded File
+	'QEWE' , # QEWE Ransomware Encrypted File
 	'SIA' , # Sia Metadata File
 	'KK' , # SyncCrypt Ransomware Encrypted File
 	'DCF' , # Safetica Free Encrypted Archive
-	'SRF' , # Samsung Smart TV Recording
+	'UFR' , # Upfiring File
 	'DED' , # DED Cryptor Ransomware Encrypted File
 	'SALMA' , # Salma Ransomware Encrypted File
-	'PYENC' , # PyFileEncrypt Encrypted File
 	'JMC' , # JM-Crypt Encrypted File
-	'UFR' , # Upfiring File
+	'PYENC' , # PyFileEncrypt Encrypted File
 	'ZIP.ENC' , # Facebook User Information Encrypted Archive
+	'SRF' , # Samsung Smart TV Recording
 	'SEB' , # Safe Exam Browser Configuration File
 	'CRYPT' , # CryptXXX Ransomware Encrypted File
 	'UUE' , # Uuencoded File
 	'UU' , # Uuencoded File
 	'PDC' , # Safeguard PDF Security Protected PDF
-	'EFU' , # Encryptafile Public Key File
 	'ESLOCK' , # ES File Explorer File Manager Encrypted File
-	'VIIVO' , # Viivo Encrypted File
+	'EFU' , # Encryptafile Public Key File
 	'BSK' , # Nero SecurDisc Private Key File
+	'VIIVO' , # Viivo Encrypted File
 	'XMDX' , # SofTest Answer File
 	'JKS' , # Java Keystore File
 	'VDATA' , # Vaulty Vault File
-	'AES' , # AES Crypt Encrypted File
 	'VP' , # Verilog Encrypted Source Code File
+	'AES' , # AES Crypt Encrypted File
 	'LCN' , # License File
 	'NULL' , # Null Ransomware Encrypted File
 	'CPT' , # Ccrypt Encrypted Archive
 	'XXE' , # XXEncoded File
-	'COOT' , # Coot Ransomware Encrypted File
-	'MERRY' , # Merry X-Mas Ransomware Encrypted File
-	'QEWE' , # QEWE Ransomware Encrypted File
-	'JAC' , # JaStaCry Encrypted File
+	'CERBER' , # Cerber Ransomware Encrypted File
 	'YKCOL' , # Locky Ransomware Encrypted File
+	'COOT' , # Coot Ransomware Encrypted File
+	'EFDC' , # EFDC Ransomware Encrypted File
 	'SXLS' , # Sealed Microsoft Excel Spreadsheet
 	'CRYPTO' , # Encrypto Encrypted File
-	'EFDC' , # EFDC Ransomware Encrypted File
-	'PSW6' , # Password Depot 6 File
 	'AZS' , # AirZip FileSECURE File
-	'CERBER' , # Cerber Ransomware Encrypted File
+	'MERRY' , # Merry X-Mas Ransomware Encrypted File
+	'JAC' , # JaStaCry Encrypted File
+	'PSW6' , # Password Depot 6 File
 	'MIM' , # Multi-Purpose Internet Mail Message File
 	'CRYPT1' , # UltraCrypter Ransomware Encrypted File
 	'PFX' , # PKCS #12 Certificate File
-	'MNC' , # AutoCAD Compiled Menu File
 	'PDEX' , # Orient Computer Encrypted Data File
+	'MNC' , # AutoCAD Compiled Menu File
 	'HTPASSWD' , # Apache HTACCESS File
 	'ENCRYPTED' , # Crypren Ransomware Encrypted File
 	'HID' , # KeepSafe File
@@ -6583,34 +6522,34 @@ set_encoded = {
 	'SFI' , # SafeFolder Encrypted File
 	'GIVEMENITRO' , # Nitro Ransomware
 	'DIME' , # Direct Internet Message Encapsulation File
-	'DC4' , # ViaThinkSoft (De)Coder 4 File
 	'ADOBE' , # Dharma Ransomware Encrypted File
+	'DC4' , # ViaThinkSoft (De)Coder 4 File
 	'SPDF' , # Sealed PDF File
 	'FGSF' , # Files by Google Safe Folder Encrypted File
 	'KEYSTORE' , # Java Keystore File
 	'MICRO' , # TeslaCrypt 3.0 Ransomware Encrypted File
 	'HID2' , # KeepSafe File
-	'GFE' , # Glarysoft Encrypted File
 	'IDEA' , # Tresor IDEA Encrypted File
 	'WNRY' , # WannaCry Virus Encrypted File
 	'CRYPTED' , # WinOptimizer Encrypted File
+	'GFE' , # Glarysoft Encrypted File
 	'ESF' , # Password Manager Container File
 	'AFP' , # FileProtector Encrypted File
 	'DLC' , # Download Link Container File
 	'SA' , # Xiaomi Mobile Phone Hidden File
+	'PFILE' , # Rights Management Protected File
 	'WNCRY' , # Wana Decrypt0r 2.0 Encrypted File
-	'BIP' , # Dharma Ransomware Encrypted File
-	'FPENC' , # FileProtect Encrypted File
+	'AURORA' , # Aurora Ransomware Encrypted File
 	'R5A' , # 7ev3n Ransomware Encrypted File
+	'FPENC' , # FileProtect Encrypted File
 	'CONTI' , # Conti Ransomware Encrypted File
 	'WPE' , # WordPerfect Entrust Document
 	'JMCE' , # JM-Crypt Encrypted File
-	'AURORA' , # Aurora Ransomware Encrypted File
 	'KIFR' , # KIFR Ransomware Encrypted File
+	'BIP' , # Dharma Ransomware Encrypted File
 	'SJPG' , # Sealed JPG File
 	'WLU' , # Jaff Ransomware Encrypted File
 	'WALLET' , # Wallet Ransomware
-	'PFILE' , # Rights Management Protected File
 	'ELBIE' , # Elbie Ransomware Encrypted File
 	'XEF' , # WinAce Encrypted File
 	'JMCX' , # JM-Crypt Encrypted File
@@ -6739,9 +6678,6 @@ set_encoded = {
 
 
 # noinspection SpellCheckingInspection
-set_compressed = set()
-
-# noinspection SpellCheckingInspection
 set_compressed = {
 	'MINT' , # Linux Mint Installer File
 	'ZHELP' , # Ziphelp Package
@@ -6773,38 +6709,38 @@ set_compressed = {
 	'DEB' , # Debian Software Package
 	'BZ2' , # Bzip2 Compressed File
 	'BNDL' , # Game Data Bundle File
-	'ZPAQ' , # ZPAQ Archive
-	'ZPI' , # Zipped File
-	'RTE' , # RTE Encoded File
-	'S7Z' , # Mac OS X 7-Zip File
-	'PIT' , # PackIt Archive
-	'ICE' , # ICE Compressed Archive
-	'ECAR' , # DIKSHA Offline Content Archive
-	'WICK' , # Wick Editor Project
 	'ARDUBOY' , # Arduboy Game Package
-	'COMPPKG.HAUPTWERK.RAR' , # Hauptwerk Component Package
 	'QDA' , # Quadruple D Archive
-	'ECS' , # Sony Ericsson Phone Backup File
-	'CB7' , # Comic Book 7-Zip Archive
+	'ZPAQ' , # ZPAQ Archive
+	'COMPPKG.HAUPTWERK.RAR' , # Hauptwerk Component Package
+	'SQX' , # SQX Archive
+	'S7Z' , # Mac OS X 7-Zip File
+	'WICK' , # Wick Editor Project
+	'RTE' , # RTE Encoded File
+	'ICE' , # ICE Compressed Archive
+	'ZPI' , # Zipped File
+	'PIT' , # PackIt Archive
 	'HBE' , # HyperBac Compressed and Encrypted Archive
+	'ECAR' , # DIKSHA Offline Content Archive
+	'ZL' , # Zlib Compressed File
 	'LZM' , # Slax Module
 	'TBZ2' , # Bzip2-Compressed TAR File
-	'MPKG' , # macOS Meta-Package
 	'ITA' , # IconTweaker Theme Archive
+	'MPKG' , # macOS Meta-Package
 	'DL_' , # Compressed DLL File
-	'OPK' , # GCW Zero Open Package
-	'ZL' , # Zlib Compressed File
+	'CB7' , # Comic Book 7-Zip Archive
 	'EPI' , # EclipsePackager2000 Compressed File
-	'SMPF' , # Sprite Monkey Project
-	'SQX' , # SQX Archive
-	'PF' , # Private File
 	'ZZ' , # Pigz Zlib Compressed File
+	'PF' , # Private File
+	'OPK' , # GCW Zero Open Package
+	'ECS' , # Sony Ericsson Phone Backup File
+	'SMPF' , # Sprite Monkey Project
 	'001' , # Split Archive Part 1
 	'DZ' , # Dzip File
 	'PAR' , # Parchive Index File
 	'B1' , # B1 Compressed Archive
-	'REV' , # RAR Recovery Volume Set
 	'JSONLZ4' , # Compressed Firefox User Profile Data File
+	'REV' , # RAR Recovery Volume Set
 	'CBR' , # Comic Book RAR Archive
 	'002' , # Split Archive Part 2
 	'7Z.002' , # 7-Zip Split Archive Part 2 File
@@ -6829,13 +6765,13 @@ set_compressed = {
 	'TAR.GZ' , # Compressed Tarball File
 	'XIP' , # macOS Signed Archive
 	'C00' , # WinAce Split Archive File
+	'DAR' , # DAR Disk Archive
 	'ZIX' , # WinZix Compressed File
 	'PAR2' , # Parchive 2 File
-	'TX_' , # Compressed Text File
-	'LZ4' , # LZ4 Compressed File
 	'LPKG' , # Liferay Application
-	'DAR' , # DAR Disk Archive
 	'ARCHIVER' , # Archiver Compressed File Archive
+	'LZ4' , # LZ4 Compressed File
+	'TX_' , # Compressed Text File
 	'WHL' , # Python Wheel Package
 	'SFS' , # Squashfs File Archive
 	'APEX' , # Android Pony Express Package File
@@ -6844,53 +6780,54 @@ set_compressed = {
 	'CBZ' , # Comic Book Zip Archive
 	'BZ' , # Bzip Compressed File
 	'SITX' , # StuffIt X Archive
-	'LZ' , # Lzip Compressed File
 	'SDOCX' , # Samsung Notes Note
-	'A01' , # ALZip Third Split Archive File
-	'RZ' , # Rzip Compressed File
-	'PEA' , # PEA File Archive
 	'SHK' , # ShrinkIt Archive
 	'LZMA' , # LZMA Compressed File
+	'RZ' , # Rzip Compressed File
+	'A01' , # ALZip Third Split Archive File
+	'PEA' , # PEA File Archive
+	'LZ' , # Lzip Compressed File
 	'SPD' , # S Note File
-	'GMZ' , # Compressed GameMaker File
 	'TGS' , # Telegram Animated Sticker File
-	'Z03' , # Third Split Zip File
+	'GMZ' , # Compressed GameMaker File
 	'VPK' , # PlayStation Vita Application Package
+	'Z03' , # Third Split Zip File
 	'F' , # Freeze Compressed File
 	'WASTICKERS' , # Sticker Maker Sticker Pack
-	'JAR.PACK' , # Pack200 Packed Jar File
 	'PIZ' , # Zipped File
-	'SIFZ' , # Synfig Studio Compressed Project
-	'SPA' , # Spotify Application
+	'JAR.PACK' , # Pack200 Packed Jar File
 	'CDZ' , # Compressed CD Image File
+	'SPA' , # Spotify Application
+	'SIFZ' , # Synfig Studio Compressed Project
 	'F3Z' , # Fusion 360 Shared Project Archive
 	'XZ' , # XZ Compressed Archive
 	'XX' , # XXEncoded File
 	'MEMO' , # Samsung Memo
 	'Z' , # Unix Compressed File
 	'BH' , # BlakHole Archive
-	'XOPP' , # Xournal++ Notebook
 	'BUNDLE' , # Game Data Bundle File
+	'SHAR' , # Unix Shar Archive
+	'XOPP' , # Xournal++ Notebook
 	'SDOC' , # Samsung Notes Note
 	'WAR' , # Java Web Archive
 	'ACE' , # WinAce Compressed Archive
 	'ARC' , # Compressed File Archive
 	'PACKAGE' , # Linux Autopackage File
-	'SHAR' , # Unix Shar Archive
-	'PKZ' , # Packet Tracer Compressed Archive
+	'OAR' , # OpenSimulator Archive
 	'OZ' , # Opera Job Management Compressed File
+	'P19' , # Parchive Recovery Volume
+	'004' , # Split Archive Part 4
+	'VOCA' , # PhotoVOCA Communication Board File
+	'R03' , # WinRAR Split Archive Part 3
+	'ODLGZ' , # Gzipped OneDrive Event Log
 	'UBZ' , # OpenBoard Document
 	'SDC' , # Secure Download Cabinet
-	'CTZ' , # Cherrytree Password-protected XML Document
 	'S02' , # ZipSplitter Part 3 File
-	'SFM' , # S Memo File
-	'004' , # Split Archive Part 4
-	'CXARCHIVE' , # CrossOver Bottle Archive
-	'VOCA' , # PhotoVOCA Communication Board File
-	'P19' , # Parchive Recovery Volume
-	'OAR' , # OpenSimulator Archive
-	'R03' , # WinRAR Split Archive Part 3
+	'CTZ' , # Cherrytree Password-protected XML Document
 	'GCA' , # GCA File Archive
+	'PKZ' , # Packet Tracer Compressed Archive
+	'CXARCHIVE' , # CrossOver Bottle Archive
+	'SFM' , # S Memo File
 	'SNB' , # S Note File
 	'SH' , # Unix Shell Archive
 	'A00' , # ALZip Second Split Archive File
@@ -6899,19 +6836,19 @@ set_compressed = {
 	'ARJ' , # ARJ Compressed File Archive
 	'R0' , # WinRAR Compressed Archive
 	'R30' , # WinRAR Split Archive Part 30
-	'C01' , # WinAce Split Archive Part 1 File
-	'TAR.BZ2' , # Compressed Tarball File
 	'RK' , # WinRK Archive
+	'TAR.BZ2' , # Compressed Tarball File
+	'C01' , # WinAce Split Archive Part 1 File
 	'ZIPX' , # Extended Zip Archive
 	'PUP' , # Puppy Linux DotPup Installer Package
-	'RNC' , # RNC ProPack Archive
 	'MZP' , # MAXScript Zip Package
-	'BZIP2' , # Bzip2 Compressed Archive
 	'S01' , # ZipSplitter Part 2 File
+	'RNC' , # RNC ProPack Archive
+	'BZIP2' , # Bzip2 Compressed Archive
 	'J' , # JAR Archive
 	'AR' , # Unix Static Library
-	'NZ' , # NanoZip Compressed File
 	'JEX' , # Joplin Export File
+	'NZ' , # NanoZip Compressed File
 	'AYT' , # Quran Content Archive
 	'GZA' , # IZArc BGA Archive File
 	'PA' , # PowerArchiver Compressed File
@@ -6921,9 +6858,9 @@ set_compressed = {
 	'TGZ' , # Gzipped Tar File
 	'XMCDZ' , # Mathcad Compressed Worksheet File
 	'TAR.LZMA' , # LZMA Compressed Tarball
-	'PET' , # Puppy Linux Install Package
 	'XAR' , # Extensible Archive Format File
 	'STKDOODLZ' , # Sticker Doodle Sticker
+	'PET' , # Puppy Linux Install Package
 	'ALZ' , # ALZip Archive
 	'FP8' , # FP8 (= Fast PAQ8) Compressed File
 	'PAQ8P' , # PAQ8P Data Archive
@@ -6933,33 +6870,33 @@ set_compressed = {
 	'Z04' , # Fourth Split Zip File
 	'SREP' , # SuperREP Compressed File
 	'FDP' , # MySafe Encrypted Data
-	'MOVPKG' , # High-Resolution Lossless Media File
 	'JGZ' , # Gzipped Javascript File
+	'MOVPKG' , # High-Resolution Lossless Media File
 	'IPK' , # Itsy Package
-	'RP9' , # RetroPlatform Disk Image Archive
 	'ZSPLIT' , # Archiver Compressed Split File
-	'CBT' , # Comic Book TAR File
-	'LBR' , # LU Library Archive
-	'R2' , # WinRAR Multi-Volume Archive Part 2
 	'R01' , # WinRAR Split Archive Part 1
+	'LBR' , # LU Library Archive
+	'CBT' , # Comic Book TAR File
+	'RP9' , # RetroPlatform Disk Image Archive
+	'R2' , # WinRAR Multi-Volume Archive Part 2
 	'ZOO' , # Zoo Compressed File
-	'ARI' , # ARI Compressed Archive
 	'TAR.LZ' , # Lzip Compressed Tarball
-	'CZIP' , # ZipGenius CryptoZip File
 	'HKI' , # WinHKI Archive
+	'CZIP' , # ZipGenius CryptoZip File
 	'TG' , # Gzip Compressed Tar Archive
+	'ARI' , # ARI Compressed Archive
 	'SEA' , # Self-Extracting Archive
-	'SAR' , # SAPCAR Archive
-	'TCX' , # TestComplete Script Extension Package
-	'ZI_' , # Renamed Zip File
-	'LHA' , # LHARC Compressed Archive
-	'IADPROJ' , # iAd Producer Project
 	'Z00' , # Split Zip Archive
+	'LHA' , # LHARC Compressed Archive
+	'TCX' , # TestComplete Script Extension Package
+	'SAR' , # SAPCAR Archive
+	'ZI_' , # Renamed Zip File
+	'IADPROJ' , # iAd Producer Project
 	'XEZ' , # eManager Template Package
 	'MOZLZ4' , # Compressed Firefox User Profile Data File
 	'CTX' , # Cherrytree Password-protected SQLite Document
-	'SNAPPY' , # Snappy Compressed File
 	'RSS' , # RAM Structural System Model File
+	'SNAPPY' , # Snappy Compressed File
 	'ISH' , # ISH Compressed Archive
 	'CAR' , # CAR Archive
 	'HYP' , # Hyper Compressed Archive
@@ -6967,147 +6904,143 @@ set_compressed = {
 	'PAX' , # PAX Archive
 	'Z01' , # First Split Zip File
 	'ZI' , # Renamed Zip File
-	'SPL' , # Splunk Application Package
-	'ISX' , # SimulationX Project
-	'EDZ' , # EPLAN Electric P8 Data Archive Zipped File
-	'MBZ' , # Moodle Backup FIle
-	'MZP' , # WinArchiver Mountable Archive
-	'LQR' , # Squeeze-Compressed LBR File
-	'ZAP' , # FileWrangler Archive
-	'LIBZIP' , # Camtasia Studio Zipped Library File
-	'KWGT' , # Kustom Widget
-	'WUX' , # Compressed Wii U Disk Image File
-	'LHZD' , # Live Home 3D Compressed Project
-	'R04' , # WinRAR Split Archive Part 4
-	'PSZ' , # Compressed PostScript File
-	'TZ' , # Zipped Tar Archive
 	'CBA' , # Comic Book ACE Archive
-	'MXC' , # MaxiCompress Compressed Archive
-	'COMPPKG_HAUPTWERK_RAR' , # Hauptwerk Component Package
-	'NAR' , # Nokia Image Archive
+	'LQR' , # Squeeze-Compressed LBR File
 	'PBI' , # PC BSD Installer Package
-	'Z02' , # Second Split Zip File
-	'LZR' , # Crunch-Compressed LBR File
-	'ECSBX' , # Error-Correcting SeqBox Container File
-	'PAQ8F' , # PAQ8F Compressed Archive
-	'LZX' , # Amiga LZX Compressed Archive
-	'BZA' , # IZArc BGA Archive
-	'VIB' , # VSphere Installation Bundle
-	'HKI1' , # WinHKI HKI1 Archive
-	'DGC' , # DGCA File Archive
-	'B64' , # Base64 MIME-Encoded File
-	'HKI3' , # WinHKI HKI3 Archive
-	'WDZ' , # WDZip Compressed Archive
-	'IZE' , # IZArc Archive
-	'XOJ' , # Xournal Notebook
-	'C10' , # WinAce Split Archive Part 10
-	'VMCZ' , # Hyper-V Compressed Virtual Machine
 	'BZIP' , # Bzip Compressed Archive
+	'LIBZIP' , # Camtasia Studio Zipped Library File
+	'HKI1' , # WinHKI HKI1 Archive
+	'MBZ' , # Moodle Backup FIle
+	'SPL' , # Splunk Application Package
+	'DGC' , # DGCA File Archive
+	'ISX' , # SimulationX Project
+	'B64' , # Base64 MIME-Encoded File
+	'LHZD' , # Live Home 3D Compressed Project
+	'KWGT' , # Kustom Widget
+	'R04' , # WinRAR Split Archive Part 4
+	'TZ' , # Zipped Tar Archive
+	'MZP' , # WinArchiver Mountable Archive
+	'WUX' , # Compressed Wii U Disk Image File
+	'PSZ' , # Compressed PostScript File
+	'MXC' , # MaxiCompress Compressed Archive
+	'EDZ' , # EPLAN Electric P8 Data Archive Zipped File
+	'IZE' , # IZArc Archive
+	'LZX' , # Amiga LZX Compressed Archive
+	'PAQ8F' , # PAQ8F Compressed Archive
+	'ZAP' , # FileWrangler Archive
+	'LZR' , # Crunch-Compressed LBR File
+	'NAR' , # Nokia Image Archive
+	'HKI3' , # WinHKI HKI3 Archive
+	'ECSBX' , # Error-Correcting SeqBox Container File
+	'C10' , # WinAce Split Archive Part 10
+	'VIB' , # VSphere Installation Bundle
+	'COMPPKG_HAUPTWERK_RAR' , # Hauptwerk Component Package
+	'Z02' , # Second Split Zip File
+	'XOJ' , # Xournal Notebook
+	'VMCZ' , # Hyper-V Compressed Virtual Machine
+	'BZA' , # IZArc BGA Archive
+	'WDZ' , # WDZip Compressed Archive
 	'ZZ' , # Zzip Compressed Archive
 	'IPG' , # iPod Game File
+	'TXZ' , # XZ Compressed Tar Archive
 	'LAYOUT' , # LayOut Document
 	'EGG' , # ALZip Archive
-	'TXZ' , # XZ Compressed Tar Archive
 	'SHR' , # Unix Shell Archive File
 	'CPGZ' , # Compressed CPIO Archive
 	'EFW' , # Renamed Zip or Executable File
 	'MD' , # MDCD Compressed Archive
-	'MAR' , # MSN Explorer Archive
+	'PVMP' , # Parallels Packed Virtual Machine
 	'BA' , # Scifer External Header Archive
-	'HPKG' , # Haiku Package File
-	'PKG.TAR.ZST' , # Arch Linux Installation Package
+	'MAR' , # MSN Explorer Archive
 	'WACZ' , # Web Archive Collection Zipped
 	'PACK.GZ' , # Pack200 Compressed Archive
-	'PVMP' , # Parallels Packed Virtual Machine
+	'PKG.TAR.ZST' , # Arch Linux Installation Package
 	'GZ2' , # Misnamed BZ2 File
+	'HPKG' , # Haiku Package File
 	'ZW' , # Zooper Widget Template
+	'TAR.Z' , # Zipped Tarball File
 	'VSI' , # Visual Studio Content Installer File
 	'SPM' , # Salt Package Manager Formula Package
-	'TAR.Z' , # Zipped Tarball File
-	'PRS' , # PRS Archive
 	'HPK' , # HPack Compressed Archive
-	'UC2' , # UltraCompressor 2 Archive
-	'STG' , # ScreenToGif Project
 	'C02' , # WinAce Split Archive Part 1 File
-	'TLZ' , # Tar LZMA Compressed File
+	'STG' , # ScreenToGif Project
+	'UC2' , # UltraCompressor 2 Archive
 	'HBC2' , # HyperBac Compressed File Archive
 	'XZM' , # Porteus Module
+	'PRS' , # PRS Archive
+	'TLZ' , # Tar LZMA Compressed File
 	'YC' , # YAC Compressed File
 	'HA' , # HA Compressed Archive
 	'LZO' , # LZO Compressed File
-	'GAR' , # Ghidra Project Archive
 	'GZI' , # Unix Gzip File
 	'HBC' , # HyperBac Compressed Archive
+	'GAR' , # Ghidra Project Archive
 	'MOU' , # WinMount Compressed File
 	'CPT' , # Compact Pro Archive
-	'ZIM' , # SimLab Composer Package
+	'TAR.ZIP' , # Zipped Tar Archive
+	'PAQ6' , # PAQ6 Compressed Archive
+	'JIC' , # Java Icon File
 	'SNAGITSTAMPS' , # Snagit Stamp Archive
-	'YZ1' , # Yamazaki Zipper Archive
+	'SNZ' , # Snappy Compressed File
+	'UZED' , # Zipped Unicode GEDCOM Genealogy File
+	'WAFF' , # Internet Explorer for Mac Web Archive
 	'PAE' , # PowerArchiver Encrypted Archive
 	'UZIP' , # FreeBSD Compressed Disk Image
-	'SNZ' , # Snappy Compressed File
-	'PAQ6' , # PAQ6 Compressed Archive
-	'FCX' , # FCX Compressed File
-	'WAFF' , # Internet Explorer for Mac Web Archive
-	'TAR.ZIP' , # Zipped Tar Archive
-	'UZED' , # Zipped Unicode GEDCOM Genealogy File
-	'JIC' , # Java Icon File
 	'DAF' , # DupArchive Format File
+	'ZIM' , # SimLab Composer Package
+	'FCX' , # FCX Compressed File
+	'YZ1' , # Yamazaki Zipper Archive
 	'ZABW' , # Compressed AbiWord Document
 	'KZ' , # KuaiZip Compressed File
-	'ASICE' , # ASiC-Extended Data Container
 	'R02' , # WinRAR Split Archive Part 2
 	'PIM' , # PIM Archive
-	'UFDR' , # UFED Report
+	'ASICE' , # ASiC-Extended Data Container
 	'BDOC' , # Binary DigiDoc Signature File
-	'WOT' , # Web Of Trust File
+	'UFDR' , # UFED Report
 	'AIN' , # AIN Compressed Archive
-	'VWI' , # Microsoft Visio Workflow Interchange File
 	'TRS' , # Linear Saw Component Information Archive 
+	'VWI' , # Microsoft Visio Workflow Interchange File
+	'WOT' , # Web Of Trust File
 	'PVMZ' , # Parallels Compressed Virtual Machine
 	'SDN' , # Shareware Distributors Network File
 	'R21' , # WinRAR Split Archive Part 21
 	'ARH' , # ProTool Compressed Project File
-	'BOO' , # Booasm Compressed Archive
 	'DIST' , # Mac OS X Distribution Script
-	'SEN' , # Scifer Internal Header Archive
+	'BOO' , # Booasm Compressed Archive
+	'HKI2' , # WinHKI HKI2 Archive
 	'CP9' , # ChoicePoint Encrypted File
-	'SIPA' , # Smint.io Portal Archive
-	'PUZ' , # Packed Publisher File
-	'TLZMA' , # LZMA Compressed Tar Archive
-	'SQF' , # Squashfs File System
-	'ANA' , # Animate Asset Package
-	'PAQ7' , # PAQ7 Compressed Archive
-	'R1' , # WinRAR Multi-Volume Archive Part 1
-	'ZWI' , # Zipped Wiki Article
-	'Y' , # Amiga Yabba Compressed Archive
-	'OSF' , # OsmAnd Package
-	'P01' , # Parchive Recovery Volume
-	'S09' , # ZipSplitter Part 10 File
-	'PAQ8L' , # PAQ8L Data Archive
+	'SEN' , # Scifer Internal Header Archive
 	'KSP' , # KeyShot Package
 	'STPROJ' , # iAd Producer Project
-	'HKI2' , # WinHKI HKI2 Archive
-	'WLB' , # WinList Protocol Bundle
+	'PUZ' , # Packed Publisher File
+	'TLZMA' , # LZMA Compressed Tar Archive
+	'R1' , # WinRAR Multi-Volume Archive Part 1
+	'Y' , # Amiga Yabba Compressed Archive
 	'CONDA' , # Conda Package
-	'ODLGZ' , # Gzipped OneDrive Event Log
+	'P01' , # Parchive Recovery Volume
+	'PAQ8L' , # PAQ8L Data Archive
+	'OSF' , # OsmAnd Package
+	'WLB' , # WinList Protocol Bundle
+	'S09' , # ZipSplitter Part 10 File
+	'ANA' , # Animate Asset Package
+	'ZWI' , # Zipped Wiki Article
+	'PAQ7' , # PAQ7 Compressed Archive
+	'SIPA' , # Smint.io Portal Archive
+	'SQF' , # Squashfs File System
 	'SBX' , # GLBasic Shoebox File
 	'TAR.GZ2' , # Misnamed BZ2 Tarball
-	'VEM' , # Virtual Expander Compressed File
 	'BZABW' , # Compressed AbiWord Document
+	'VEM' , # Virtual Expander Compressed File
 	'VFS' , # Animated Slide File
 	'ZED' , # Zipped GEDCOM Genealogy File
 	'PXL' , # Package and Extension Library Application
-	'PAQ8' , # PAQ8 Data Archive
 	'VMS' , # NanoZoomer Virtual Microscope Specimen
+	'PAQ8' , # PAQ8 Data Archive
 	'SBX' , # SeqBox Container File
 	'SQZ' , # The Master Genealogist Backup Project
 	'XFP' , # FormsForWeb Extensible Form Package
 }
 
-
-# noinspection SpellCheckingInspection
-set_disk_image = set()
 
 # noinspection SpellCheckingInspection
 set_disk_image = {
@@ -7123,31 +7056,31 @@ set_disk_image = {
 	'IMG' , # Disc Image Data File
 	'MDF' , # Media Disc Image File
 	'DSK' , # Disk Image
-	'DCF' , # Disk Copy Fast Disk Image File
-	'D01' , # VirtualDrive Disc Image Part 2 File
-	'WLZ' , # WinImage Compressed Disk Image Set
+	'HD' , # IBochs Virtual Hard Disk
+	'LVI' , # Lazesoft Backup Disk Image
 	'I02' , # DVD Shrink Part 3 File
+	'WLZ' , # WinImage Compressed Disk Image Set
+	'MBI' , # Multi-Bootable Information File
 	'L01' , # EnCase Logical Evidence File
 	'VAPORCD' , # Norum Vapor CD
-	'EX01' , # EnCase Evidence Image File
-	'MBI' , # Multi-Bootable Information File
-	'BWS' , # BlindWrite Sub Code File
-	'HD' , # IBochs Virtual Hard Disk
-	'DMGPART' , # Mac OS X Disk Image Part
 	'CFS' , # Compact File Set Archive
-	'VDI' , # VirtualBox Virtual Disk Image
 	'ASHDISC' , # Ashampoo Burning Studio Image
-	'VHD' , # Virtual PC Virtual Hard Disk
 	'DBR' , # DeepBurner Disc Project
-	'D64' , # Commodore 64 1541 Disk Image
+	'D01' , # VirtualDrive Disc Image Part 2 File
 	'MACVM' , # Parallels Virtual Machine (Virtualization Framework Based)
-	'LVI' , # Lazesoft Backup Disk Image
+	'D64' , # Commodore 64 1541 Disk Image
+	'DCF' , # Disk Copy Fast Disk Image File
+	'BWS' , # BlindWrite Sub Code File
+	'EX01' , # EnCase Evidence Image File
+	'VDI' , # VirtualBox Virtual Disk Image
+	'VHD' , # Virtual PC Virtual Hard Disk
+	'DMGPART' , # Mac OS X Disk Image Part
 	'DAA' , # PowerISO Direct-Access-Archive
 	'XVD' , # Xbox Virtual Disk
 	'D00' , # VirtualDrive Disc Image Part File
 	'SDI' , # Windows System Deployment Image
-	'QCOW' , # QEMU Copy On Write Disk Image
 	'MD0' , # Alcohol Disk Image Segment 1
+	'QCOW' , # QEMU Copy On Write Disk Image
 	'BIN' , # Binary Disc Image
 	'LCD' , # CDSpace Emulated Disk Image
 	'IMA' , # Disk Image
@@ -7155,17 +7088,17 @@ set_disk_image = {
 	'VHDX' , # Windows 8 Virtual Hard Drive File
 	'MDX' , # Extended Media Descriptor File
 	'NRG' , # Nero CD/DVD Image File
-	'HDI' , # Hard Disk Image
 	'AVHD' , # Hyper-V SnapShot File
+	'HDI' , # Hard Disk Image
 	'SUB' , # CloneCD Subchannel File
 	'QCOW2' , # QEMU Copy On Write Version 2 Disk Image
 	'IBP' , # IsoBuster Managed Image Information
-	'WIM' , # Windows Imaging Format File
 	'BIF' , # Boot Information File
+	'WIM' , # Windows Imaging Format File
 	'TOAST' , # Toast Disc Image
 	'ISO' , # PlayStation 2 ROM File
-	'UIBAK' , # UltraISO Backup Disk Image
 	'XVA' , # Xen Project Virtual Appliance
+	'UIBAK' , # UltraISO Backup Disk Image
 	'CIF' , # Easy CD Creator Disk Image
 	'E01' , # EnCase Image File
 	'I01' , # DVD Shrink Part 2 File
@@ -7178,16 +7111,16 @@ set_disk_image = {
 	'CCD' , # CloneCD Control File
 	'ECM' , # ECM Disc Image
 	'EDE' , # Ensoniq EPS Disk Image
-	'SDSK' , # SafeHouse Private Storage Volume
-	'DAX' , # PSP Compressed ISO Disc Image
 	'ADZ' , # Compressed Amiga Disk File
+	'DAX' , # PSP Compressed ISO Disc Image
 	'XDI' , # WinArchiver Extended Disc Image File
+	'SDSK' , # SafeHouse Private Storage Volume
 	'VC4' , # Virtual CD Disc Image
 	'ISZ' , # Zipped ISO Disk Image
-	'IMG' , # Floppy Disk Image
 	'SWM' , # Split Windows Imaging Format File
-	'IPF' , # Interchangeable Preservation File
 	'IBDAT' , # IsoBuster Data File
+	'IMG' , # Floppy Disk Image
+	'IPF' , # Interchangeable Preservation File
 	'PVM' , # Parallels Virtual Machine
 	'CDI' , # DiscJuggler Disc Image
 	'2MG' , # Apple IIGS Disk Image
@@ -7197,16 +7130,16 @@ set_disk_image = {
 	'UIF' , # Universal Image Format Disc Image
 	'HC' , # VeraCrypt Container
 	'ADF' , # Amiga Disk File
-	'GCD' , # Prassi CD Image
-	'SCO' , # TotalRecovery Backup Image
-	'MFI' , # HDClone MFI Disk Image
-	'MRIMG' , # Macrium Reflect Disk Image
-	'FLP' , # Floppy Disk Image
-	'EUI' , # Ensoniq EPS Compacted Disk Image
-	'DVDR' , # DVD/CD-R Master Image
-	'SQFS' , # Squash FS Bootable File
 	'BWI' , # BlindWrite CD/DVD Disc Image
+	'SCO' , # TotalRecovery Backup Image
+	'GCD' , # Prassi CD Image
+	'DVDR' , # DVD/CD-R Master Image
+	'EUI' , # Ensoniq EPS Compacted Disk Image
+	'MFI' , # HDClone MFI Disk Image
+	'SQFS' , # Squash FS Bootable File
+	'FLP' , # Floppy Disk Image
 	'MD1' , # GEAR CD Disc Image
+	'MRIMG' , # Macrium Reflect Disk Image
 	'HFS' , # HFS Disk Image File
 	'P01' , # Toast CD Image
 	'X64' , # Commodore 64 Disk Image
@@ -7215,58 +7148,59 @@ set_disk_image = {
 	'TZX' , # ZX Spectrum Tape Image File
 	'NDIF' , # Apple New Disk Image Format File
 	'TC' , # TrueCrypt Volume
-	'LX01' , # EnCase Logical Evidence File
-	'B5I' , # BlindWrite 5 Disk Image
-	'GBI' , # gBurner Project File
 	'MLC' , # MobaLiveCD File
+	'B5I' , # BlindWrite 5 Disk Image
 	'UTM' , # UTM Virtual Machine
+	'GBI' , # gBurner Project File
+	'LX01' , # EnCase Logical Evidence File
 	'PMF' , # Partition Image File
 	'TAP' , # Commodore 64 Cassette Tape Image
 	'TOC' , # Brasero Table of Contents File
 	'000' , # Virtual CD Disc Image File
-	'SMI' , # Self-Mounting Disk Image
-	'CISO' , # Compact ISO File
 	'ST' , # Atari ST Disk Image
-	'FDI' , # Amiga Formatted Disk Image
 	'EDK' , # Ensoniq KT Disk Image
+	'FDI' , # Amiga Formatted Disk Image
+	'SMI' , # Self-Mounting Disk Image
 	'UDF' , # Universal Disk Format File
 	'FLG' , # IsoPuzzle Flag File
 	'T64' , # Commodore 64 Tape Image File
-	'IMD' , # ImageDisk Disk Image File
 	'AFF' , # AFF Disk Image
+	'IMD' , # ImageDisk Disk Image File
 	'I00' , # DVD Shrink Part 1 File
 	'IMAGE' , # Apple Disk Image
 	'FDD' , # Parallels Desktop Floppy Disk Image File
-	'PARTIMG' , # Partimage File
-	'CL5' , # Easy CD Creator 5 Saved Project
+	'B6I' , # BlindWrite 6 Disc Image
 	'BWZ' , # WinImage Batch Configuration File
-	'IXA' , # Ulead Disc Image format
-	'AFD' , # AFF Disk Image Part File
-	'GKH' , # Ensoniq EPS Family Disk Image
-	'MD1' , # Alcohol Disk Image Segment 2
-	'SPARSEIMAGE' , # Mac OS X Sparse Image
-	'VDI' , # Virtuo CD Manager Disk Image
-	'WOZ' , # Apple II Disk Image
-	'QED' , # QEMU Enhanced Disk Image
-	'NKIT' , # Nintendo Kit Game ROM File
-	'PXI' , # PlexTools Disc Image
-	'P01' , # GEAR CD/DVD Disc Image
-	'RAW' , # Fedora Linux Disk Image
 	'XA' , # CD-ROM eXtended Architecture Disc Image
-	'RCL' , # Easy CD and DVD Creator 6 Project
-	'BWA' , # BlindWrite Disk Information File
-	'PGD' , # PGP Disk Image
-	'WMT' , # WinMount Virtual Disk File
-	'HFV' , # HFS Disk Image
 	'IBADR' , # IsoBuster Address File
+	'NKIT' , # Nintendo Kit Game ROM File
+	'AFD' , # AFF Disk Image Part File
+	'QED' , # QEMU Enhanced Disk Image
+	'WOZ' , # Apple II Disk Image
+	'RAW' , # Fedora Linux Disk Image
+	'CISO' , # Compact ISO File
+	'IXA' , # Ulead Disc Image format
+	'VCO' , # Virtual CD Collection File
+	'BWA' , # BlindWrite Disk Information File
+	'CL5' , # Easy CD Creator 5 Saved Project
+	'RCL' , # Easy CD and DVD Creator 6 Project
+	'PARTIMG' , # Partimage File
+	'SPARSEIMAGE' , # Mac OS X Sparse Image
+	'TD0' , # Teledisk Archive
+	'GKH' , # Ensoniq EPS Family Disk Image
+	'HDD' , # Parallels Desktop Hard Disk
+	'WMT' , # WinMount Virtual Disk File
+	'P2G' , # Power2Go Project File
+	'VDI' , # Virtuo CD Manager Disk Image
+	'HFV' , # HFS Disk Image
 	'VCX' , # Virtual Disc Definition File
+	'PGD' , # PGP Disk Image
+	'MD1' , # Alcohol Disk Image Segment 2
+	'IMAGE' , # Squeak Virtual Image
 	'INFINITEMACDISK' , # Infinite Mac Disk Image
 	'PQI' , # PowerQuest Drive Image
-	'P2G' , # Power2Go Project File
-	'VCO' , # Virtual CD Collection File
-	'HDD' , # Parallels Desktop Hard Disk
-	'IMAGE' , # Squeak Virtual Image
-	'B6I' , # BlindWrite 6 Disc Image
+	'PXI' , # PlexTools Disc Image
+	'P01' , # GEAR CD/DVD Disc Image
 	'WII' , # Scrambled Wii Disc Image
 	'DISC' , # Roxio Toast Document
 	'NN' , # Nero CD File List
@@ -7275,30 +7209,29 @@ set_disk_image = {
 	'DMS' , # Amiga Disk Masher Image
 	'IBQ' , # IsoBuster Managed Image
 	'GI' , # Global Image
-	'C2D' , # WinOnCD Disc Image
-	'IBB' , # ImgBurn Project File
-	'MD2' , # Alcohol Disk Image Segment 2
-	'BDF' , # MIDAS BDF Disk Image File
 	'EDA' , # Ensoniq ASR Disk Image
+	'BDF' , # MIDAS BDF Disk Image File
 	'B6T' , # BlindWrite 6 Track Information File
+	'IBB' , # ImgBurn Project File
+	'C2D' , # WinOnCD Disc Image
+	'MD2' , # Alcohol Disk Image Segment 2
 	'RDF' , # PowerProducer Disc Image
-	'IMZ' , # WinImage Compressed Disk Image
+	'DXP' , # CDBurnerXP Data Compilation File
 	'GDRIVE' , # Gizmo Virtual Drive File
 	'WBI' , # Compact ISO File
-	'DXP' , # CDBurnerXP Data Compilation File
-	'B5T' , # BlindWrite 5 Disc Track Information File
+	'IMZ' , # WinImage Compressed Disk Image
 	'CD' , # CD-i OptImage
 	'86F' , # 86Box Floppy Disk Image 
-	'TD0' , # Teledisk Archive
-	'EDV' , # Ensoniq VFX-SD Disk Image
+	'B5T' , # BlindWrite 5 Disc Track Information File
 	'SIMG' , # Synclavier Disk Image File
+	'EDV' , # Ensoniq VFX-SD Disk Image
 	'ATR' , # Atari Disk Image
 	'WINCLONE' , # Winclone Image
 	'VOLARCHIVE' , # CopyCatX Volume Archive
-	'ADF' , # Archimedes Disk File
-	'G41' , # Commodore 1541 Disk Image
 	'SOPT' , # Synclavier Optical Disk Image File
+	'G41' , # Commodore 1541 Disk Image
 	'SPARSEBUNDLE' , # Mac OS X Sparse Bundle
+	'ADF' , # Archimedes Disk File
 	'LNX' , # Atari Lynx ROM
 	'XMD' , # Extended Media Disc Image
 	'NCD' , # NTI CD-Maker Disc Image
@@ -7307,23 +7240,23 @@ set_disk_image = {
 	'MINISO' , # Mini Image Destination File
 	'MIR' , # Mini-Image Ripper Disc Image
 	'DDI' , # DiskDupe Disk Image
-	'FD' , # IBochs Floppy Disk Image
-	'D88' , # Toshiba Pasopia 7 Disk File
+	'VHDPMEM' , # Hyper-V Virtual Machine Persistent Memory Device
+	'TAO' , # Track-At-Once CD or DVD Image
+	'RATDVD' , # RatDVD Disk Image
 	'WIL' , # WinImage Disk Image List
-	'AFM' , # AFF Metadata File
 	'PGX' , # Hopedot VOS Data File
+	'FD' , # IBochs Floppy Disk Image
 	'RPKG' , # Symbian OS Z Drive ROM
 	'NFI' , # Dreambox Disc Image
-	'RATDVD' , # RatDVD Disk Image
-	'AA' , # Generic CD Image
-	'VHDPMEM' , # Hyper-V Virtual Machine Persistent Memory Device
-	'EDQ' , # Ensoniq SQ1/SQ2/KS32 Disk Image
 	'D71' , # Commodore 64 1571 Disk Image
+	'AA' , # Generic CD Image
 	'D81' , # Commodore 64 1581 Disk Image
+	'EDQ' , # Ensoniq SQ1/SQ2/KS32 Disk Image
 	'PO' , # ProDOS Order Apple II Disk Image
+	'AFM' , # AFF Metadata File
 	'DO' , # DOS 3.3 Order Apple II Disk Image
-	'TAO' , # Track-At-Once CD or DVD Image
 	'DAO' , # Disk-At-Once CD or DVD Image
+	'D88' , # Toshiba Pasopia 7 Disk File
 	'VC8' , # Virtual CD 8 Disc Image
 	'EDS' , # Ensoniq SQ-80 Disk Image
 	'XMF' , # GameJack Disc Image File
@@ -7333,9 +7266,6 @@ set_disk_image = {
 	'TAP' , # Oric Tape Image
 }
 
-
-# noinspection SpellCheckingInspection
-set_developer = set()
 
 # noinspection SpellCheckingInspection
 set_developer = {
@@ -7350,9 +7280,9 @@ set_developer = {
 	'SB' , # Scratch Project File
 	'SB2' , # Scratch 2.0 Project File
 	'SB3' , # Scratch 3.0 Project
+	'YPR' , # BYOB Project File
 	'IPR' , # IntelliJ IDEA Project File
 	'PYD' , # Python Dynamic Module
-	'YPR' , # BYOB Project File
 	'KT' , # Kotlin Source Code File
 	'APPX' , # Windows App Package 
 	'RBXM' , # Roblox Model
@@ -7368,20 +7298,20 @@ set_developer = {
 	'GM81' , # Game Maker 8.1 Project File
 	'C' , # C/C++ Source Code File
 	'VBP' , # Visual Basic Project File
-	'ASM' , # Assembly Language Source Code File
 	'ARSC' , # Android Package Resource Table
+	'ASM' , # Assembly Language Source Code File
 	'SCRIPTTERMINOLOGY' , # AppleScript Script Terminology File
-	'CAPROJ' , # Construct Project File
+	'AM4' , # AutoPlay Media Studio 4 Project File
+	'SLOGO' , # StarLogo Project File
+	'MD' , # Markdown Documentation File
+	'XQ' , # XQuery File
+	'PH' , # Perl Header File
+	'SC' , # Scala Worksheet
 	'AIDL' , # Android Interface Definition Language File
 	'TT' , # Visual Studio Text Template
 	'YMP' , # YaST Metapackage File
 	'PAS' , # Delphi Unit Source File
-	'XQ' , # XQuery File
-	'PH' , # Perl Header File
-	'SC' , # Scala Worksheet
-	'MD' , # Markdown Documentation File
-	'SLOGO' , # StarLogo Project File
-	'AM4' , # AutoPlay Media Studio 4 Project File
+	'CAPROJ' , # Construct Project File
 	'HAS' , # Haskell Script
 	'LUA' , # Lua Source Code
 	'B' , # BASIC Source File
@@ -7394,23 +7324,23 @@ set_developer = {
 	'SWC' , # Flex Components Archive
 	'SWIFT' , # Swift Source Code File
 	'CONFIG' , # Configuration File
+	'VDPROJ' , # Visual Studio Setup and Deployment Project
 	'CC' , # C++ Source Code File
 	'TK' , # Tk Script
-	'VDPROJ' , # Visual Studio Setup and Deployment Project
 	'PATCH' , # Patch File
 	'JAVA' , # Java Source Code File
 	'FS' , # Visual F# Source File
-	'HS' , # Haskell Script
 	'COD' , # Compiled Source Code
+	'HS' , # Haskell Script
 	'DOX' , # Visual Basic Binary UserDocument
 	'R' , # R Script File
 	'Y' , # Yacc Source File
 	'SUO' , # Visual Studio Solution User Options File
 	'OCX' , # ActiveX Control
 	'NK' , # NUKE Script
-	'GMK' , # GameMaker Project File
-	'GMX' , # GameMaker File
 	'ISE' , # InstallShield Express Project File
+	'GMX' , # GameMaker File
+	'GMK' , # GameMaker Project File
 	'RESOURCES' , # Visual Studio Resource File
 	'SMALI' , # Android Smali Assembly Language File
 	'V12.SUO' , # Visual Studio 2013 Solution User Options File
@@ -7422,77 +7352,77 @@ set_developer = {
 	'RES' , # C++ Complied Resource Script
 	'CD' , # Visual Studio Class Diagram
 	'CSPROJ' , # Visual Studio C# Project
-	'BBC' , # BBC BASIC Data File
 	'BET' , # BETA Source File
 	'FBP' , # wxFormBuilder Project
+	'BBC' , # BBC BASIC Data File
 	'BPL' , # Borland Package Library
 	'ML' , # ML Source Code File
+	'RPY' , # Python Script
 	'SLN' , # Visual Studio Solution File
 	'MK' , # Makefile
 	'S' , # Source Code File
-	'PJX' , # FoxPro Project
-	'MXML' , # Flex MXML Component
-	'ENTITLEMENTS' , # Mac App Sandboxing Entitlements File
 	'BLUEJ' , # BlueJ Package File
+	'MXML' , # Flex MXML Component
+	'PJX' , # FoxPro Project
+	'ENTITLEMENTS' , # Mac App Sandboxing Entitlements File
 	'DTD' , # Document Type Definition File
 	'RUL' , # InstallShield Rules File
 	'SWD' , # Flash Debug File
 	'O' , # Compiled C Object File
 	'RB' , # Ruby Source Code
 	'HBS' , # Handlebars Template
-	'MPX' , # FoxPro Compiled Program Menu
-	'ERL' , # Erlang Source Code File
-	'RESX' , # .NET Managed Resources File
 	'DGML' , # Visual Studio Directed Graph Document
 	'CCS' , # CodeCharge Studio Project File
-	'VCXPROJ' , # Visual C++ Project
-	'AIA' , # MIT App Inventor Project
-	'LISP' , # Lisp Source Code File
-	'WDGT' , # Adobe Captivate Widget File
-	'PBXBTREE' , # Xcode Auto-Complete File
-	'SSI' , # Adobe Dreamweaver Server Side Include File
-	'XAMLX' , # Visual Studio Workflow Service File
 	'ANE' , # Adobe AIR Native Extension
-	'NUSPEC' , # NuGet Specification File
+	'XAMLX' , # Visual Studio Workflow Service File
+	'SSI' , # Adobe Dreamweaver Server Side Include File
+	'PBXBTREE' , # Xcode Auto-Complete File
+	'MPX' , # FoxPro Compiled Program Menu
+	'WDGT' , # Adobe Captivate Widget File
+	'LISP' , # Lisp Source Code File
+	'VCXPROJ' , # Visual C++ Project
+	'RESX' , # .NET Managed Resources File
+	'ERL' , # Erlang Source Code File
+	'AIA' , # MIT App Inventor Project
 	'XCDATAMODELD' , # Xcode Core Data Model File
+	'NUSPEC' , # NuGet Specification File
 	'RC' , # Resource Script
 	'XSD' , # XML Schema Definition
 	'RES' , # Windows Resource File
 	'PROTO' , # Protocol Buffer File
 	'AU3' , # AutoIt v3 Script
 	'CXP' , # CX-Programmer Project File
-	'XT' , # Xdebug Trace File
 	'XAML' , # XAML File
+	'XT' , # Xdebug Trace File
 	'V' , # Verilog Source Code File
+	'D' , # D Source Code File
 	'PB' , # PureBasic Source File
 	'IPR' , # InstallShield Professional Project File
-	'CTP' , # CakePHP Template
-	'S19' , # Motorola S19 File Record
 	'ADS' , # Ada Specification File
+	'S19' , # Motorola S19 File Record
+	'CTP' , # CakePHP Template
 	'PL' , # Perl Script
 	'H' , # C/C++/Objective-C Header File
-	'EX' , # Euphoria Source Code
-	'PYW' , # Python GUI Source File
-	'FXML' , # FXML Source Code File
 	'PBJ' , # Pixel Bender Bytecode File
+	'PYW' , # Python GUI Source File
 	'APPXUPLOAD' , # Windows 8 App Upload Package
-	'RPY' , # Python Script
+	'FXML' , # FXML Source Code File
+	'EX' , # Euphoria Source Code
 	'YAML' , # YAML Document
-	'D' , # D Source Code File
-	'W32' , # Win32 Makefile
 	'IDB' , # Visual Studio Intermediate Debug File
+	'W32' , # Win32 Makefile
 	'MSIX' , # MSIX Installer Package
 	'TARGETS' , # MSBuild Targets File
 	'MRT' , # Stimulsoft Report File
 	'VB' , # Visual Basic Project Item File
-	'AS3PROJ' , # FlashDevelop ActionScript 3 Project File
-	'IML' , # IntelliJ IDEA Module
-	'REXX' , # Rexx Source File
 	'DPROJ' , # Delphi Project
+	'IML' , # IntelliJ IDEA Module
+	'AS3PROJ' , # FlashDevelop ActionScript 3 Project File
+	'REXX' , # Rexx Source File
 	'MO' , # Machine Object File
-	'FPM' , # FPS Creator Map File
 	'L' , # Lex Source File
 	'TWIG' , # Twig Template
+	'FPM' , # FPS Creator Map File
 	'VBG' , # Visual Basic Project Group File
 	'AP_' , # ADT Android Developer Package
 	'SCC' , # SourceSafe Source Code Control File
@@ -7503,64 +7433,64 @@ set_developer = {
 	'AS' , # ActionScript File
 	'ASI' , # Alpha Five Variable File
 	'BAS' , # BASIC Source Code File
-	'TESTSETTINGS' , # Visual Studio Test Settings File
-	'CSP' , # Caché Server Page
-	'FTL' , # FreeMarker Template File
-	'GM6' , # GameMaker 6 Project File
-	'FRX' , # Visual Basic Binary Form File
-	'AGI' , # Asterisk Gateway Interface File
-	'TPU' , # Turbo Pascal Unit
-	'FXC' , # FilePackager Configuration
-	'HH' , # C++ Header File
-	'JSFL' , # Animate JSFL Script File
-	'PBXUSER' , # Xcode Project User Data File
-	'GLD' , # MPLAB C Compiler Linker Script File
 	'TLH' , # Typelib Generated C/C++ Header File
+	'AGI' , # Asterisk Gateway Interface File
 	'GSPROJ' , # GameSalad Windows Project File
-	'GITIGNORE' , # Git Ignore File
+	'HH' , # C++ Header File
+	'CSP' , # Caché Server Page
+	'FRX' , # Visual Basic Binary Form File
+	'PBXUSER' , # Xcode Project User Data File
 	'DCP' , # Delphi Compiled Package
+	'GLD' , # MPLAB C Compiler Linker Script File
+	'JSFL' , # Animate JSFL Script File
+	'FTL' , # FreeMarker Template File
 	'JSPF' , # Java Server Page Fragment
-	'PRO' , # Qt Project File
+	'GM6' , # GameMaker 6 Project File
+	'GITIGNORE' , # Git Ignore File
+	'FXC' , # FilePackager Configuration
+	'TPU' , # Turbo Pascal Unit
+	'TESTSETTINGS' , # Visual Studio Test Settings File
 	'PAS' , # Pascal Source File
+	'PRO' , # Qt Project File
 	'ABC' , # ActionScript Byte Code File
 	'DPR' , # Delphi Project
 	'PBXPROJ' , # Xcode Project Data File
 	'NUPKG' , # NuGet Package
-	'INC' , # Include File
-	'LIVECODE' , # LiveCode Stack File
 	'I' , # Visual Studio Intermediate File
-	'FRAMEWORK' , # Mac OS X Application Framework
-	'MAK' , # Makefile
+	'LIVECODE' , # LiveCode Stack File
+	'INC' , # Include File
 	'CLS' , # Program Class File
 	'AM7' , # AutoPlay Media Studio 7 Project
-	'F90' , # Fortran 90 Source Code File
+	'FRAMEWORK' , # Mac OS X Application Framework
 	'SUD' , # Super Project Analyzer File
+	'MAK' , # Makefile
 	'VBX' , # Visual Basic Custom Control
+	'F90' , # Fortran 90 Source Code File
 	'APA' , # RSView Development Project Archive
 	'STORYBOARD' , # Xcode Interface Builder Storyboard
 	'UI' , # User Interface File
-	'ASC' , # ActionScript Communication File
-	'KDEVPRJ' , # KDevelop Project File
-	'DPL' , # Delphi Package Library
-	'DMD' , # SQL Developer Data Modeler File
 	'NIB' , # Interface Builder User Interface File
-	'XCWORKSPACE' , # Xcode Workspace
-	'KDEVELOP' , # KDevelop Project Data File
 	'PLC' , # PL/B Source File
 	'IDL' , # Interface Definition Language File
+	'XCWORKSPACE' , # Xcode Workspace
+	'ASC' , # ActionScript Communication File
+	'DPL' , # Delphi Package Library
+	'KDEVELOP' , # KDevelop Project Data File
+	'KDEVPRJ' , # KDevelop Project File
+	'DMD' , # SQL Developer Data Modeler File
 	'SVN-BASE' , # Subversion Base File
 	'V' , # Coq Source Code File
 	'VM' , # Velocity Template
 	'MARKDOWN' , # Markdown Documentation File
 	'M' , # Objective-C Implementation File
 	'VHD' , # VHDL Source File
+	'WIQ' , # Visual Studio Work Item Query File
 	'AS2PROJ' , # FlashDevelop ActionScript 2 Project File
 	'RC2' , # Visual Studio Resources File
 	'F' , # Fortran Source Code
 	'JIC' , # JTAG Indirect Configuration File
-	'PIKA' , # Pika Software Builder Project File
 	'CBP' , # Code::Blocks Project File
-	'WIQ' , # Visual Studio Work Item Query File
+	'PIKA' , # Pika Software Builder Project File
 	'AUTOPLAY' , # AutoPlay Media Studio Project File
 	'HAL' , # HansaWorld Application Language File
 	'NXC' , # Not eXactly C Source Code File
@@ -7568,98 +7498,98 @@ set_developer = {
 	'SMA' , # AMX Mod Plugin Source File
 	'RSRC' , # Macintosh Resource File
 	'ALB' , # Alpha Five Library
-	'AM6' , # AutoPlay Media Studio 6 Project
-	'DSGM' , # DS Game Maker Project
-	'PRG' , # RAPID Program File
-	'SLTNG' , # StarLogo TNG Project File
-	'WDP' , # Windev Project File
-	'WDL' , # World Definition Language Script
-	'ISM' , # InstallShield Project File
-	'BDSPROJ' , # Borland Developer Studio Project
-	'FSSCRIPT' , # Visual F# Script
-	'WDW' , # WinDev Window File
-	'LTB' , # LithTech Binary File
-	'TUR' , # Turing Program Source File
-	'DBML' , # Visual Studio OR Design File
-	'XPP' , # X++ Source Code File
-	'LNT' , # PC-lint/FlexeLint Configuration File
-	'CLW' , # Visual C++ ClassWizard File
-	'M4' , # Macro Processor Library
-	'SYM' , # Symbols File
-	'RBC' , # Rembo-C Script
-	'ICONSET' , # Mac OS X Icon Set Folder
 	'HAML' , # Haml Source Code File
-	'WSC' , # Windows Script Component
-	'LSPROJ' , # Visual Studio LightSwitch Project
-	'MCP' , # CodeWarrior Project
-	'NVV' , # NVIDIA Vertex Shader File
+	'CLW' , # Visual C++ ClassWizard File
+	'TUR' , # Turing Program Source File
 	'PBK' , # Pixel Bender Kernel File
+	'SYM' , # Symbols File
+	'DSGM' , # DS Game Maker Project
+	'XPP' , # X++ Source Code File
+	'DBML' , # Visual Studio OR Design File
+	'AM6' , # AutoPlay Media Studio 6 Project
+	'SLTNG' , # StarLogo TNG Project File
+	'ICONSET' , # Mac OS X Icon Set Folder
+	'FSSCRIPT' , # Visual F# Script
+	'PRG' , # RAPID Program File
+	'ISM' , # InstallShield Project File
+	'WDL' , # World Definition Language Script
+	'WDW' , # WinDev Window File
+	'BDSPROJ' , # Borland Developer Studio Project
+	'NVV' , # NVIDIA Vertex Shader File
+	'MCP' , # CodeWarrior Project
+	'M4' , # Macro Processor Library
+	'RBC' , # Rembo-C Script
 	'OCA' , # Custom Control Library Type File
-	'LDS' , # Binutils LD Linker Script
+	'LSPROJ' , # Visual Studio LightSwitch Project
+	'WSC' , # Windows Script Component
+	'LTB' , # LithTech Binary File
 	'DF1' , # Omnis Native Datafile
+	'LDS' , # Binutils LD Linker Script
+	'WDP' , # Windev Project File
 	'FOR' , # Fortran Source Code File
+	'LNT' , # PC-lint/FlexeLint Configuration File
 	'CXX' , # C++ Source Code File
 	'NLS' , # NetLogo Source File
+	'RDLC' , # Visual Studio Client Report Definition File
+	'SAS' , # SAS Program File
 	'NSI' , # NSIS Script
 	'WSP' , # SharePoint Solution Package
-	'SAS' , # SAS Program File
-	'RDLC' , # Visual Studio Client Report Definition File
 	'ILK' , # Incremental Linking File
 	'M' , # MATLAB Source Code File
 	'BB' , # Blitz Source Code File
-	'OCTEST' , # Xcode Objective-C Unit Test Bundle
 	'NBC' , # Next Byte Codes Source Code File
 	'XCCONFIG' , # Xcode Configuration Settings File
-	'OMO' , # OMake Object File
-	'PL1' , # PL/I Source Code
-	'PKGDEF' , # Visual Studio Shell File
 	'ASM' , # Visual Studio Assembler Source Code File
+	'OCTEST' , # Xcode Objective-C Unit Test Bundle
+	'PL1' , # PL/I Source Code
+	'OMO' , # OMake Object File
+	'PKGDEF' , # Visual Studio Shell File
 	'GEM' , # RubyGems Package
 	'KPL' , # Kids Programming Language File
 	'SUP' , # Super Project Definition File
 	'MYAPP' , # Visual Studio Application XML File
 	'PLAYGROUND' , # Xcode Playground File
-	'MER' , # RSView Development Runtime File
 	'IPCH' , # Intellisense Precompiled Header File
+	'MER' , # RSView Development Runtime File
 	'UML' , # UML Data Object Model
 	'HXX' , # C++ Source Code Header File
 	'PL' , # Prolog Source Code File
-	'V11.SUO' , # Visual Studio 2012 Solution User Options File
-	'XOJO_XML_PROJECT' , # Xojo XML Project File
-	'DIFF' , # Patch File
-	'CTXT' , # BlueJ Context File
+	'MSS' , # Microprocessor Software Specification File
 	'MSHC' , # Microsoft Help Container File 
 	'OWL' , # OWL Source Code File
-	'MSHI' , # Microsoft Help Index File
-	'XOML' , # Windows Workflow File
-	'INL' , # C++ Inline File
-	'MSS' , # Microprocessor Software Specification File
 	'MSHA' , # Microsoft Help Asset File
+	'INL' , # C++ Inline File
+	'V11.SUO' , # Visual Studio 2012 Solution User Options File
+	'XOML' , # Windows Workflow File
 	'CDF' , # CryENGINE Character Definition File
+	'CTXT' , # BlueJ Context File
+	'XOJO_XML_PROJECT' , # Xojo XML Project File
+	'DIFF' , # Patch File
+	'MSHI' , # Microsoft Help Index File
 	'ERB' , # Ruby ERB Script
 	'CP' , # Xcode C++ Source File
 	'ACD' , # RSLogix 5000 Program
 	'PCP' , # Windows Installer Patch Creation Properties File
 	'CSI' , # ContentServ Include File
-	'REFRESH' , # Visual Studio Refresh File
 	'PYX' , # Pyrex Source Code File
 	'JPR' , # JBuilder Project
+	'REFRESH' , # Visual Studio Refresh File
 	'SRC' , # Source Code File
 	'EXP' , # Symbols Export File
 	'A2W' , # Alice World
 	'XOJO_PROJECT' , # Xojo Project File
+	'DM1' , # ER/Studio Data Model File
+	'TCL' , # Tcl Script
 	'PM' , # Perl Module
-	'DGSL' , # Visual Shader Graph File
 	'CCN' , # Compressed Multimedia Fusion File
 	'FORTH' , # Forth Language File
-	'TCL' , # Tcl Script
 	'VDP' , # Visual Studio Deployment Project
-	'VSMACROS' , # Visual Studio Binary Macro Project
-	'DM1' , # ER/Studio Data Model File
-	'EDMX' , # ADO.NET Entity Data Model Designer File
-	'PLI' , # PL/I Source Code File
 	'NW' , # Node-Webkit App Package
 	'WXL' , # WiX Localization File
+	'VSMACROS' , # Visual Studio Binary Macro Project
+	'DGSL' , # Visual Shader Graph File
+	'EDMX' , # ADO.NET Entity Data Model Designer File
+	'PLI' , # PL/I Source Code File
 	'VBPROJ' , # Visual Studio Visual Basic.NET Project
 	'PRI' , # Package Resource Index File
 	'BSC' , # Visual Studio Source Browser Information File
@@ -7668,172 +7598,172 @@ set_developer = {
 	'ASVF' , # Asphyre Sphinx Archive File
 	'WXS' , # WiX Source File
 	'A' , # Static Library
+	'PTL' , # Rational Rose Petal File
+	'FTN' , # Fortran Source Code File
 	'LBI' , # Dreamweaver Library Item
 	'PPC' , # Mobile Data Studio Project File
-	'FTN' , # Fortran Source Code File
 	'PXD' , # Pyrex Definition File
-	'PTL' , # Rational Rose Petal File
-	'IST' , # InstallShield Project Template File
 	'CBL' , # COBOL Source Code File
+	'IST' , # InstallShield Project Template File
 	'DEC' , # Declaration File
 	'HPF' , # High Performance Fortran File
 	'VSSSCC' , # Visual Studio Solution Source Control File
-	'SS' , # SilverStripe Source Code File
-	'PCH' , # Precompiled Header File
 	'MOM' , # Managed Object Model
+	'PCH' , # Precompiled Header File
 	'CAF' , # CryENGINE Character Animation File
+	'SS' , # SilverStripe Source Code File
 	'T' , # Turing Source Code File
 	'POT' , # Portable Object Template
 	'VC' , # Verge Code File
-	'TLD' , # Tag Library Descriptor File
+	'XCAPPDATA' , # Xcode App Data File
+	'PDM' , # VB Project Information File
+	'WIXOUT' , # WiX XML Output File
+	'PKGUNDEF' , # Visual Studio Shell File
+	'FSPROJ' , # FireStarter Project File
+	'WIXMST' , # WiX Transform File
+	'FBZ7' , # Compressed FinalBuilder 7 Project
+	'WIXLIB' , # WiX Library File
 	'RESW' , # Windows Resources File
-	'BBPROJECT' , # BBEdit Project File
+	'P3D' , # Panda3D Multifile 
+	'CCP' , # CodeCharge Studio Page File
+	'VSPSCC' , # Visual Studio Project Source Control File
+	'LUCIDSNIPPET' , # Lucid Snippet
+	'JCP' , # JCreator Project File
+	'GSZIP' , # GameSalad Marketplace Asset File
+	'IWB' , # IWBasic Source Code File
+	'AM5' , # AutoPlay Media Studio 5 Project File
+	'GEMSPEC' , # Gem Specification File
+	'XQL' , # XML Query Language File
+	'TLD' , # Tag Library Descriptor File
+	'WDGTPROJ' , # Dashcode Widget Project
+	'XCSNAPSHOTS' , # Xcode Snapshot
+	'RAV' , # Rave Reports Project File
+	'XOJO_BINARY_PROJECT' , # Xojo Binary Project File
+	'GS3' , # GameStarter File
+	'RISE' , # RISE Editor Model File
+	'EQL' , # Embedded SQL File
+	'SRC.RPM' , # Red Hat Package Manager Source File
+	'IWS' , # IntelliJ IDEA Web Page
+	'GED' , # Game Editor Project File
+	'LXSPROJ' , # Liquid XML Studio Project File
+	'CP' , # Captivate Source File
+	'FXL' , # FaceFX Language File
 	'TMLANGUAGE' , # TextMate Language Grammar File
 	'TEXTFACTORY' , # BBEdit Text Factory
-	'PRI' , # Qt Project Include File
-	'VSZ' , # Visual Studio Wizard File
-	'XCSNAPSHOTS' , # Xcode Snapshot
-	'WIXMST' , # WiX Transform File
-	'GSZIP' , # GameSalad Marketplace Asset File
-	'WIXLIB' , # WiX Library File
-	'P3D' , # Panda3D Multifile 
-	'XOJO_BINARY_PROJECT' , # Xojo Binary Project File
-	'FBZ7' , # Compressed FinalBuilder 7 Project
-	'RAV' , # Rave Reports Project File
-	'WIXOBJ' , # WiX Object File
+	'BBPROJECT' , # BBEdit Project File
 	'CVSRC' , # CVS Command File
-	'LUCIDSNIPPET' , # Lucid Snippet
-	'WIXOUT' , # WiX XML Output File
-	'JCP' , # JCreator Project File
-	'WDGTPROJ' , # Dashcode Widget Project
-	'PKGUNDEF' , # Visual Studio Shell File
-	'XQL' , # XML Query Language File
-	'XCODEPROJ' , # Xcode Project
-	'LXSPROJ' , # Liquid XML Studio Project File
-	'RISE' , # RISE Editor Model File
-	'TESTRUNCONFIG' , # Visual Studio Test Run Configuration File
-	'GEMSPEC' , # Gem Specification File
-	'RODL' , # RemObjects Definition Language File
-	'DPKW' , # Delphi Package
-	'VTM' , # Visual Tool Markup Language Document
-	'REX' , # Rexx Source File
-	'LICX' , # Visual Studio License File
-	'GMO' , # GNU Machine Object File
-	'VSPSCC' , # Visual Studio Project Source Control File
-	'IWS' , # IntelliJ IDEA Web Page
-	'ODL' , # Object Description Language File
-	'GS3' , # GameStarter File
-	'SRC.RPM' , # Red Hat Package Manager Source File
-	'FXL' , # FaceFX Language File
-	'GED' , # Game Editor Project File
-	'XCAPPDATA' , # Xcode App Data File
-	'FSPROJ' , # FireStarter Project File
-	'CLIPS' , # Coda Clips File
 	'COB' , # COBOL Source Code File
+	'ODL' , # Object Description Language File
+	'PRI' , # Qt Project Include File
+	'XOJO_MENU' , # Xojo Menu File
+	'WIXOBJ' , # WiX Object File
+	'CLIPS' , # Coda Clips File
+	'RSS' , # Symbian Application Resource File
+	'VTM' , # Visual Tool Markup Language Document
 	'BS2' , # BASIC Stamp 2 Code File
-	'FXCPROJ' , # FX Composer Project File
-	'PDM' , # VB Project Information File
-	'BCP' , # Borland C++ Makefile
-	'LBS' , # Omnis Library
 	'RBP' , # Real Studio Project File
 	'RNC' , # RELAX NG Compact Syntax File
-	'VBZ' , # Visual Basic Project Template
-	'GAMEPROJ' , # GameSalad Project File
+	'TESTRUNCONFIG' , # Visual Studio Test Run Configuration File
 	'VDM' , # VDM Specification File
-	'GORM' , # Gorm Interface Resource File
-	'XOJO_MENU' , # Xojo Menu File
-	'IWB' , # IWBasic Source Code File
-	'VSPX' , # Visual Studio Performance Report Data File
-	'AM5' , # AutoPlay Media Studio 5 Project File
-	'CP' , # Captivate Source File
-	'EQL' , # Embedded SQL File
-	'DBPROJ' , # Visual Studio Database Project File
-	'RSS' , # Symbian Application Resource File
-	'MDZIP' , # MagicDraw Project Archive
 	'VSPS' , # Visual Studio Serialized Performance Report
+	'LBS' , # Omnis Library
 	'WPW' , # WinDev Mobile Window File
+	'RODL' , # RemObjects Definition Language File
+	'GAMEPROJ' , # GameSalad Project File
+	'BCP' , # Borland C++ Makefile
+	'FXCPROJ' , # FX Composer Project File
+	'REX' , # Rexx Source File
 	'TLI' , # Typelib Generated C/C++ Inline File
-	'CCP' , # CodeCharge Studio Page File
+	'XCODEPROJ' , # Xcode Project
+	'MDZIP' , # MagicDraw Project Archive
+	'GMO' , # GNU Machine Object File
+	'GORM' , # Gorm Interface Resource File
+	'DBPROJ' , # Visual Studio Database Project File
+	'VSZ' , # Visual Studio Wizard File
+	'VSPX' , # Visual Studio Performance Report Data File
+	'VBZ' , # Visual Basic Project Template
+	'LICX' , # Visual Studio License File
+	'DPKW' , # Delphi Package
 	'TNS' , # TI-Nspire Document
-	'CTL' , # Visual Basic UserControl Object File
 	'ENT' , # External Entity
+	'CTL' , # Visual Basic UserControl Object File
 	'PSC' , # Papyrus Script
 	'XCARCHIVE' , # Xcode Archive
 	'BRX' , # BREW Application Resource File
-	'LPROJ' , # Localized Project Folder
 	'IDT' , # Windows Installer Database Text Archive File
+	'LPROJ' , # Localized Project Folder
 	'DBA' , # CryENGINE Animation Database File
-	'GREENFOOT' , # Greenfoot Project Archive
 	'LICENSES' , # Visual Studio Licensed Classes File
+	'GREENFOOT' , # Greenfoot Project Archive
 	'4TH' , # Forth Language File
 	'SPEC' , # RPM Specification File
-	'DSP' , # Visual C++ 6 Project
-	'VGC' , # ViziGen Code Generation Template
-	'EDML' , # Adobe Extension Data Markup Language Document
-	'FSPROJ' , # Visual F# Project File
 	'XIB' , # Interface Builder File
+	'DSP' , # Visual C++ 6 Project
+	'EDML' , # Adobe Extension Data Markup Language Document
+	'VGC' , # ViziGen Code Generation Template
+	'FSPROJ' , # Visual F# Project File
 	'P' , # Pascal Source Code
 	'PLE' , # Messenger Plus! Live Encrypted Log File
 	'TDS' , # Turbo Debugger Symbols File
 	'MOD' , # Fortran Module
-	'VTV' , # Adobe Dreamweaver Validator Configuration File
-	'CSN' , # Adobe Code Snippet Document
 	'BBPROJECTD' , # BBEdit Project Document
 	'POD' , # Perl POD File
-	'DPK' , # Delphi Package
+	'VTV' , # Adobe Dreamweaver Validator Configuration File
+	'CSN' , # Adobe Code Snippet Document
 	'R' , # Rez Source Code File
 	'APS' , # Visual C++ Resource File
-	'ADDIN' , # Visual Studio Add-in Definition File
 	'NED' , # OMNeT++ Network Description File
-	'PRG' , # Visual FoxPro Program File
+	'ADDIN' , # Visual Studio Add-in Definition File
 	'INFORM' , # Inform Project 
-	'GROUPPROJ' , # Delphi Project Group File
-	'VTML' , # Visual Tool Markup Language File
-	'RBW' , # Ruby Script
-	'VSMPROJ' , # Visual Studio Text Macro Project
-	'DCPROJ' , # Dashcode Project
-	'FSX' , # Visual F# Script File
-	'DBO' , # DarkBASIC Object
-	'VSMDI' , # Visual Studio Test Metadata File
-	'TU' , # Turing Source File
 	'GFAR' , # Greenfoot Archive
 	'SQLPROJ' , # Visual Studio SQL Server Project
+	'FSX' , # Visual F# Script File
+	'DCPROJ' , # Dashcode Project
+	'TU' , # Turing Source File
 	'SDEF' , # AppleScript Dictionary Document
-	'XQM' , # XQuery Module
-	'PSM1' , # Windows PowerShell Script Module File
+	'GROUPPROJ' , # Delphi Project Group File
+	'VTML' , # Visual Tool Markup Language File
+	'DPK' , # Delphi Package
 	'FXPL' , # Adobe Flash FXP Library
+	'RBW' , # Ruby Script
+	'VSMDI' , # Visual Studio Test Metadata File
+	'VSMPROJ' , # Visual Studio Text Macro Project
+	'PSM1' , # Windows PowerShell Script Module File
+	'DBO' , # DarkBASIC Object
+	'XQM' , # XQuery Module
+	'PRG' , # Visual FoxPro Program File
 	'MSP' , # MaxScript Page File
-	'CFC' , # ColdFusion Component File
 	'PDE' , # Processing Development Environment Source Code File
-	'WIXPROJ' , # WiX Project File
 	'LHS' , # Literate Haskell Script
+	'WIXPROJ' , # WiX Project File
+	'CFC' , # ColdFusion Component File
 	'VSP' , # Visual Studio Performance Report File
+	'DCU' , # Delphi Compiled Unit
 	'EXW' , # Euphoria Source code File
 	'RKT' , # Racket Source Code File
-	'DCU' , # Delphi Compiled Unit
 	'DFM' , # Delphi Form
 	'CSI' , # EdLog Program Data File
 	'GROOVY' , # Groovy Source Code File
-	'NCB' , # Visual C++ IntelliSense Database
 	'BPG' , # Borland Project Group
-	'LIT' , # Literate Haskell Script
-	'RESJSON' , # Windows JavaScript Resources File
+	'NCB' , # Visual C++ IntelliSense Database
 	'DBPRO' , # DarkBASIC Professional Project File
-	'MSL' , # Mapping Specification Language File
 	'DBA' , # DarkBASIC Source Code File
-	'SCRIPTSUITE' , # AppleScript Script Suite File
+	'RESJSON' , # Windows JavaScript Resources File
 	'VCP' , # eMbedded Visual C++ Project File
+	'MAGIK' , # Magik Source Code File
+	'ARTPROJ' , # Artifacts Project
+	'SCRIPTSUITE' , # AppleScript Script Suite File
+	'NFM' , # Delphi .NET Form File
+	'MSL' , # Mapping Specification Language File
 	'FSI' , # Visual F# Signature File
+	'SBPROJ' , # OpenGL Shader Builder Project
+	'LIT' , # Literate Haskell Script
+	'NQC' , # Not Quite C Source Code File
+	'WXI' , # WiX Include File
 	'WIXPDB' , # WiX Debug File
 	'WIXMSP' , # WiX XML Patch File
-	'ARTPROJ' , # Artifacts Project
-	'NQC' , # Not Quite C Source Code File
-	'XQUERY' , # XQuery Source Code File
-	'MAGIK' , # Magik Source Code File
-	'SBPROJ' , # OpenGL Shader Builder Project
-	'WXI' , # WiX Include File
 	'WFM' , # dBASE Form
-	'NFM' , # Delphi .NET Form File
+	'XQUERY' , # XQuery Source Code File
 	'SSC' , # SourceSafe Status File
 	'DEVICEIDS' , # Device Identification FIle
 	'JPX' , # JBuilder Project
@@ -7841,9 +7771,6 @@ set_developer = {
 	'R' , # REBOL Script
 }
 
-
-# noinspection SpellCheckingInspection
-set_backup = set()
 
 # noinspection SpellCheckingInspection
 set_backup = {
@@ -7952,38 +7879,37 @@ set_backup = {
 	'ATI' , # Office Accounting Updated Company File
 	'AS4' , # askSam Backup File
 	'QIC' , # Windows Backup File
-	'BA7' , # TaxAct 2017 Tax Return Backup File
-	'TIG' , # TI Connect Backup File
 	'NRS' , # NovaBACKUP Restore Script
+	'BA7' , # TaxAct 2017 Tax Return Backup File
 	'BA8' , # TaxAct 2018 Tax Return Backup File
+	'TIG' , # TI Connect Backup File
 	'ADI' , # Active@ Disk Image Backup File
 	'$DB' , # dBASE Temporary File
 	'RBS' , # Windows Installer Rollback Script
 	'TIBX' , # Acronis True Image Backup
-	'BACKUP.METADATA' , # Seedvault Backup Metadata File
 	'BAK' , # VEGAS Video Project Backup
-	'NBF' , # Nokia Backup File
+	'BACKUP.METADATA' , # Seedvault Backup Metadata File
 	'FUL' , # Microsoft Backup File List
-	'ABBU' , # Address Book Backup
-	'PFI' , # Paragon Backup Index File
-	'KMNB' , # Keep My Notes Backup File
-	'ENC' , # Smart Switch Encrypted App Backup
+	'NBF' , # Nokia Backup File
 	'NPF' , # NTI Partition File
+	'PFI' , # Paragon Backup Index File
 	'VPCBACKUP' , # Windows Virtual PC Backup File
+	'ENC' , # Smart Switch Encrypted App Backup
+	'ABBU' , # Address Book Backup
 	'NOY' , # NOY Backup File
+	'FBK' , # Microsoft Dynamics NAV Backup File
+	'CBK' , # Backup Configuration File
 	'BAK3' , # Backup File
 	'BACKUP' , # Android Backup
-	'CBK' , # Backup Configuration File
-	'FBK' , # Microsoft Dynamics NAV Backup File
-	'BKF' , # Windows Backup Utility File
 	'SDC' , # Stardock Central Download Archive
 	'BIFX' , # Get Backup Project
+	'BKF' , # Windows Backup Utility File
 	'BCK' , # VMX Backup File
 	'DBK' , # Sony Ericsson Mobile Phone Backup File
 	'BPN' , # Archicad Project Backup File
 	'$$$' , # Temporary File
-	'LLX' , # LabVIEW VI Library Backup File
 	'BCM' , # Microsoft Works Communications Script Backup
+	'LLX' , # LabVIEW VI Library Backup File
 	'JPS' , # Akeeba Backup Archive
 	'DIM' , # Active@ Raw Disk Image Backup File
 	'WBB' , # WinBackup Archive
@@ -7993,16 +7919,16 @@ set_backup = {
 	'QBX' , # QuickBooks Accountant Transfer File
 	'OBK' , # Backup File
 	'DASH' , # Dashlane Profile
-	'CCCTASK' , # Carbon Copy Cloner Task Configuration
-	'ABF' , # Analysis Services Backup File
 	'QBA.TLG' , # QBA Transaction Log File
-	'IMAZING' , # iMazing iPhone Backup
-	'BA0' , # TaxAct 2020 1040 Tax Return Backup File
-	'NBK' , # NovaBACKUP Job File
+	'ABF' , # Analysis Services Backup File
 	'GB1' , # Game Maker Backup File
-	'VRB' , # Veeam Incremental Backup File
-	'FH' , # Symantec Backup Exec File
+	'NBK' , # NovaBACKUP Job File
+	'IMAZING' , # iMazing iPhone Backup
 	'NBU' , # Nokia Phone Backup File
+	'CCCTASK' , # Carbon Copy Cloner Task Configuration
+	'BA0' , # TaxAct 2020 1040 Tax Return Backup File
+	'FH' , # Symantec Backup Exec File
+	'VRB' , # Veeam Incremental Backup File
 	'TMP' , # Finale Temporary File
 	'WBK' , # Microsoft Word Document Backup File
 	'MEM' , # FoxPro Variable File
@@ -8010,8 +7936,8 @@ set_backup = {
 	'SAV' , # Parallels Desktop Saved State Image File
 	'BUP' , # Backup File
 	'BAK' , # Act! Database Backup
-	'QSF' , # Qualtrics Survey File
 	'DBK' , # dBASE Database Backup
+	'QSF' , # Qualtrics Survey File
 	'001' , # Norton Ghost Disk Backup
 	'BPM' , # PowerDesigner Business Process Model
 	'RBF' , # Windows Installer Rollback File
@@ -8022,6 +7948,7 @@ set_backup = {
 	'BAK' , # Finale 2012 Score Backup
 	'BAK' , # MobileTrans Backup
 	'CRDS' , # Windows CardSpace Backup File
+	'KMNB' , # Keep My Notes Backup File
 	'WIN' , # FoxPro Window Settings
 	'GHS' , # Norton Ghost Image Segment
 	'SN2' , # Drive Snapshot Backup Continuation 2
@@ -8035,13 +7962,13 @@ set_backup = {
 	'BM3' , # Sony Ericsson Backup File
 	'PBX5SCRIPT' , # Personal Backup Script
 	'GS-BCK' , # Genius Scan Backup File
-	'SNMM' , # Smart Switch Notes Backup
 	'WIN' , # Windows Backup File
 	'LBF' , # LG Backup File
 	'WBCAT' , # Windows Backup Catalog
 	'FTMB' , # Family Tree Maker Backup File
 	'PTB' , # Sage 50 Backup File
 	'ASVX' , # Finale 2014 Auto-Saved Score
+	'SNMM' , # Smart Switch Notes Backup
 	'QUICKEN2017BACKUP' , # Quicken 2017 Backup File
 	'FZA' , # Form•Z Autosave File
 	'113' , # Iomega Disk Backup
@@ -8116,8 +8043,8 @@ set_backup = {
 	'DNA' , # CA Backup and Migration Backup File
 	'MYNOTESBACKUP' , # Keep My Notes Backup
 	'TIS' , # True Image Script
-	'QBB' , # QuickBooks Backup File
 	'NB7' , # NovaBACKUP Output File
+	'QBB' , # QuickBooks Backup File
 	'NWBAK' , # NeatWorks Backup File
 	'WSPAK' , # WebsitePanel Backup File
 	'VPB' , # Photos Legacy Video Project Backup
@@ -8174,25 +8101,22 @@ set_backup = {
 
 
 # noinspection SpellCheckingInspection
-set_misc = set()
-
-# noinspection SpellCheckingInspection
 set_misc = {
 	'ADI' , # Dynamics AX Developer Documentation Index File
-	'BRUSHSET' , # Procreate Brush Set
 	'ART80' , # BERNINA ARTlink 8 Embroidery File
+	'BRUSHSET' , # Procreate Brush Set
 	'CBDS' , # Comic Book DS File
 	'NAR' , # Ukagaka Ghost
-	'WCLD2' , # WordClouds.com Save File
 	'AAWDEF' , # Ad-Aware Definitions File
+	'WCLD2' , # WordClouds.com Save File
 	'DOWNLOADING' , # Pando Incomplete Download File
 	'IPSW' , # iPod and iPhone Software Update File
 	'SR0' , # SecuROM Analysis File
-	'MCFI' , # Maya Initial Fluid Cache File
 	'T$M' , # AVG Internet Security Temporary File
-	'PDPCOMP' , # Pdplayer Composition File
-	'SIS.DM' , # Ovi Store DRM-Protected Application
 	'JAM' , # FigJam Board
+	'PDPCOMP' , # Pdplayer Composition File
+	'MCFI' , # Maya Initial Fluid Cache File
+	'SIS.DM' , # Ovi Store DRM-Protected Application
 	'ISN' , # Installer Source File
 	'CRDOWNLOAD' , # Chrome Partially Downloaded File
 	'DCT' , # Dictionary File
@@ -8207,17 +8131,18 @@ set_misc = {
 	'LDB' , # Microsoft Access Lock File
 	'INFO' , # Texinfo Document
 	'PARTIAL' , # Internet Explorer Partially Downloaded File
-	'P10' , # Certificate Request File
-	'TFIL' , # Blizzard Software Update File
 	'BP3' , # AutoCAD Batch Plot File
 	'ESD' , # Windows Electronic Software Download
+	'P10' , # Certificate Request File
+	'TFIL' , # Blizzard Software Update File
 	'OB!' , # Orbit Downloader Incomplete Download
-	'MSF' , # Mail Summary File
 	'IDLK' , # Adobe InDesign Lock File
+	'MSF' , # Mail Summary File
 	'OPDOWNLOAD' , # Opera Partially Downloaded File
 	'GTA' , # Microsoft Groove Tool Archive
 	'SEARCH-MS' , # Windows Saved Search File
 	'AVASTLIC' , # Avast License File
+	'SF' , # Minecraft JAR Signature File
 	'INFO' , # Generic Information File
 	'JAD' , # Java Application Descriptor File
 	'MTD' , # Musicnotes Digital Sheet Music File
@@ -8231,38 +8156,38 @@ set_misc = {
 	'SFV' , # Simple File Verification File
 	'UNKNOWN' , # Unknown File Type
 	'LOCK' , # Lock File
+	'XLNK' , # XML Shortcut File
+	'INLK' , # Adobe InDesign Lock File
+	'CUL' , # Windows Cursor Library
+	'LTF' , # Frogans Shortcut File
+	'SKBA' , # SketchBook Pro Animation File
+	'GLINK' , # Google Drive External File Shortcut
+	'DAT' , # Inno Setup Uninstaller Data File
+	'TTX' , # Trados TagEditor File
+	'PAD' , # ACT! Database Pointer File
+	'VP3' , # Husqvarna Viking / Pfaff Embroidery File
+	'EFL' , # External Format Language File
+	'FPFV' , # File Protected From Virus
+	'ICMA' , # InCopy Assignment File
+	'RFN' , # RoboForm Safenote File
 	'RFP' , # RoboForm Passcard File
 	'VBT' , # iAntiVirus Temporary Scan File
-	'TTX' , # Trados TagEditor File
-	'ID' , # Lotus Notes User ID File
-	'SVN-WORK' , # Subversion Cache File
-	'DAT' , # Inno Setup Uninstaller Data File
-	'SSLF' , # HLSW Shared Server List File
-	'SSD' , # WindowBlinds Skin File List
-	'INETLOC' , # Internet Location
-	'XWF' , # OmniPage Workflow File
-	'LTF' , # Frogans Shortcut File
-	'FPFV' , # File Protected From Virus
-	'RFN' , # RoboForm Safenote File
-	'GROWLREGDICT' , # Growl Temp File
-	'PAD' , # ACT! Database Pointer File
-	'AUZ' , # Ableton Authorization File
-	'MGT' , # Musicnotes Guitar Guru Song File
-	'XLNK' , # XML Shortcut File
-	'NWP' , # Magentic Wallpaper File
-	'GLINK' , # Google Drive External File Shortcut
-	'ICMA' , # InCopy Assignment File
-	'MCF' , # Monocurl Project
-	'MLS' , # CrystalPlayer Playlist
-	'EF2' , # Internet Download Manager Export File
-	'INLK' , # Adobe InDesign Lock File
-	'3DC' , # RacerMate 3D Course File
-	'VP3' , # Husqvarna Viking / Pfaff Embroidery File
-	'CUL' , # Windows Cursor Library
-	'SNF' , # Starry Night Pro Document
-	'SKBA' , # SketchBook Pro Animation File
 	'FREAKSHOW' , # Freakshow Industries License File
-	'EFL' , # External Format Language File
+	'MLS' , # CrystalPlayer Playlist
+	'INETLOC' , # Internet Location
+	'GROWLREGDICT' , # Growl Temp File
+	'MCF' , # Monocurl Project
+	'ID' , # Lotus Notes User ID File
+	'NWP' , # Magentic Wallpaper File
+	'EF2' , # Internet Download Manager Export File
+	'3DC' , # RacerMate 3D Course File
+	'MGT' , # Musicnotes Guitar Guru Song File
+	'SSLF' , # HLSW Shared Server List File
+	'SVN-WORK' , # Subversion Cache File
+	'SNF' , # Starry Night Pro Document
+	'SSD' , # WindowBlinds Skin File List
+	'XWF' , # OmniPage Workflow File
+	'AUZ' , # Ableton Authorization File
 	'!UT' , # uTorrent Incomplete Download
 	'EGT' , # EagleGet Temporary File
 	'DAT' , # Piriform Portable Mode Flag
@@ -8270,8 +8195,8 @@ set_misc = {
 	'SIS' , # Symbian Installation File
 	'FRM' , # Form File
 	'CHW' , # Compiled Help Index File
-	'PLA' , # iriver iQuickList File
 	'TDL' , # MathType Translator Definition Language
+	'PLA' , # iriver iQuickList File
 	'GG' , # Google Desktop Gadget File
 	'GP4' , # Guitar Pro 4 Tablature
 	'RTM' , # LabVIEW Run-Time Menu File
@@ -8289,19 +8214,19 @@ set_misc = {
 	'SISX' , # Symbian OS 9.1+ Installation File
 	'RWZ' , # Outlook Rules Wizard File
 	'MDL' , # Flight Simulator Airplane Model
+	'SKR' , # PGP Private Keyring
+	'TD' , # Thunder Incomplete Download File
 	'GSP' , # Geometer's Sketchpad File
 	'MVI' , # AutoCAD Movie Command File
+	'EZW' , # easyOFFER Real Estate Form
 	'BFC' , # Windows Briefcase File
 	'DRC' , # DRM Rights Object
-	'TD' , # Thunder Incomplete Download File
-	'EZW' , # easyOFFER Real Estate Form
-	'SKR' , # PGP Private Keyring
 	'!BT' , # BitTorrent Incomplete Download File
 	'DAT' , # Exchange E-mail Attachment
 	'CACHE' , # Cache File
+	'APPUP' , # Erlang Application Upgrade File
 	'SLF' , # Symantec License File
 	'PSI' , # PrimalScript Online Help Shortcut
-	'APPUP' , # Erlang Application Upgrade File
 	'_NWS' , # Windows Live Mail Newsgroup Copy File
 	'CSH' , # Photoshop Custom Shapes File
 	'OLB' , # OLE Object Library
@@ -8317,65 +8242,65 @@ set_misc = {
 	'DLM' , # Akamai Download Manager File
 	'FILE' , # Generic File
 	'MD5' , # MD5 Checksum File
-	'PVK' , # Private Key File
-	'WJF' , # WinJournal Journal File
-	'FDR' , # Windows Error Report File
 	'RML' , # Elixir Report Template File
-	'VNCLOC' , # Screen Sharing VNC Internet Location
+	'WJF' , # WinJournal Journal File
+	'PVK' , # Private Key File
 	'TLDR' , # tldraw Drawing
+	'VNCLOC' , # Screen Sharing VNC Internet Location
+	'FDR' , # Windows Error Report File
 	'APF' , # Adobe Profile File
 	'MSI' , # Windows Installer Package
-	'JQZ' , # JQuiz File
-	'RND' , # PGP Random Seed File
-	'APPDOWNLOAD' , # Mac App Store Partially Downloaded App
 	'GDRAW' , # Google Drawings Shortcut
+	'JQZ' , # JQuiz File
+	'APPDOWNLOAD' , # Mac App Store Partially Downloaded App
+	'RND' , # PGP Random Seed File
 	'WTC' , # Logitech Webcam File
 	'TPL' , # Document Template
 	'BPS' , # BPS Virus File
 	'SDR' , # Dell Support File
 	'KEY' , # Software License Key File
-	'SISX.DM' , # Nokia Ovi Store DRM-Protected Application
-	'PAMP' , # Poweramp Album Art File
-	'KHD' , # Dynamics AX Kernel Help Data File
 	'CFS' , # Lucene Compound Index File
 	'CALIBRE' , # Calibre Device Data File
-	'CLKK' , # Clicker Keyboard
-	'ARR' , # Advanced RAR Password Recovery Auto-Save
-	'AZ!' , # Vuze Partial Download File
+	'SISX.DM' , # Nokia Ovi Store DRM-Protected Application
 	'MTHD' , # MOPEKS Method File
+	'CLKK' , # Clicker Keyboard
+	'AZ!' , # Vuze Partial Download File
+	'PAMP' , # Poweramp Album Art File
+	'ARR' , # Advanced RAR Password Recovery Auto-Save
 	'ACL' , # AutoCorrect List File
-	'COS2' , # Pinnacle Studio Cache File
 	'ZTF' , # DVD Label Template File
 	'TNEF' , # Transport Neutral Encapsulation Format
+	'KHD' , # Dynamics AX Kernel Help Data File
+	'COS2' , # Pinnacle Studio Cache File
 	'CXF' , # Picasa Collage File
 	'DISKDEFINES' , # Linux LiveCD Information File
 	'SHS' , # Microsoft Scrap File
 	'SCW' , # Score Writer Document
 	'ABR' , # Adobe Photoshop Brushes
-	'SST' , # Serialized Certificate Store File
-	'NUP' , # Smart Security Update File
-	'QUA' , # Avira AntiVir Quarantined File
 	'BC!' , # BitComet Incomplete File
+	'QUA' , # Avira AntiVir Quarantined File
+	'NUP' , # Smart Security Update File
 	'MRK' , # DPOF Auto Print Order File
 	'SDX' , # Kivuto Secure Download Manager File
 	'HEX' , # Hexadecimal Source File
 	'DWL' , # TurboCAD Drawing Lock File
-	'WLX' , # Windows Live Mesh Sync File
 	'XSLIC' , # XenServer License File
+	'WLX' , # Windows Live Mesh Sync File
 	'DBX' , # Outlook Express E-mail Folder
 	'PES' , # Brother PE Embroidery Format
 	'XMP' , # Extensible Metadata Platform File
-	'RJS' , # RealJukebox Skin File
-	'PTH' , # 4D Path Document
-	'PLF' , # Papyrus License File
-	'DOC#' , # LibreOffice Document Lock File
-	'NA2' , # Netscape Address Book File
-	'PLSK' , # Messenger Plus! Live Skin Pack
 	'TOC' , # Eudora Table of Contents
 	'FLF' , # Microsoft Dynamics NAV License File
+	'DOC#' , # LibreOffice Document Lock File
+	'NA2' , # Netscape Address Book File
+	'RJS' , # RealJukebox Skin File
+	'PLSK' , # Messenger Plus! Live Skin Pack
+	'PLF' , # Papyrus License File
+	'PTH' , # 4D Path Document
 	'VMG' , # Nokia Text Message
 	'SIG' , # Signature File
 	'ZML' , # Zooming Markup Language File
+	'PLS' , # Multimedia Playlist File
 	'EXP' , # Melco Embroidery File
 	'LIC' , # Software License File
 	'THM' , # Sony Ericsson Theme File
@@ -8384,32 +8309,30 @@ set_misc = {
 	'MAR' , # Mozilla Archive
 	'ZZZ' , # CCleaner Securely Deleted File
 	'0' , # Hacha Split File Segment
-	'Z80' , # TI-83 and 84 Plus Calculator File
-	'JMT' , # JMatch File
-	'FND' , # Windows Saved Search
-	'SFT' , # Microsoft App-V Sequencer File
-	'MGO' , # MacGourmet Recipe File
-	'RSA' , # Minecraft JAR Codesign File
-	'ICALENDAR' , # iCalendar File
 	'SNM' , # Netscape Mail Index
-	'KMR' , # KnowledgeMill Link File
+	'SFT' , # Microsoft App-V Sequencer File
 	'LAY' , # DVD Studio Pro Layout File
 	'MNL' , # AutoCAD Menu LISP File
+	'FND' , # Windows Saved Search
+	'MGO' , # MacGourmet Recipe File
 	'CLKX' , # Clicker Grid Set
 	'VMF_AUTOSAVE' , # Valve Hammer Editor Autosave File
-	'ERR' , # AutoCAD Error Log File
-	'DAP' , # Download Accelerator Plus Partial Download
-	'HXK' , # Microsoft Help 2 Index File
-	'REQ' , # Canon SD Card Version Request File
-	'ZM1' , # ZoneAlarm Renamed MDA File
+	'ICALENDAR' , # iCalendar File
+	'Z80' , # TI-83 and 84 Plus Calculator File
 	'IFL' , # 3ds Max Image File List
-	'XSD' , # Pattern Maker for Cross Stitch 4 Pattern
-	'VBT' , # Spyware Doctor Temporary Scan File
-	'ENF' , # EndNote Filter File
 	'SC' , # Space Engine Script
-	'PLS' , # Multimedia Playlist File
-	'WDSEML' , # Thunderbird Searchable Email File
 	'JC!' , # FlashGet Incomplete Download
+	'WDSEML' , # Thunderbird Searchable Email File
+	'REQ' , # Canon SD Card Version Request File
+	'KMR' , # KnowledgeMill Link File
+	'JMT' , # JMatch File
+	'ZM1' , # ZoneAlarm Renamed MDA File
+	'HXK' , # Microsoft Help 2 Index File
+	'XSD' , # Pattern Maker for Cross Stitch 4 Pattern
+	'DAP' , # Download Accelerator Plus Partial Download
+	'ENF' , # EndNote Filter File
+	'VBT' , # Spyware Doctor Temporary Scan File
+	'ERR' , # AutoCAD Error Log File
 	'RPMSG' , # Outlook Restricted Permission Message
 	'CRC' , # Total Commander Checksum File
 	'NOMEDIA' , # Android No Media File
@@ -8420,80 +8343,80 @@ set_misc = {
 	'ARIA2' , # aria2 Control File
 	'ZM3' , # ZoneAlarm Renamed NCH File
 	'MAT' , # Microsoft Access Table Shortcut File
-	'XXX' , # Compucon Singer Embroidery File
 	'MANIFEST' , # Steam Manifest File
 	'VIR' , # Virus-Infected File
+	'XXX' , # Compucon Singer Embroidery File
 	'ASS' , # Aegisub Advanced SubStation Alpha File
-	'BT!' , # BitSpirit Incomplete Download File
 	'LOGONXP' , # LogonStudio Windows XP Logon Screen
+	'BT!' , # BitSpirit Incomplete Download File
 	'DST' , # Tajima Embroidery Format
 	'JMS' , # Masher Project
 	'BST' , # BibTeX Style Document
 	'CVF' , # CPU-Z Validation File
 	'OST' , # Outlook Offline Data File
-	'CAS' , # Autodesk Cascade License File
 	'ING' , # MasterCook Ingredients File
+	'CAS' , # Autodesk Cascade License File
 	'BQY' , # Brio Query File
-	'EXD' , # Control Information Cache File
 	'MMAP' , # MindManager Map
+	'EXD' , # Control Information Cache File
 	'RTC' , # Live Meeting Connection File
+	'SIDN' , # iTunes Authorization Data File
+	'PANDO' , # Pando File
+	'SMWT' , # Adobe InDesign Filter
+	'XNK' , # Exchange Shortcut
 	'SIDD' , # iTunes Authorization Data File
+	'FMELIC' , # FME License File
+	'MGDATABASE' , # MacGourmet Deluxe Database File
 	'DWLIBRARY' , # Paperless Document Library
 	'SWJ' , # SolidWorks Journal File
-	'MGDATABASE' , # MacGourmet Deluxe Database File
-	'FMELIC' , # FME License File
-	'CHUNK001' , # File Splitter Split Archive Part 1
-	'SIDN' , # iTunes Authorization Data File
 	'SPK' , # Synology Package
-	'TSTREAM' , # SwarmPlayer Streaming Torrent
-	'MMO' , # Memory Map Overlay File
-	'CFL' , # IMVU Product File
-	'XNK' , # Exchange Shortcut
-	'VOR' , # StarOffice Template
-	'83P' , # TI-83 Calculator File
-	'DAL' , # Download Accelerator Plus URL List
-	'NK2' , # Outlook 2002 Nickname File
-	'MIF' , # Management Information Format
-	'CDS' , # ConceptDraw DIAGRAM SlideShow (Legacy)
+	'CHUNK001' , # File Splitter Split Archive Part 1
 	'BOOTSKIN' , # Stardock Bootskin File
+	'MIF' , # Management Information Format
+	'MMO' , # Memory Map Overlay File
+	'DAL' , # Download Accelerator Plus URL List
+	'CDS' , # ConceptDraw DIAGRAM SlideShow (Legacy)
+	'CFL' , # IMVU Product File
+	'NK2' , # Outlook 2002 Nickname File
+	'VOR' , # StarOffice Template
+	'TSTREAM' , # SwarmPlayer Streaming Torrent
+	'83P' , # TI-83 Calculator File
 	'LXA' , # Microsoft Speech Lexicon File
-	'SMWT' , # Adobe InDesign Filter
-	'PANDO' , # Pando File
 	'SWP' , # Vi Swap File
 	'MSO' , # Microsoft Office Macro Reference File
 	'SNT' , # Sticky Notes File
 	'SPD' , # Form·Z Suspended Render File
 	'NJB' , # Nikon Photo Index File
-	'AEPKEY' , # Advanced Encryption Package Key File
 	'SSC' , # Stellarium Script
+	'AEPKEY' , # Advanced Encryption Package Key File
 	'CDF-MS' , # ClickOnce Compiled Manifest File
-	'MAB' , # Mozilla Address Book
 	'MSRCINCIDENT' , # Windows Remote Assistance Invitation File
+	'MAB' , # Mozilla Address Book
 	'TEMP' , # Temporary (Temp) File
 	'DIC' , # Dictionary File
-	'LCK' , # Program Lock File
-	'SHA512' , # SHA 512 Hash File
-	'CP3' , # Grand Prix 3 Cockpit Shape File
+	'WWD' , # Works Wizard File
 	'ICAL' , # iCalendar File
 	'SXM' , # StarMath Formula
-	'WWD' , # Works Wizard File
 	'TIP' , # TuneUp Utilities Icon Package
+	'SHA512' , # SHA 512 Hash File
+	'CP3' , # Grand Prix 3 Cockpit Shape File
+	'LCK' , # Program Lock File
 	'LYR' , # ArcView Layer File
 	'8XP' , # TI-83 Plus Calculator File
-	'TLS' , # TuneUp Utilities Logon Screen
-	'ZM2' , # ZoneAlarm Renamed MDZ File
-	'RND' , # Random Hash Data File
 	'GAU' , # Flight Simulator Gauge File
 	'P7R' , # Certificate Request Response File
+	'RND' , # Random Hash Data File
+	'TLS' , # TuneUp Utilities Logon Screen
 	'LINK' , # iPod Link File
+	'ZM2' , # ZoneAlarm Renamed MDZ File
 	'FLK' , # AccountEdge Company Lock File
-	'Z1' , # ZoneAlarm Renamed VB File
-	'MONTAGE' , # Montage Screenplay File
 	'VOL' , # Volfs File System Directory
+	'MONTAGE' , # Montage Screenplay File
+	'VPA' , # VPchat Chat Gestures File
+	'Z1' , # ZoneAlarm Renamed VB File
 	'VMHF' , # VMware Hot Fix File
 	'RXC' , # Roxio Certificate File
 	'ADD' , # Dynamics AX Developer Documentation File
-	'VPA' , # VPchat Chat Gestures File
 	'CRD' , # Windows CardSpace File
 	'CL' , # Cursor Library
 	'REQ' , # SSL Certificate Request File
@@ -8501,170 +8424,171 @@ set_misc = {
 	'JC' , # FlashGet Partial Download
 	'CCH' , # .NET Security Resolution Cache File
 	'KWM' , # WebMoney Key File
-	'DSC' , # Nikon Disk Identification File
-	'DECRYPT' , # Decrypted Microsoft ESD File
 	'P7M' , # S/MIME Email Message
+	'DECRYPT' , # Decrypted Microsoft ESD File
+	'DSC' , # Nikon Disk Identification File
 	'EXT' , # Generic Email Attachment
 	'SHX' , # Motorola Flash Superfile
 	'MTA' , # Samsung AllShare Metadata File
-	'MZZ' , # Microsoft .NET Download Package
-	'BKMK' , # Yummy FTP Bookmark File
-	'MTF' , # MasterCook Tips File
-	'MFIL' , # Blizzard Software Update File
 	'PEKEY' , # PhysicsEditor License Key
-	'RFB' , # RoboForm Bookmark File
+	'MFIL' , # Blizzard Software Update File
+	'MTF' , # MasterCook Tips File
 	'GOD' , # God Configuration File
-	'PLA' , # PlantStudio Plant File
-	'XOL' , # PowerDesigner Object Language File
-	'KYR' , # Lotus Domino Key Ring File
+	'MZZ' , # Microsoft .NET Download Package
+	'RFB' , # RoboForm Bookmark File
+	'BKMK' , # Yummy FTP Bookmark File
+	'ENML' , # Evernote for Android Note
+	'CDSZ' , # ConceptDraw DIAGRAM SlideShow
+	'HS' , # Motorola Flash Flex File
+	'SKINDEX' , # Mail Index File
+	'JCW' , # JCross File
 	'ICONTAINER' , # CandyBar iContainer File
-	'DUID' , # DHCPv6 Unique Identifier
-	'BPDX' , # Acrobat Batch PDX File
+	'WL' , # Wolfram Language Package
+	'MDMP' , # Mindclouds.com Save File
 	'BWS' , # Brady Workstation Label
-	'ZCI' , # PowerCD Multimedia File
-	'LOGONVISTA' , # LogonStudio Windows Vista Logon Screen
-	'CLKW' , # Clicker Word Bank
-	'VP4' , # PREMIER+ / Husqvarna Viking / Pfaff Embroidery File
-	'STH' , # Lotus Domino Stash File
-	'LWTP' , # LimeWire Theme Pack
-	'DSTUDIO' , # DownloadStudio Incomplete Download
-	'INCA' , # InCopy CS3 Assignment File
-	'KHI' , # Dynamics AX Kernel Help Index File
-	'AHI' , # Dynamics AX Online Help Index File
+	'NAV2' , # WinAVI Temporary Navigation File
+	'PLA' , # PlantStudio Plant File
 	'LINX' , # iPod Links Folder
 	'IMAPMBOX' , # IMAP Mailbox
-	'SKINDEX' , # Mail Index File
+	'LOGONVISTA' , # LogonStudio Windows Vista Logon Screen
 	'FTPLOC' , # FTP Location
-	'NAV2' , # WinAVI Temporary Navigation File
-	'HS' , # Motorola Flash Flex File
+	'INCA' , # InCopy CS3 Assignment File
+	'VP4' , # PREMIER+ / Husqvarna Viking / Pfaff Embroidery File
 	'DR' , # DRM Rights Object
+	'STH' , # Lotus Domino Stash File
+	'KYR' , # Lotus Domino Key Ring File
+	'PTM' , # Protheus Patch
+	'XOL' , # PowerDesigner Object Language File
+	'LWTP' , # LimeWire Theme Pack
+	'DSTUDIO' , # DownloadStudio Incomplete Download
+	'KHI' , # Dynamics AX Kernel Help Index File
+	'AHI' , # Dynamics AX Online Help Index File
 	'TPM' , # Trusted Platform Module Password File
 	'MC2' , # MasterCook 5 Cookbook File
-	'MNX' , # FoxPro Menu
-	'TLB' , # OLE Type Library
-	'MDMP' , # Mindclouds.com Save File
-	'MJDOC' , # MacJournal Document
-	'AVGDX' , # AVG Diagnostics File
-	'WJE' , # WinJournal Entry
-	'PTM' , # Protheus Patch
-	'CDSZ' , # ConceptDraw DIAGRAM SlideShow
 	'CNV' , # Office Converter File
-	'HMX' , # Help & Manual 4 Project
-	'_SYS.LFO' , # Adware File
-	'CONTOUR' , # Contour Screenplay File
-	'VPC7' , # Virtual Machine Package
 	'ART70' , # BERNINA ARTlink 7 Embroidery File
-	'JCW' , # JCross File
-	'WL' , # Wolfram Language Package
+	'TLB' , # OLE Type Library
+	'_SYS.LFO' , # Adware File
+	'AVGDX' , # AVG Diagnostics File
+	'DUID' , # DHCPv6 Unique Identifier
+	'BPDX' , # Acrobat Batch PDX File
+	'ZCI' , # PowerCD Multimedia File
+	'WJE' , # WinJournal Entry
+	'HMX' , # Help & Manual 4 Project
+	'VPC7' , # Virtual Machine Package
+	'MJDOC' , # MacJournal Document
 	'RWLIBRARY' , # Paperless Receipt Library
+	'MNX' , # FoxPro Menu
+	'CLKW' , # Clicker Word Bank
+	'CONTOUR' , # Contour Screenplay File
 	'SHA1' , # SHA-1 Hash File
 	'FW' , # Firmware Update
-	'AIF' , # Symbian Application Information File
 	'UPG' , # Upgrade File
+	'AIF' , # Symbian Application Information File
 	'PKPASS' , # Apple Wallet Pass
 	'ART' , # BERNINA Embroidery File
 	'NSS' , # Magentic Screensaver File
 	'QDS' , # Windows Directory Query File
 	'VFS' , # Virtual File System Index
-	'TNSP' , # TI-Nspire PublishView Document
-	'MCFP' , # Maya Fluid Cache Playback File
 	'W' , # Google Toolbar Search History File
+	'MCFP' , # Maya Fluid Cache Playback File
+	'TNSP' , # TI-Nspire PublishView Document
 	'MAG' , # Access Diagram Shortcut File
 	'RELOC' , # Windows EXE Relocation Section File
-	'SPLIT' , # Archiver Split File
 	'NFS' , # Network File System Temporary File
-	'TBS' , # TuneUp Utilities Boot Screen
-	'MCO' , # Live Messenger Winks File
+	'SPLIT' , # Archiver Split File
 	'SUM' , # Garmin Checksum File
+	'MCO' , # Live Messenger Winks File
 	'EDC' , # Kryptel Lite Encrypted File
+	'TBS' , # TuneUp Utilities Boot Screen
+	'DCTMP' , # DC++ Partially Downloaded File
 	'MBS' , # Opera Mailbox File
 	'MBB' , # Kodak EasyShare Data File
-	'DCTMP' , # DC++ Partially Downloaded File
 	'SMRD' , # Adobe InDesign Filter File
 	'BMK' , # Nokia Device Bookmark File
 	'DCOVER' , # Disc Cover File
 	'PGP' , # PGP Security Key
 	'NICK' , # Outlook 2000 Nickname File
-	'ALT' , # Dynamics AX Temporary File
 	'LETTER' , # Undeliverable Mail File
+	'ALT' , # Dynamics AX Temporary File
 	'DISABLED' , # Spybot - Search & Destroy Disabled File
 	'MSO' , # Outlook In-Line Office Attachment
 	'PSAR' , # PSP Update File
-	'MB' , # Kodak EasyShare Data File
-	'FEEDBACK' , # Expression SketchFlow Feedback File
-	'YPS' , # Yahoo! Messenger Data File
 	'IMY' , # iMelody Ringtone File
+	'FEEDBACK' , # Expression SketchFlow Feedback File
 	'JCL' , # JCloze File
+	'HXA' , # Microsoft Help 2 Attribute Definition File
+	'YPS' , # Yahoo! Messenger Data File
 	'ULS' , # NetMeeting User Location Service File
 	'AC$' , # AutoCAD Temporary File
-	'HXA' , # Microsoft Help 2 Attribute Definition File
+	'MB' , # Kodak EasyShare Data File
 	'BLF' , # MasterWorks Working File
 	'BLI' , # Thomson Speedtouch Firmware File
 	'RFT' , # RoboForm Identity File
 	'PTR' , # Flash Intro Project File
 	'LICENSEKEY' , # iPartition License Key File
-	'AML' , # Microsoft Assistance Markup Language File
-	'CLKT' , # Clicker Grid Set Template
-	'TPKEY' , # TexturePacker License Key File
-	'STORYMILL' , # StoryMill Project File
-	'WRTS' , # Wrts File
-	'NCW' , # Nero CoverDesigner Wizard File
 	'VPC6' , # Virtual Machine Package
+	'SSW' , # Sony Ericsson Firmware File
+	'NCW' , # Nero CoverDesigner Wizard File
+	'MWF' , # Translation Memory Word Find File
+	'TPKEY' , # TexturePacker License Key File
+	'WRTS' , # Wrts File
+	'CLKT' , # Clicker Grid Set Template
+	'AML' , # Microsoft Assistance Markup Language File
+	'STORYMILL' , # StoryMill Project File
 	'EBN' , # Philips Firmware Update File
 	'ITC' , # iTunes Cover Flow Data File
-	'SSW' , # Sony Ericsson Firmware File
-	'MWF' , # Translation Memory Word Find File
 	'AFPLOC' , # Apple Filing Protocol Location
 	'DWC' , # Emulex DWC Firmware Update File
 	'PVM' , # HP Photo Album
 	'DTF' , # Domino Temporary File
 	'SLUPKG-MS' , # XrML Digital License Package
-	'SHORTCUT' , # Asutype Shortcut
 	'CLR' , # Animate Color Set
-	'QXL' , # QuarkXPress Library
 	'SHV' , # Husqvarna Viking Embroidery File
+	'QXL' , # QuarkXPress Library
+	'SHORTCUT' , # Asutype Shortcut
 	'CERBER3' , # Cerber Ransomware Virus File
 	'MAP' , # TECkit Mapping File
 	'DWN' , # Firmware Update File
 	'PN' , # Powernoodle File (Discontinued)
-	'RADIUMKEY2' , # Radium 2 License File
-	'RMF' , # Adobe Rights Management Document
 	'NDL' , # Lotus Notes Doclink File
+	'RMF' , # Adobe Rights Management Document
+	'RADIUMKEY2' , # Radium 2 License File
 	'IN' , # Spyware File
-	'SLB' , # AutoCAD Slide Library
 	'SBC' , # Office Accounting Company Shortcut File
-	'ACB' , # AOL Cabinet File
+	'SLB' , # AutoCAD Slide Library
 	'CTF' , # AVG Update Control File
-	'MAILTOLOC' , # Mail Internet Location File
-	'WORDLIST' , # Desktop Poet Word List File
-	'CHKSPLIT' , # Archiver Split Checksum File
-	'DEK' , # Memorize-It Flashcard Deck
-	'YBD' , # YobiDrive Link File
-	'SIDB' , # iTunes Authorization Data File
-	'CML' , # CryptoMailer Encrypted File
-	'HDK' , # HotDocs Registration File
-	'SC2LOCALE' , # Blizzard StarCraft 2 Localization File
-	'LOOKLIBRARY' , # Painter Looks Library
-	'VMDK-CONVERTTMP' , # VMWare Fusion Temporary File
-	'ZTR' , # DVD Label Template Media File
-	'RMH' , # Rights-Managed HTML Document
-	'INDK' , # Adobe Shortcut Set File
+	'ACB' , # AOL Cabinet File
 	'DMX-INFO' , # DriverMax Driver Information File
-	'DA2' , # Adaware License File
-	'AOI' , # Dynamics AX Application Object Index File
-	'NTF' , # MediaFACE II CD Label
-	'PAPERS' , # Painter Paper Texture File
-	'CDLX' , # ConceptDraw DIAGRAM XML Library
-	'XPR' , # PressIt Disc Label
-	'AHD' , # Dynamics AX Online Help Data File
-	'XENSEARCH' , # XenCenter Saved Search File
-	'MERLINLICENSE' , # Merlin License File
-	'MWLIC' , # MoneyWell License File
-	'MAILPLANELICENSE' , # Mailplane License File
+	'WORDLIST' , # Desktop Poet Word List File
+	'SIDB' , # iTunes Authorization Data File
+	'YBD' , # YobiDrive Link File
+	'MAILTOLOC' , # Mail Internet Location File
 	'RASKINLICENSE' , # Raskin License File
+	'HDK' , # HotDocs Registration File
+	'CML' , # CryptoMailer Encrypted File
+	'DEK' , # Memorize-It Flashcard Deck
+	'MERLINLICENSE' , # Merlin License File
+	'PAPERS' , # Painter Paper Texture File
+	'DA2' , # Adaware License File
+	'ZTR' , # DVD Label Template Media File
+	'NTF' , # MediaFACE II CD Label
+	'INDK' , # Adobe Shortcut Set File
+	'CDLX' , # ConceptDraw DIAGRAM XML Library
+	'SC2LOCALE' , # Blizzard StarCraft 2 Localization File
+	'AHD' , # Dynamics AX Online Help Data File
+	'XPR' , # PressIt Disc Label
+	'MAILPLANELICENSE' , # Mailplane License File
+	'LRS' , # Check Point License Request File
+	'RMH' , # Rights-Managed HTML Document
+	'AOI' , # Dynamics AX Application Object Index File
+	'CHKSPLIT' , # Archiver Split Checksum File
+	'LOOKLIBRARY' , # Painter Looks Library
+	'MWLIC' , # MoneyWell License File
+	'VMDK-CONVERTTMP' , # VMWare Fusion Temporary File
 	'RAT' , # PICS Rating File
-	'CTF' , # Content Transformation File
 	'DHV' , # Husqvarna Viking Embroidery Design File
+	'CTF' , # Content Transformation File
 	'HYP' , # Dictionary Information File
 	'EZLOG' , # Skype Extras Manager Log File
 	'WZMUL' , # WinZip Registration File

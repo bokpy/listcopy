@@ -10,12 +10,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7d47a416-3b1c-466e-a851-3e5a458f6704" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/musicbrains.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/geolocate.py" beforeDir="false" afterPath="$PROJECT_DIR$/geolocate.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/brainzmusic.py" beforeDir="false" afterPath="$PROJECT_DIR$/brainzmusic.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/extensionsets.py" beforeDir="false" afterPath="$PROJECT_DIR$/extensionsets.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/listcopy.py" beforeDir="false" afterPath="$PROJECT_DIR$/listcopy.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/listfiles.py" beforeDir="false" afterPath="$PROJECT_DIR$/listfiles.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pathseeker.py" beforeDir="false" afterPath="$PROJECT_DIR$/pathseeker.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scratch.data" beforeDir="false" afterPath="$PROJECT_DIR$/scratch.data" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/update_extensions.py" beforeDir="false" afterPath="$PROJECT_DIR$/update_extensions.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -64,45 +66,45 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.brainzmusic.executor": "Run",
-    "Python.extensions.executor": "Run",
-    "Python.geolocate.executor": "Run",
-    "Python.gps_data_kd_tree.executor": "Run",
-    "Python.gpstree.executor": "Run",
-    "Python.listcopy -b ~/meta.test.executor": "Run",
-    "Python.listcopy .executor": "Run",
-    "Python.listcopy.executor": "Run",
-    "Python.listfiles.executor": "Run",
-    "Python.listutils.executor": "Run",
-    "Python.metadata.executor": "Run",
-    "Python.musicbrains.executor": "Run",
-    "Python.slowcopy.executor": "Run",
-    "Python.test_Comprehensions.executor": "Run",
-    "Python.test_extensions.executor": "Run",
-    "Python.test_listdir.executor": "Run",
-    "Python.testiter.executor": "Run",
-    "Python.testtime.executor": "Run",
-    "Python.update_extensions.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "1560ed10",
-    "last_opened_file_path": "/usr/lib/python3/dist-packages/IPython/core/magic.py",
-    "run.code.analysis.last.selected.profile": "aDefault",
-    "settings.editor.selected.configurable": "reference.settingsdialog.IDE.editor.colors.Python",
-    "settings.editor.splitter.proportion": "0.3207547"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.brainzmusic.executor&quot;: &quot;Run&quot;,
+    &quot;Python.extensions.executor&quot;: &quot;Run&quot;,
+    &quot;Python.geolocate.executor&quot;: &quot;Run&quot;,
+    &quot;Python.gps_data_kd_tree.executor&quot;: &quot;Run&quot;,
+    &quot;Python.gpstree.executor&quot;: &quot;Run&quot;,
+    &quot;Python.listcopy -b ~/meta.test.executor&quot;: &quot;Run&quot;,
+    &quot;Python.listcopy .executor&quot;: &quot;Run&quot;,
+    &quot;Python.listcopy.executor&quot;: &quot;Run&quot;,
+    &quot;Python.listfiles.executor&quot;: &quot;Run&quot;,
+    &quot;Python.listutils.executor&quot;: &quot;Run&quot;,
+    &quot;Python.metadata.executor&quot;: &quot;Run&quot;,
+    &quot;Python.musicbrains.executor&quot;: &quot;Run&quot;,
+    &quot;Python.slowcopy.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test_Comprehensions.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test_extensions.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test_listdir.executor&quot;: &quot;Run&quot;,
+    &quot;Python.testiter.executor&quot;: &quot;Run&quot;,
+    &quot;Python.testtime.executor&quot;: &quot;Run&quot;,
+    &quot;Python.update_extensions.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;3c50fa7a&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/bob/python/listcopy/test_librosa_gemeni.py&quot;,
+    &quot;run.code.analysis.last.selected.profile&quot;: &quot;aDefault&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.sourceCode.Python&quot;,
+    &quot;settings.editor.splitter.proportion&quot;: &quot;0.3207547&quot;
   },
-  "keyToStringList": {
-    "GitStage.ChangesTree.GroupingKeys": [
-      "directory",
-      "module",
-      "repository"
+  &quot;keyToStringList&quot;: {
+    &quot;GitStage.ChangesTree.GroupingKeys&quot;: [
+      &quot;directory&quot;,
+      &quot;module&quot;,
+      &quot;repository&quot;
     ],
-    "com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File": [
-      "GitIgnore"
+    &quot;com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File&quot;: [
+      &quot;GitIgnore&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$" />

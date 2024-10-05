@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 
+
+import datetime
 import metadata as meta
-from gpstree import DEBUGPRINT
+import extensions as ext
 
 DEBUGPRINT=print
 
@@ -93,6 +95,39 @@ LANGUAGES={'nl':(NL_DAG,NL_MAAND),
            'fy':(FRIS_DAYS,FRIS_MONTHS),
            'eng':(ENG_DAYS,ENG_MONTHS)
            }
+_ext_types='","'.join(ext.collect_mime_types())
+
+help_text=f'''
+Fore every class of files like:
+"{_ext_types}"
+recognized by extension.
+a substitution path can be defined by a list of tags.
+This can bee tags extracted with "exiftool" followed by "Overpass" "OpenStreetMap" lookup.
+If "exiftool" does not provide all the wanted data "librosa" combined with "MusicBrainz"
+is tried.
+The subdirectories of the original path can be copied.
+Positive numbers indicate a subdirectory above the source directory.
+Negative numbers indicate a subdirectory below the filename.
+
+syntax: <filetype>   = [ext|file|default]:class
+        <tag>        = [name:][exif|osm|mbz|subdir]{{tagname [[and=seperator|or] tagname]}}
+                       name renames the base filename.
+        <path>       = <filetype>[,<filetype>]/<tag>[/<tag>]
+        #<substitute> = <path>[
+
+Example: ext:image,ext:video/exif{{artist}}/exif{{album and=" year " year}}/name:exif{{ title }}
+         ext:image:/osm{{addr:city}}/osm{{addr:street and=" " addr:housenumber'}}/subdir{{-1}}
+
+for <filetype> "ext"  look in "extensionsets.py"
+for <filetype> "file" see "listfiles --show-mime general" "listfiles --show-mime general_mime_type"
+for <tag>      "exif" https://manpages.org/exiftool "exiftool -list"
+for <tag>      "osm"  https://wiki.openstreetmap.org/wiki/Map_features(#Addresses)
+for <tag>      "mbz"  
+'''
+
+def show_substitute_help():
+	print(help_text)
+
 class PathSeeker:
 
 	def __init__(self, path_format: list, gps_file=None,language='eng') -> None:

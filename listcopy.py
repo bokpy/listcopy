@@ -8,7 +8,7 @@ import pathlib
 import time
 import signal
 import listutils as lu
-from pathseeker import PathSeeker,LANGUAGES
+from pathseeker import PathSeeker,LANGUAGES,show_substitute_help
 from metadata import ExifTags
 import metadata as meta
 DEBUGPRINT=print
@@ -97,13 +97,11 @@ parser.add_argument('-p', '--post-it',
                     )
 #s s s s s s s s s s s s s s s s s s
 parser.add_argument('-s', '--substitute',
-                    help=f'Substitute the destination directory based on exif tags if this is possible "{meta.ExifTags.EXIFTAGS}" '
-                         f'if there is gps data use nearest "tags:tagname" like "tags:addr:street" "tags:addr:housenumber" "tags:building" '
-                         f'info at: https://wiki.openstreetmap.org/wiki/Category:Tag_descriptions'
-                         f' or a selection of original directories "number" negatief a subdir under the basename.'
-	                    f' or subdir names based on mime type.',
+                    help=f'Assemble a destination path according to a list of expressions. '
+						f'Enter "help" for a detailed explanation. ',
+
                     nargs='*',
-                    metavar='',
+                    metavar='expression',
                     action='store'
                     )
 #l l l l l l l l l l l l l l l l
@@ -490,13 +488,15 @@ def track_and_trace():
 		return os.path.join(os.path.expanduser('~'),args.post_it)
 	return os.path.join(os.path.expanduser('~'),'listcopy')
 
+
 def main() -> None:
 	global destination_path,ok_file,bad_file
 	print(f'{args.input=} {args.destination=}')
 	
-	if args.usage:
-		explain()
-		exit(0)
+	if args.substitute:
+		if args.substitute[0].upper() == 'HELP':
+			show_substitute_help()
+			exit(0)
 	
 	if args.todo:
 		list_to_do()
