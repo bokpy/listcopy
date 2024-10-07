@@ -8,7 +8,7 @@ import pathlib
 import time
 import signal
 import listutils as lu
-from pathseeker import PathSeeker,LANGUAGES,show_substitute_help
+from pathseeker import PathSeeker,show_substitute_help
 from metadata import ExifTags
 import metadata as meta
 DEBUGPRINT=print
@@ -100,15 +100,15 @@ parser.add_argument('-s', '--substitute',
                     help=f'Assemble a destination path according to a list of expressions. '
 						f'Enter "help" for a detailed explanation. ',
 
-                    nargs='*',
+                    nargs='?',
                     metavar='expression',
                     action='store'
                     )
 #l l l l l l l l l l l l l l l l
-langs='","'.join(LANGUAGES.keys())
+langs='","'.join(lu.LANGUAGES.keys())
 parser.add_argument('-l', '--language',
                     help=f'Language for days and months "{langs}".',
-                    choices=LANGUAGES.keys(),
+                    choices=lu.LANGUAGES.keys(),
                     nargs='?',
                     metavar='',
                     default='eng',
@@ -464,7 +464,7 @@ def process_filelisting(args):
 	
 	count=0
 	for src in listing:
-		dest = path_seeker.compose_path(src,listing)
+		dest = path_seeker.compose_path(src,str(listing))
 		#processed_file=dst
 		if args.dry_run:
 			print(f'from: "{src}"')
@@ -510,5 +510,5 @@ def main() -> None:
 	process_filelisting(args)
 	
 if __name__ == '__main__':
-	print('Called as main')
+	print('_'*80)
 	main()

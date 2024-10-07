@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import time
 import datetime
+import random
 from collections import deque
 import os
 import sys
@@ -8,6 +9,93 @@ import re
 from idlelib.iomenu import errors
 from os import write
 from time import sleep
+NL_MAAND= {
+    "Jan": "Jan",
+    "Feb": "Feb",
+    "Mar": "Mar",
+    "Apr": "Apr",
+    "May": "Mei",
+    "Jun": "Jun",
+    "Jul": "Jul",
+    "Aug": "Aug",
+    "Sep": "Sep",
+    "Oct": "Okt",
+    "Nov": "Nov",
+    "Dec": "Dec"
+}
+NL_DAG={
+    "Mon": "Ma",
+    "Tue": "Di",
+    "Wed": "Wo",
+    "Thu": "Do",
+    "Fri": "Vr",
+    "Sat": "Za",
+    "Sun": "Zo"
+}
+#FRIS_MONTHS = {
+#     'Jan': 'Jan',
+#     'Feb': 'Feb',
+#     'Mar': 'Mrt',
+#     'Apr': 'Apr',
+#     'May': 'Mai',
+#     'Jun': 'Jun',
+#     'Jul': 'Jul',
+#     'Aug': 'Aug',
+#     'Sep': 'Sep',
+#     'Oct': 'Okt',
+#     'Nov': 'Nov',
+#     'Dec': 'Des'
+# }
+FRIS_MONTHS = {
+'Jan':'jannewaris',
+'Feb':'febrewaris',
+'Mar':'maart',
+'Apr':'april',
+'May':'maaie',
+'Jun':'juny',
+'Jul':'july',
+'Aug':'augustus',
+'Sep':'septimber',
+'Oct':'oktober',
+'Nov':'novimber',
+'Dec':'desimber'
+}
+FRIS_DAYS = {
+    'Mon': 'moandei',
+    'Tue': 'tiisdei',
+    'Wed': 'woansdei',
+    'Thu': 'tongersdei',
+    'Fri': 'freed',
+    'Sat': 'sneon',
+    'Sun': 'snein'
+}
+ENG_DAYS = {
+	'Mon': "Monday",
+	'Tue': "Tuesday",
+	'Wed': "Wednesday",
+	'Thu': "Thursday",
+	'Fri': "Friday",
+	'Sat': "Saturday",
+	'Sun': "Sunday"
+}
+ENG_MONTHS = {
+    "Jan": "January",
+    "Feb": "February",
+    "Mar": "March",
+    "Apr": "April",
+    "May": "May",
+    "Jun": "June",
+    "Jul": "July",
+    "Aug": "August",
+    "Sep": "September",
+    "Oct": "October",
+    "Nov": "November",
+    "Dec": "December"
+}
+LANGUAGES={'nl':(NL_DAG,NL_MAAND),
+           'fy':(FRIS_DAYS,FRIS_MONTHS),
+           'eng':(ENG_DAYS,ENG_MONTHS)
+           }
 
 DATA_BEGIN_MARKER='-------->Data_Begin_Marker-------->'
 DATA_END_MARKER='<--------Data_End_Marker<--------'
@@ -17,6 +105,43 @@ FILTEROUT=['/Cookies/','/Microsoft/','/Windows/','/Cache','#.*#$','\.lnk$',
            '\.ini$','/NTUSER.DAT',]
 DEBUGPRINT=print
 
+class LocalTimeString:
+	
+	def __init__(self,lang='eng'):
+		self.set_language(lang)
+		self.set_time(time.time())
+		
+	def set_language(self,lang):
+		self.day_names,self.month_names=LANGUAGES[lang]
+		
+	def set_time(self,epoch_time):
+		ct = time.ctime(epoch_time)
+		#'Sun Oct  6 10:17:07 2024'
+		self.time_split=[x for x in ct.split(' ') if x]
+		#['Sun', 'Oct', '6', '10:17:07', '2024']
+		#   0      1     2       3         4
+	
+	def get_weekday(self):
+		return self.day_names[self.time_split[0]]
+	
+	def get_day(self):
+		return self.time_split[2]
+	
+	def get_month(self):
+		return self.month_names[self.time_split[1]]
+	
+	def get_year(self):
+		return self.time_split[4]
+	
+	def get_time(self):
+		return self.time_split[3]
+		
+def get_extension(filename):
+	point = filename.rfind('.')
+	if point < 0: return ''
+	ext = filename[point + 1:].upper()
+	return ext
+		
 def printerr(message:str)->None:
 	if isinstance(message,bytes):
 		sys.stderr.write(message.decode('ascii',errors='ignore'))
@@ -181,6 +306,38 @@ class InputFileIterator:
 	def __str__(self):
 		return self.current()[self.root_path_length:]
 	
+	def find_begin(self)->(int,str):
+		i=-1
+		while i < self.filelist_len:
+			i += 1
+			if self.filelist[i]==DATA_BEGIN_MARKER:
+				#DEBUGPRINT(f'{i+2} "{self.filelist[i+1]}"')
+				return i+2,self.filelist[i+1]
+				
+	def find_end_after_index(self,index)->int:
+		while self.filelist[index] != DATA_END_MARKER:
+			index+=1
+			if index >= self.filelist_len:
+				return 0
+		return index-1
+	
+	def random_pic(self,num):
+		start,root_dir=self.find_begin()
+		end=self.find_end_after_index(start)
+		items=end-start
+		if num > items:
+			num=items
+		basked=[x for x in range(start,end+1)]
+		
+		print(f'{DATA_BEGIN_MARKER}')
+		print(f'{root_dir}')
+		while num>0:
+			i=random.randint(0,len(basked)-1)
+			print (self.filelist[i])
+			del(basked[i])
+			num-=1
+		print(f'{DATA_END_MARKER}')
+	
 	def _kick_index(self):
 		self.index+=1
 		if self.index < self.filelist_len:
@@ -218,6 +375,7 @@ class InputFileIterator:
 			# read until we find it or till end of the list
 			if self.current() == DATA_BEGIN_MARKER:
 				self._data_begin_marker_found()
+				self._kick_index()
 				return
 			try:
 				self._kick_index()
@@ -340,13 +498,6 @@ def bytes_to_utf8(string):
 	return string.decode('utf8',errors='ignore')
 
 
-def main() -> None:
-	print (f'200.123 {kilo_mega("200.123 ")}')
-	print (f'200.123 M {kilo_mega(" 200.123 M ")}')
-	print (f'200.123 K {kilo_mega(" 200.123 K")}')
-	print (f'200.123G {kilo_mega("200.123G")}')
-	print (f'128k {kilo_mega("128k")}')
-	pass
 
 class Tumbler:
 	def __init__(self,tumblers="|/-\\"):
@@ -366,12 +517,46 @@ class Tumbler:
 		i=self.__next__()
 		print(f'\b{i}',end='')
 		sys.stdout.flush()
-		
+
+import locale
+from datetime import datetime
+
+def local_time(epoch_time,lang):
+	save_locale=locale.getlocale()
+	print(f'{save_locale=}')
+	locale.setlocale(locale.LC_ALL, lang)
+	dt = datetime.fromtimestamp(epoch_time)
+	day_name = dt.strftime('%A')  # Sonntag
+	month_name = dt.strftime('%B')  # Januar
+	print(day_name, month_name)
+	locale.setlocale(locale.LC_ALL,save_locale)
+	
+
+
+
+
+def main() -> None:
+	print (f'200.123 {kilo_mega("200.123 ")}')
+	print (f'200.123 M {kilo_mega(" 200.123 M ")}')
+	print (f'200.123 K {kilo_mega(" 200.123 K")}')
+	print (f'200.123G {kilo_mega("200.123G")}')
+	print (f'128k {kilo_mega("128k")}')
+	pass
+
+def rand_test_list():
+	ip=InputFileIterator("/home/bob/python/listcopy/sander_audio.list","test_dat")
+	ip.random_pic(30)
+	
 if __name__ == '__main__':
+	rand_test_list()
+	exit(0)
+	lct=LocalTimeString('fy')
+	print(lct.get_weekday())
+	exit(0)
 	tumble=Tumbler('ABCDEFGH')
 	for i in tumble:
 		sleep(0.2)
 		print(f'\b{i}',end='')
 		sys.stdout.flush()
 		
-	main()
+	
