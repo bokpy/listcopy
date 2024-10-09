@@ -141,7 +141,25 @@ def get_extension(filename):
 	if point < 0: return ''
 	ext = filename[point + 1:].upper()
 	return ext
-		
+
+def center_string(text,length):
+	"""
+center a string in a string of len(length) between spaces.
+Cut the end of the string if it is to long,
+so there always a space at the start and at the end.
+	:param text: string to center
+	:param length: length of the string with "text" centered
+	:return: the centered string
+	"""
+	lt=len(text)
+	if lt > (length-2):
+		lt=length-2
+		text=text[:lt]
+	spaces=length-lt
+	front_spaces=spaces//2
+	end__spaces=spaces-front_spaces
+	return ' '*front_spaces + text + ' '*end__spaces
+	
 def printerr(message:str)->None:
 	if isinstance(message,bytes):
 		sys.stderr.write(message.decode('ascii',errors='ignore'))
@@ -548,7 +566,11 @@ def rand_test_list():
 	ip.random_pic(30)
 	
 if __name__ == '__main__':
-	rand_test_list()
+	print(f'->{center_string("Centered",40)}<-'
+			f'->{center_string("20 Centered",20)}<-'
+			f'->{center_string("to big123456 Centered",10)}<-'
+			)
+	#rand_test_list()
 	exit(0)
 	lct=LocalTimeString('fy')
 	print(lct.get_weekday())
