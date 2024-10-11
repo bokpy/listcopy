@@ -1,3 +1,5 @@
+#!/bin/python3
+'''
 {
  'AEBBracketValue':('none',store_none),
  'AELock':('none',store_none),
@@ -984,7 +986,7 @@
    # |                |          | list            | releases, releaseids, releasegroups,        |
    # |                |          |                | releasegroupids, tracks, compress,           |
    # |                |          |                | usermeta, sources)                          |
-'''Usage: fpcalc [OPTIONS] FILE [FILE...]
+Usage: fpcalc [OPTIONS] FILE [FILE...]
 
 Generate fingerprints from audio files/streams.
 
@@ -1004,3 +1006,31 @@ Options:
 -plain         Print the just the fingerprint in text format
 -version       Print version information
 '''
+
+tag_strings=['bind','slash','basic','filetype','alt_start','alt_close','name']
+def generate_tags(tags=tag_strings):
+
+	print(f'\nre_path= re.compile(')
+	plus="       "
+	for tag in tags:
+		print(f'{plus}{tag}_re')
+		plus="+ '|' +"
+	print(')')
+
+	print('\nclass TagToken:\n')
+	count=-1
+	for tag in tags:
+		count+=1
+		print(f'\t{tag} = {count}')
+
+	print('\n\tdef __init__(self,token_line_up):') # '\n\t\tfor token in token_line_up:\t\t\t')
+	for tag in tags:
+		print(f'''\t\t\tif token_line_up[TagToken.{tag}] :
+		\t\ttoken=token_line_up[TagToken.{tag}]
+		\t\tDEBUGPRINT(f'{tag} {{token}}')
+		\t\tself.token = TagToken.{tag}
+		\t\treturn''')
+	print()
+	
+if __name__ == '__main__':
+	generate_tags()

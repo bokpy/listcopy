@@ -43,7 +43,7 @@ Zero the full path above the source directory
 
 syntax: <path>       = <filetype>[,<filetype>]/<tag>[/<name>];
         <join>        = <+{{str}}+>
-        <filetype>   = <ext|file|default>:<class>|"copy"
+        <filetype>   = <ext|file|default>:<class>
         <tag>        = <exif|osm|mbz|subdir|literal>{{string}}
         <tag>        = <tag>[<join><tag>]
         <tag>        = (<tag>)<tag>)
@@ -59,141 +59,250 @@ for <tag>      "exif" https://manpages.org/exiftool "exiftool -list"
 for <tag>      "osm"  https://wiki.openstreetmap.org/wiki/Map_features(#Addresses)
 for <tag>      "mbz"  {bzm.MusicTags().str_tags()}
 '''
+#'Bind','Choice','Basic','FileType','Alt_start','Alt_close'
+#filetype_re   =r'(?:ext|file|default):[^,^/]+)'
+filetype_re   =r'((?:ext|file|default):[^,^/]+)'
+#re.compile(filetype_re)
+basic_re      =r'((?:exif|osm|mbz|subdir|literal){[^}]+})'
+#re.compile(basic_re)
+bind_re       =r'\+"([^"]+)"\+'
+slash_re      =r'(/)'
+alt_start_re  =r'(\()'
+alt_close_re  =r'(\))'
+name_re       =r'name:((?:exif|osm|mbz|subdir|literal){[^}]+})'
 
-filetype_token=r'(ext|file|default):([^,^/]+)'
-tag_token     =r'(exif|osm|mbz|subdir|literal){([^}]+)}'
-join_token    =r'\+"([^"]+)\+'
-slash_token   =r'/'
-choice_start_token  =r'(\()'
-choice_end_token    =r'(\))'
+split_basic_re=r'([^{]+){([^}]+)}'
+re_split_basic=re.compile(split_basic_re)
 
+#re.compile(name_re)
+# start\s+(?:false|good|bad)\s+good luck
+#exit(0)
 re_path= re.compile(
-		filetype_token
-		+ '|' + tag_token
-		+ '|' + join_token
-		+ '|' + slash_token
-		+ '|' + choice_start_token
-		+ '|' +  choice_end_token
+       bind_re
++ '|' +slash_re
++ '|' +basic_re
++ '|' +filetype_re
++ '|' +alt_start_re
++ '|' +alt_close_re
++ '|' +name_re
 )
-re_filetype=re.compile(r'(ext|file|default):([^,^/]+)')
-re_tag     =re.compile(r'(exif|osm|mbz|subdir|literal){([^}]+)}')
-re_join    =re.compile(r'\+"([^"]+)\+')
-re_slash   =re.compile(r'/')
 
+class TagToken:
 
-# primitive_tag='([^{]+){([^}]+)}'
-# 	re_primitive_tag=re.compile(primitive_tag)
-#
-# 	reg='([^{]+){([^}]+)}'
-# 	re_tag=re.compile(reg)
-#
-# 	# <tags><+{{str}}+><tags>
-# 	tie=r'([^+]+)\+([^+]+)\+(.*)'
-# 	re_tie=re.compile(tie)
-#
-# 	either='([^|]+)|(.*)'
-# 	re_either=re.compile(either)
-
-
-def show_substitute_help():
-	print(help_text)
+	bind      = 0
+	slash     = 1
+	basic     = 2
+	filetype  = 3
+	alt_start = 4
+	alt_close = 5
+	name      = 6
 	
-class TagNode:
+	mainline_tokens=(bind ,slash, basic, name)
+	diverge_tokens =(filetype,alt_start)
 	
-	Bind=1
-	Choice=2
-	Primetive=3
-	FileType=4
-	Root=5
-	Literal = 6
-	Leaf=7
+	token2str={
+		0:'bind',
+		1:'slash',
+		2:'basic',
+		3:'filetype',
+		4:'alt_start',
+		5:'alt_close',
+		6:'name'
+		}
 	
-	def __init__(self,token=0,tag_kind='',tag_name='',left=None,right=None,text='',):
+	file_data = None
+	exif_data = None
+	osm_data  = None
+	mbz_data  = None
+
+	def __init__(self,token_line_up):
+		#DEBUGPRINT(f'{token_line_up=}')
+		#DEBUGPRINT('TagToken:init')
+		self.tag_kind = ''
+		self.tag_name = ''
+		self.value=''
+		self.mainline = None
+		self.diverge  = None
 		
-		self.token = token
-		self.text  = text
-		self.left  = left
-		self.right = right
-		
-		if (not token) or (token == TagNode.Leaf):
-			self.token=TagNode.Leaf
-			self.tag_kind='shoot'
-			self.tag_name='bud'
-			self.text="twig"
+		# bind bind bind bind bind bind bind
+		if token_line_up[TagToken.bind] :
+			item=token_line_up[TagToken.bind]
+			self.value=item
+			#DEBUGPRINT(f'bind {item}')
+			self.token = TagToken.bind
 			return
-		if token==TagNode.Choice:
-			self.text='Choice'
+		
+		# slash slash slash slash slash slash
+		if token_line_up[TagToken.slash] :
+			token=token_line_up[TagToken.slash]
+			#DEBUGPRINT(f'slash {token}')
+			#self.value='slash'
+			self.tag_kind='/'
+			self.token = TagToken.slash
+			return
+		
+		# basic basic basic basic basic basic
+		if token_line_up[TagToken.basic] :
+			item=token_line_up[TagToken.basic]
+			#DEBUGPRINT(f'name {item}')
+			self.tag_kind,self.tag_name=re_split_basic.match(item).groups()
+			if self.tag_kind=='literal':
+				self.value=self.tag_name
+			self.token = TagToken.basic
+			return
+		
+		# filetype filetype filetype filetype
+		if token_line_up[TagToken.filetype] : # filetype ext:audio
+			item=token_line_up[TagToken.filetype]
+			self.tag_kind,self.tag_name=item.split(':')
+			if (self.tag_kind=='file') and ('\\' in self.tag_name):
+				self.tag_name=self.tag_name.replace('\\','/')
+				#DEBUGPRINT(f'filetype {item}')
+			self.token = TagToken.filetype
+			return
+		
+		# alt_start alt_start alt_start alt_start alt_start
+		if token_line_up[TagToken.alt_start] :
 			self.tag_kind='cross'
 			self.tag_name='road'
-			
+			#DEBUGPRINT(f'alt_start {token}')
+			self.token = TagToken.alt_start
+			return
+		
+		# alt_close alt_close alt_close alt_close
+		if token_line_up[TagToken.alt_close] :
+			token=token_line_up[TagToken.alt_close]
+			#DEBUGPRINT(f'alt_close {token}')
+			self.token = TagToken.alt_close
+			return
+		
+		# name name name name name name name name
+		if token_line_up[TagToken.name] :
+			# name exif{title}
+			item = token_line_up[TagToken.name]
+			self.tag_kind, self.tag_name = re_split_basic.match(item).groups()
+			#DEBUGPRINT(f'name {item}')
+			self.token = TagToken.name
+			return
+
 	def __str__(self):
-		if self.tag_kind: return self.tag_kind + ' ' + self.tag_name
-		if self.text: return self.text
-		return "token(" + str(self.token) + ")"
+		s='('
+		add=''
+		if self.tag_kind:
+			s+=f'{self.tag_kind}'
+			add='-'
+		if self.tag_name:
+			s+=f'{add}{self.tag_name}'
+			add='>'
+		if self.value:
+			s+=f'{add}{self.value}'
+		s+=')'
+		return self.token2str[self.token] + s
 	
-	def set(self,token=0,tag_kind='',tag_name='',left=None,right=None,text=''):
-		if token    : self.token    = token
-		if tag_kind : self.tag_kind = tag_kind
-		if tag_name : self.tag_name = tag_name
-		if left     : self.left     = left
-		if right    : self.right    = right
-		if text     : self.text     = text
+	def set_free_diverge(self,other):
+		next=self
+		while next.diverge:
+			next=next.diverge
+		next.diverge=other
+		
+	def clear(self):
+		self.file_data=None
+		self.exif_data=None
+		self.osm_data =None
+		self.mbz_data =None
+		
+	def is_bind(self):     return self.token==TagToken.bind
+	def is_slash(self):    return self.token==TagToken.slash
+	def is_basic(self):    return self.token==TagToken.basic
+	def is_filetype(self): return self.token==TagToken.filetype
+	def is_alt_start(self):return self.token==TagToken.alt_start
+	def is_alt_close(self):return self.token==TagToken.alt_close
+	def is_name(self):     return self.token==TagToken.name
 		
 	def show(self):
 		print(f'\n\nTagNode: {self.token} ',end='')
-		print(f' left({self.left!=None})',end='')
-		print(f' right({self.right!=None})',end='')
-		print(f' {self.tag_kind}{{{self.tag_name}}} "{self.text}"')
+		print(f' mainline({self.mainline!=None})',end='')
+		print(f' diverge({self.diverge!=None})',end='')
+		print(f' {self.tag_kind}{{{self.tag_name}}} "{self.value}"')
+		
+	def _columns(self):
+		try:
+			columns,_=os.get_terminal_size()
+			return columns
+		except OSError as e:
+			if e.errno!=25:
+				print(f'{e}')
+				exit(e.errno)
+		return 100
 	
-	def show_tree(self):
-		#DEBUGPRINT(f'show_tree')
-		columns,_=os.get_terminal_size()
+	def show_deep_tree(self):
+		diverse_node=None
+		print(f'TagToken:deep_tree:\n')
+		def show_deep(level,node):
+			nonlocal diverse_node
+			if not node:
+				return False
+			print(str(node),end='->')
+			if (not diverse_node) and node.diverge:
+				diverse_node=node.diverge
+			show_deep(level,node.mainline)
+			if diverse_node:
+				level+=1
+				print('\n'+'\t'*level,end='')
+				dv=diverse_node
+				diverse_node=None
+				show_deep(level,dv)
+				level-=1
+			
+		show_deep(0,self)
+			
+	def show_broad_tree(self):
+		#DEBUGPRINT(f'show_broad_tree')
+		columns=self._columns()
 		stack=deque([self])
-		def _show_tree(stack):
+		def _show_broad_tree(stack):
+			#DEBUGPRINT(stack)
 			stl=len(stack)
-			#DEBUGPRINT(f'_show_tree stack len ({stl})')
+			#DEBUGPRINT(f'_show_broad_tree stack len ({stl})')
 			if stl==0:
 				return
 			next_stack=deque()
 			item_len=columns//stl
-			while True:
-				try:
-					node=stack.pop()
-				except IndexError:
-					break
+			while stack:
+				node=stack.pop()
+				#node.show()
 				print(center_string(str(node),item_len),end='')
-				if node.left:
-					#DEBUGPRINT(f'append(node.left)')
-					next_stack.append(node.left)
-				if node.right:
-					#DEBUGPRINT(f'append(node.right)')
-					next_stack.append(node.right)
+				if node.mainline:
+					#DEBUGPRINT(f'append(node.mainline)')
+					next_stack.append(node.mainline)
+				if node.diverge:
+					#DEBUGPRINT(f'append(node.diverge)')
+					next_stack.append(node.diverge)
 			print()
-			_show_tree(next_stack)
-		_show_tree(stack)
+			_show_broad_tree(next_stack)
+		_show_broad_tree(stack) # start stack contains root or root of branche self
 		
-	def set_left(self,node):
-		self.left=node
+	def set_mainline(self,node):
+		self.mainline=node
 		
-	def set_right(self,node):
-		self.right=node
+	def set_diverge(self,node):
+		self.diverge=node
 		
-	def get_left(self):
-		return self.left
+	def get_mainline(self):
+		return self.mainline
 		
-	def get_right(self):
-		return self.right
+	def get_diverge(self):
+		return self.diverge
 
 class PathSeeker:
-	
-	
-	def __init__(self, path_format="default:copy", gps_file=None,language='eng') -> None:
-		self.tree=TagNode(TagNode.Root,text='Root')
+	root=None
+
+	def __init__(self, path_format=None, gps_file=None,language='eng') -> None:
 		lines=self.read_format(path_format)
-		DEBUGPRINT(f'{lines=}')
+		#DEBUGPRINT(f'{lines=}')
 		if lines:
 			self.grow_tree(lines)
-			self.tree.show_tree()
+		# 	self.tree.show_broad_tree()
 			
 	def read_format(self,format):
 		try_file=os.path.expanduser(format)
@@ -208,7 +317,7 @@ class PathSeeker:
 		return self.clean_white(format)
 			
 	def clean_white(self,format):
-		DEBUGPRINT(f'clean_white {format} type({type(format)})')
+		#DEBUGPRINT(f'clean_white {format} type({type(format)})')
 		head=-1
 		quote=False
 		end=len(format)-1
@@ -235,119 +344,60 @@ class PathSeeker:
 		return lines
 		
 	def grow_tree(self,lines):
-		stem=self.tree
-		def split_on_pars(string):
-			l=len(string)
-			ret=[]
-			front=1
-			for i in range(1,l):
-				if string[i]=='(':
-					return {'tags':ret,'tail':string[front:]}
-				if string[i]==')':
-					ret.append(string[front:i])
-					front=i+1
-			return {'tags':ret,'tail':string[front:]}
+		main_nodes  = deque()
+		choice_node = None
 		
-		def add_branche(tag_list)->TagNode:
-			pass
-			# DEBUGPRINT(f'add_branche({tag_list=})')
-			# if not tag_list: return None
-			# head=tag_list[0]
-			# if head[0] == '(':
-			# 	choice_bud=TagNode(TagNode.Choice)
-			# 	ways=split_on_pars(head)
-			# 	alternatives=ways['tags']
-			# 	choice_tail=add_branche(ways['tail'].append(tag_list[1:]))
-			# 	cur=choice_bud
-			# 	for choice in ways['tags']:
-			# 		cur.left=add_branche(choice)
-			# 		cur.left.left=choice_tail
-			# 		cur.right=TagNode(TagNode.Choice)
-			# 		cur=cur.right
-			# 	return choice_bud
-			
-			# knot = re_tie.match(head[0])
-			# if knot:
-			# 	knot_tail=head[0]
-			#
-			# 	DEBUGPRINT(f'{choice=}')
-			# DEBUGPRINT(f'add_branche({tag_list=})')
-			# primitive=self.re_primitive_tag.match(tag_list[0])
-			# if primitive:
-			# 	tagnode=TagNode(TagNode.Primetive,tag_kind=primitive.group(1),tag_name=primitive.group(2))
-			# 	knot.left=tagnode
-			# 	tagnode.show()
-			# 	return knot.left
-			
-			# head=tag_list[0]
-			# tail=tag_list[1:]
-			# if head[0] == '(':
-			# 	choices=split_on_pars(head)
-			# 	for choice in choices:
-			# 		DEBUGPRINT(f'{choice=}')
-			#
-			# tied=self.re_tie.match(tags)
-			# if tied:
-			# 	first_tag = add_branche(tied.group(1))
-			# 	glue = tied.group(2)
-			# 	second_tag= add_branche(tied.group(2))
-			# 	glue_node=TagNode(TagNode.Bind,first_tag,second_tag,text=glue)
-			# 	glue_node.show()
-			# 	return glue_node
 		def tokenize(string):
 			tokens = []
 			for match in re_path.findall(string):
-				tokens.append(TagNode,tag_)
-				token_type = None
-				ftype_token
-		+ '|' + tag_token
-		+ '|' + join_token
-		+ '|' + slash_token
-		+ '|' + choice_start_token
-		+ '|' +  choice_end_token
-				word_match, number_match, punctuation_match = match.groups()
-				if word_match:
-					token_type = "word"
-				elif number_match:
-					token_type = "number"
-				elif punctuation_match:
-					token_type = "punctuation"
-				tokens.append((match.group(0), token_type))
+				#DEBUGPRINT(f'{match=}',end='')
+				new_token=TagToken(match)
+				#DEBUGPRINT(f'new_token={str(new_token)}')
+				tokens.append(new_token)
 			return tokens
 		
-		string = "This is a sample sentence with numbers 123 and punctuation!"
-		tokens = tokenize(string)
-		print(tokens))
+		def append_on_mainline(tok):
+			nonlocal choice_node,main_nodes
+			while main_nodes:
+				node=main_nodes.pop()
+				node.mainline=tok
+			main_nodes.append(tok)
+		
+		def append_filetype(tok):
+			nonlocal main_nodes
+			self.root.set_free_diverge(tok)
+			main_nodes.append(tok)
+		
+		def append_switch(tok):
+			nonlocal main_nodes
+			while main_nodes:
+				node=main_nodes.pop()
+				node.set_free_diverge(tok)
+			main_nodes.append(tok)
 			
 		for line in lines:
-			DEBUGPRINT(f'{line=}'mport re
-
-
-			#<path>       = <filetype>[,<filetype>]/<tag>[/<name>];
-			slash=line.find('/')
-			# line[:slash]            = <filetype>[,<filetype>]
-			# line[:slash].split(',') = [<filetype>,<filetype>,...]
-			filetypes=line[:slash].split(',')
-			# line[slash:] = /<tag>[/<name>]
-			tags=line[slash:]
-			# tags.split('/') = [None,<tag>,<tag>,...]
-			subdirs=tags.split('/')
-			path=TagNode()
-			add_branche(path,subdirs)
-			DEBUGPRINT(f'{filetypes=}')
-			for filetype in filetypes:
-				DEBUGPRINT(f'{filetype=}')
-				kind,name=filetype.split(':')
-				stem.set(token=TagNode.FileType,tag_kind=kind,tag_name=name,left=path)
-				stem.right=TagNode()
-				stem=stem.right
-			self.tree.show_tree()
+			line_tokens=tokenize(line)
+			for tokkie in line_tokens:
+				if not self.root:
+					self.root=tokkie
+					main_nodes.append(tokkie)
+					continue
 				
+				if tokkie.is_filetype():
+					append_filetype(tokkie)
+					continue
+					
+				if tokkie.is_alt_start():
+					append_switch(tokkie)
+					continue
+					
+				if tokkie.token in TagToken.mainline_tokens:
+					append_on_mainline(tokkie)
+					
+					
+				#print(str(tokkie),end=',')
+			#print('\n' + '-'*50)
 	
-	def copy_path(self):
-		pass
-	
-		
 	def add_old_subdir(self,pos):
 		return f'not yet subdir {pos}'
 	
@@ -362,21 +412,20 @@ class PathSeeker:
 	
 	def compose_path(self,full_path,tail_path):
 		pass
-		# self.full_path=full_path
-		# self.tail_path=tail_path
-		# DEBUGPRINT(f'{tail_path=}')
-		# ext=get_extension(tail_path)
-		# if ext in self.parse_dict:
-		# 	return self.parse_dict[ext]()
-		# return self.tail_path
+
+	def show(self):
+		if not self.root:
+			print('PathSeeker:Tree is Empty')
+			return
+		print('\nPathSeeker:Tree:')
+		self.root.show_broad_tree()
+		
 
 def main() -> None:
-	tgn=TagNode(TagNode.Literal,None)
-	tgn.show_tree()
-	ts=LocalTimeString('fy')
-	show_substitute_help()
-	print( ts.get_weekday()+' '+ts.get_day()+'-'+ts.get_month()+'-'+ts.get_year())
-	#pathmaker=PathSeeker([1,2,'audio','year'])
+	#generate_tags()
+	ps=PathSeeker("syntax.test")
+	ps.root.show_deep_tree()
+	
 
 if __name__ == '__main__':
 	main()
