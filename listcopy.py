@@ -8,7 +8,7 @@ import pathlib
 import time
 import signal
 import listutils as lu
-from pathseeker import PathSeeker,show_substitute_help
+from pathseeker import PathSeeker,pathseeker_help
 from metadata import ExifTags
 import metadata as meta
 DEBUGPRINT=print
@@ -448,26 +448,28 @@ def process_filelisting(args):
 	global destination_path
 	global processed_file
 	global chunk_size
-	destination_path=os.path.expanduser(args.destination)
+	global pathseeker
+	
+	destination_path = os.path.expanduser(args.destination)
 	destination_path = lu.end_slash(destination_path)
-	input=os.path.expanduser(args.input)
-	if args.post_it:
+	input = os.path.expanduser(args.input)
+	if args.post_it: # deside in which place and files to keep track of the copying progress
 		tracker= os.path.join(os.path.expanduser('~'),args.post_it)
 	else:
 		tracker= os.path.join(os.path.expanduser('~'),'listcopy')
-	listing=lu.InputFileIterator(input,tracker)
-		
+	listing = lu.InputFileIterator(input,tracker)
 	path_seeker=PathSeeker(args.substitute,args.gps_info,language=args.language)
 	
-	target_fs_properties(destination_path)
+	target_fs_properties(destination_path) # test and store the capabilities of the device where the destination directory lives
 	chunk_size = FsBlockSize
 	
 	count=0
-	for src in listing:
-		dest = path_seeker.compose_path(src,str(listing))
+	for src_full,src_tail in listing:
+		dest = path_seeker.compose_path(src_full)
 		#processed_file=dst
 		if args.dry_run:
-			print(f'from: "{src}"')
+			print(f'from: "{src_tail}"')
+			print(f'from: "{src_full}"')
 			print(f'to  : "{destination_path}{dest}"')
 			print()
 			continue
@@ -494,8 +496,9 @@ def main() -> None:
 	print(f'{args.input=} {args.destination=}')
 	
 	if args.substitute:
-		if args.substitute[0].upper() == 'HELP':
-			show_substitute_help()
+		DEBUGPRINT(f'{args.substitute=}')
+		if args.substitute.upper() == 'HELP':
+			pathseeker_help()
 			exit(0)
 	
 	if args.todo:
@@ -507,6 +510,8 @@ def main() -> None:
 		print(f'Need at least an input file and a destination!')
 		exit(0)
 	
+	global pathseeker
+	pathseeker=PathSeeker(args.substitute,args.gps_info,args.language)
 	process_filelisting(args)
 	
 if __name__ == '__main__':

@@ -247,16 +247,16 @@ class ExifTags(InputFileIterator):
 			return 'weekday '+UNKNOWN
 		return f'{dtm[CT_WEEKDAY]}'
 		
-	def set_language(self,language):
-		if language.upper()=='NL':
-			self.translate_day=NL_DAG
-			self.translate_mount=NL_MAAND
-			return
-		if language.upper()=='FY':
-			self.translate_day=FRIS_DAYS
-			self.translate_mount=FRIS_MONTHS
-			return
-		raise ValueError( f'"{language}" not supported (yet).')
+	# def set_language(self,language):
+	# 	if language.upper()=='NL':
+	# 		self.translate_day=NL_DAG
+	# 		self.translate_mount=NL_MAAND
+	# 		return
+	# 	if language.upper()=='FY':
+	# 		self.translate_day=FRIS_DAYS
+	# 		self.translate_mount=FRIS_MONTHS
+	# 		return
+	# 	raise ValueError( f'"{language}" not supported (yet).')
 		
 	def destination(self)->str:
 		self.set(self.current())

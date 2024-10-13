@@ -319,7 +319,7 @@ class InputFileIterator:
 		#DEBUGPRINT(f'{self.root_path=}')
 		if self.root_path:
 			#DEBUGPRINT(f'{self.root_path}')
-			return self.current()
+			return self.current(),self.current()[self.root_path_length:]
 		
 	def __str__(self):
 		return self.current()[self.root_path_length:]
@@ -360,7 +360,7 @@ class InputFileIterator:
 		self.index+=1
 		if self.index < self.filelist_len:
 			return True
-		self.index-=1
+		self.index-=1 # stay put and keep repeating StopIteration
 		#DEBUGPRINT('FIRE STOPITERATION FIRE STOPITERATION FIRE STOPITERATION FIRE STOPITERATION FIRE STOPITERATION ')
 		raise StopIteration
 		
