@@ -4,12 +4,15 @@ import re
 import subprocess
 import json
 import time
+from icecream import ic
+from numpy.distutils.system_info import language_map
+
 #from codecs import namereplace_errors
 #from datetime import datetime
 #from collections import deque
 #import pandas as pd
 
-from listutils import InputFileIterator,timestamp2epouch,end_slash
+from listutils import InputFileIterator,timestamp2epouch,end_slash,LocalTimeString
 from geolocate import gps_alpha_to_float, ovp_near_query, ovp_box_query
 from gpstree import GpsTree,GpsTreeNode
 
@@ -39,8 +42,12 @@ UNKNOWN='unknown'
 CAMERA_TAGS={'CameraID':0,'Make':1,'Model':2,'CameraType2':3,
              'EquipmentVersion':4,'BodyFirmwareVersion':5,'DeviceType':6,
              'CameraTemperature':7,'temp':8}
-
 count_spaces = re.compile(r'^\s*')
+
+def upcase_initial(string):
+	if string[0].isupper():
+		return string
+	return string[0].upper() + string[1:]
 
 def count_and_split(string):
 	# count the leading spaces of string
@@ -150,33 +157,41 @@ def set_exiftags_format(format):
 	global _EXIFTAGSFORMAT
 	_EXIFTAGSFORMAT=format
 
-class ExifTags(InputFileIterator):
+class ExifTags:
 	EXIFTAGS = ['date', 'yearmonth', 'year', 'month', 'day', 'weekday','camera', 'gps',
 	            'flash', 'light', 'mime'] # + [str(x) for x in range(4,-5,-1) if x != 0]
+	localtimestring = None
 	#"2024:09:03 10:51:43+02:00"
 	date_split=re.compile(r'(\d+):(\d+):(\d+) (\d+):(\d+):(\d+)(.*)')
 	#'date':["2012","01","25","03","41","57"]
 	
-	def __init__(self,destination_dir:str,input_file,tracker_file_stem):
-		global _EXIFTAGSFORMAT
-		
-		InputFileIterator.__init__(self,destination_dir,input_file,tracker_file_stem)
-		self.path_format=_EXIFTAGSFORMAT
-		self.tags={}
-		self.translate_day={}
-		self.translate_mount={}
-		self.dest_dir = end_slash(destination_dir)
-		self.ovpi_file = None
-		self.new_points_count=OPS_SAVE_COUNT
+	def __init__(S):
+		S.file_path=None
+		S.json_tags=None
+		S.tags=None
+		S.ovpi_file = None
+		S.new_points_count=OPS_SAVE_COUNT
 	
-	def set(self,file_path):
-		#DEBUGPRINT(f'ExifTags set ( {file_path=}')
-		self.file_path=file_path
-		self.json_tags={}
-		self.tags={}
-		self.early=time.time()+4e9 # don't expect to get foto's from more then 100 years in the future
-		self._collect_exif_from_file()
-		self._process()
+	def set_language(S,language):
+		S.localtimestring = LocalTimeString(language)
+		
+	def set_file(S,file_path):
+		DEBUGPRINT(f'set_file("{file_path}")')
+		S.file_path=file_path
+		S.json_tags=None
+		S.tags= {}
+		S.ovpi_file = None
+		S.early=time.time()+4e9 # don't expect to get foto's from more then 100 years in the future
+		#S.new_points_count=OPS_SAVE_COUNT
+	
+	# def set(self,file_path):
+	# 	#DEBUGPRINT(f'ExifTags set ( {file_path=}')
+	# 	self.file_path=file_path
+	# 	self.json_tags={}
+	# 	self.tags={}
+	# 	self.early=time.time()+4e9 # don't expect to get foto's from more then 100 years in the future
+	# 	self._collect_exif_from_file()
+	# 	self._process()
 		
 	def add_gps_point(self,node):
 		global OvpInf,OPS_SAVE_COUNT
@@ -272,85 +287,110 @@ class ExifTags(InputFileIterator):
 	# 		return tag + self.tags[tag] + '/'
 	# 	return tag + UNKNOWN  + '/'
 	#
-	def make_sub_dir(self)->str:
-		
-		dir=''
-		for tag in self.path_format:
-			if tag == 'date':
-				dir += self.extract_datum() + '/'
-				continue
-				
-			if tag == 'yearmonth':
-				if 'date' in self.tags:
-					dir = dir + self.extract_month_year() + '/'
-					continue
-				dir= dir + UNKNOWN  + '/'
-				continue
-
-			if tag == 'year':
-				if 'date' in self.tags:
-					date=self.tags['date']
-					dir = dir + self.extract_year() + '/'
-					continue
-				dir= dir + 'year ' + UNKNOWN  + '/'
-				continue
-				
-			if tag == 'month':
-				if 'date' in self.tags:
-					date=self.tags['date']
-					dir = dir + self.extract_month() + '/'
-					continue
-				dir= dir + UNKNOWN  + '/'
-				continue
-				
-			if tag == 'weekday':
-				if 'date' in self.tags:
-					date=self.tags['date']
-					dir = dir + self.extract_weekday() + '/'
-					continue
-				dir= dir + UNKNOWN  + '/'
-				continue
-				
-			if tag == 'day':
-				if 'date' in self.tags:
-					date=self.tags['date']
-					dir = dir + self.extract_day() + '/'
-					continue
-				dir= dir + UNKNOWN  + '/'
-				continue
-				
-			if tag == 'camera':
-				dir = dir + self.extract_camera() + '/'
-				continue
-			
-			if tag == 'gps':
-				dir = dir +  self.extract_gps() + '/'
-				continue
-				
-			if tag == 'flash':
-				if 'flash' in self.tags:
-					dir = dir + 'Flash '+ self.tags['flash'] + '/'
-					continue
-				dir= dir + UNKNOWN  + '/'
-				continue
-			
-			if tag == 'light':
-				if 'light' in self.tags:
-					dir = dir + 'light '+ self.tags['light'] + '/'
-					continue
-				dir= dir + UNKNOWN  + '/'
-				continue
-				
-			if tag == 'mime':
-				if 'mime' in self.tags:
-					dir = dir + str(self.tags['mime']) + '/'
-					continue
-				dir= dir + UNKNOWN  + '/'
-				continue
-			
-			dir = dir + self.sub_dir(tag) + '/'
-			
-		return dir
+	
+	def exiftool_j(S):
+		try:
+			res = subprocess.check_output(["exiftool", "-j", S.file_path])
+		except subprocess.SubprocessError as e:
+			print(f'exiftool_j subprocess.SubprocessError {e}')
+			return {}
+		#DEBUGPRINT(f'{res=}')
+		dct=json.loads(res)
+		if isinstance(dct,list) : return dct[0]
+		return dct
+	
+	def get_exif_tag(S,tag)->str:
+		DEBUGPRINT(f'get_exif_tag({tag})')
+		if S.json_tags == None:
+			S.json_tags=S.exiftool_j()
+			DEBUGPRINT (json.dumps(S.json_tags,indent=4))
+		if tag in S.json_tags:
+			DEBUGPRINT (json.dumps(S.json_tags,indent=4))
+			return S.json_tags[tag]
+		tag=upcase_initial(tag)
+		if tag in S.json_tags:
+			DEBUGPRINT (json.dumps(S.json_tags,indent=4))
+			return S.json_tags[tag]
+		return ''
+		g
+		#
+		# dir=''
+		# for tag in self.path_format:
+		# 	if tag == 'date':
+		# 		dir += self.extract_datum() + '/'
+		# 		continue
+		#
+		# 	if tag == 'yearmonth':
+		# 		if 'date' in self.tags:
+		# 			dir = dir + self.extract_month_year() + '/'
+		# 			continue
+		# 		dir= dir + UNKNOWN  + '/'
+		# 		continue
+		#
+		# 	if tag == 'year':
+		# 		if 'date' in self.tags:
+		# 			date=self.tags['date']
+		# 			dir = dir + self.extract_year() + '/'
+		# 			continue
+		# 		dir= dir + 'year ' + UNKNOWN  + '/'
+		# 		continue
+		#
+		# 	if tag == 'month':
+		# 		if 'date' in self.tags:
+		# 			date=self.tags['date']
+		# 			dir = dir + self.extract_month() + '/'
+		# 			continue
+		# 		dir= dir + UNKNOWN  + '/'
+		# 		continue
+		#
+		# 	if tag == 'weekday':
+		# 		if 'date' in self.tags:
+		# 			date=self.tags['date']
+		# 			dir = dir + self.extract_weekday() + '/'
+		# 			continue
+		# 		dir= dir + UNKNOWN  + '/'
+		# 		continue
+		#
+		# 	if tag == 'day':
+		# 		if 'date' in self.tags:
+		# 			date=self.tags['date']
+		# 			dir = dir + self.extract_day() + '/'
+		# 			continue
+		# 		dir= dir + UNKNOWN  + '/'
+		# 		continue
+		#
+		# 	if tag == 'camera':
+		# 		dir = dir + self.extract_camera() + '/'
+		# 		continue
+		#
+		# 	if tag == 'gps':
+		# 		dir = dir +  self.extract_gps() + '/'
+		# 		continue
+		#
+		# 	if tag == 'flash':
+		# 		if 'flash' in self.tags:
+		# 			dir = dir + 'Flash '+ self.tags['flash'] + '/'
+		# 			continue
+		# 		dir= dir + UNKNOWN  + '/'
+		# 		continue
+		#
+		# 	if tag == 'light':
+		# 		if 'light' in self.tags:
+		# 			dir = dir + 'light '+ self.tags['light'] + '/'
+		# 			continue
+		# 		dir= dir + UNKNOWN  + '/'
+		# 		continue
+		#
+		# 	if tag == 'mime':
+		# 		if 'mime' in self.tags:
+		# 			dir = dir + str(self.tags['mime']) + '/'
+		# 			continue
+		# 		dir= dir + UNKNOWN  + '/'
+		# 		continue
+		#
+		# 	dir = dir + self.sub_dir(tag) + '/'
+		#
+		# return dir
 	
 	def sub_dir(self,index)->str:
 		i=int(index)
@@ -373,16 +413,16 @@ class ExifTags(InputFileIterator):
 			print(json.dumps(self.tags,indent=4))
 			return
 		print(json.dumps(self.json_tags,indent=4))
-	
-	def _collect_exif_from_file(self)->None:
-		metadata=do_exiftool_json(self.file_path)
-		if type(metadata) != dict:
-			print(f'do_exiftool_json returned {type(metadata)}')
-			return
-		if metadata == {}:
-			return
-		self.json_tags=metadata
-		self._process()
+
+	# def _collect_exif_from_file(self)->None:
+	# 	metadata=do_exiftool_json(self.file_path)
+	# 	if type(metadata) != dict:
+	# 		print(f'do_exiftool_json returned {type(metadata)}')
+	# 		return
+	# 	if metadata == {}:
+	# 		return
+	# 	self.json_tags=metadata
+	# 	self._process()
 		
 	def _process(self)->None:
 		global TAG_PROCESSOR

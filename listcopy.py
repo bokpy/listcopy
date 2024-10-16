@@ -458,16 +458,19 @@ def process_filelisting(args):
 	else:
 		tracker= os.path.join(os.path.expanduser('~'),'listcopy')
 	listing = lu.InputFileIterator(input,tracker)
-	path_seeker=PathSeeker(args.substitute,args.gps_info,language=args.language)
+	# path_seeker=PathSeeker(args.substitute,args.gps_info,language=args.language)
+	# DEBUGEXIT(0)
 	
 	target_fs_properties(destination_path) # test and store the capabilities of the device where the destination directory lives
 	chunk_size = FsBlockSize
 	
 	count=0
 	for src_full,src_tail in listing:
-		dest = path_seeker.compose_path(src_full)
+		print('<'*35+'-'*40+'>'*35)
+		dest = pathseeker.compose_path(src_full)
 		#processed_file=dst
 		if args.dry_run:
+			#print('<'*35+'-'*40+'>'*35)
 			print(f'from: "{src_tail}"')
 			print(f'from: "{src_full}"')
 			print(f'to  : "{destination_path}{dest}"')
@@ -512,6 +515,7 @@ def main() -> None:
 	
 	global pathseeker
 	pathseeker=PathSeeker(args.substitute,args.gps_info,args.language)
+	pathseeker.root.save_to_file('test.dump')
 	process_filelisting(args)
 	
 if __name__ == '__main__':

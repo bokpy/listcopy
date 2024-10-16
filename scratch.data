@@ -1032,5 +1032,12 @@ def generate_tags(tags=tag_strings):
 		\t\treturn''')
 	print()
 	
+def yielder():
+	for x in range(0,21):
+		yield x
+			
 if __name__ == '__main__':
-	generate_tags()
+	#generate_tags()
+	yi=yielder()
+	for i in yi:
+		print(i,end=', ')

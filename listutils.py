@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 import time
-import datetime
+import datetime as dt # datetime.datetime gives problems
 import random
 from collections import deque
 import os
@@ -105,6 +105,17 @@ FILTEROUT=['/Cookies/','/Microsoft/','/Windows/','/Cache','#.*#$','\.lnk$',
            '\.ini$','/NTUSER.DAT',]
 DEBUGPRINT=print
 
+# class DequeStack(deque):
+# 	def __init__(S):
+# 		super(deque, S).__init__()
+#
+# 	def push(S,val):
+# 		S.append(val)
+#
+# 	def peek(S):
+# 		return S[0]
+	
+
 class LocalTimeString:
 	
 	def __init__(self,lang='eng'):
@@ -189,8 +200,8 @@ def timestamp2epouch(tmstmp):
 	if not ts:
 		return 0.0
 	tsg=ts.group
-	dt = datetime.datetime(int(tsg(1)),int(tsg(2)),int(tsg(3)),int(tsg(4)),int(tsg(5)))
-	return time.mktime(dt.timetuple())
+	dat = dt.datetime(int(tsg(1)),int(tsg(2)),int(tsg(3)),int(tsg(4)),int(tsg(5)))
+	return time.mktime(dat.timetuple())
 
 # # Original byte string
 # original_bytes = b"Hello, World!"
@@ -564,13 +575,65 @@ def main() -> None:
 def rand_test_list():
 	ip=InputFileIterator("/home/bob/python/listcopy/sander_audio.list","test_dat")
 	ip.random_pic(30)
+
+
+import sys
+import termios
+import tty
+
+
+def get_cursor_position():
+	# Save current terminal settings
+	fd = sys.stdin.fileno()
+	try:
+		old_settings = termios.tcgetattr(fd)
+	except termios.error as e:
+		return 0,0
 	
+	try:
+		# Set terminal to raw mode to capture output
+		tty.setraw(fd)
+		
+		# Send escape sequence to get cursor position
+		sys.stdout.write("\033[6n")
+		sys.stdout.flush()
+		
+		# Read the response from the terminal
+		response = ""
+		while True:
+			char = sys.stdin.read(1)
+			response += char
+			if char == "R":
+				break
+	
+	finally:
+		# Restore the terminal settings
+		termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+	
+	# Parse the response (format: ESC [ row ; col R)
+	response = response.lstrip("\033[[").rstrip("R")
+	row, col = map(int, response.split(";"))
+	
+	return row, col
+
 if __name__ == '__main__':
+	#
+	# dqs=DequeStack()
+	# for x in range(1,11):
+	# 	dqs.push(x)
+	#
+	# while dqs:
+	# 	a=dqs,pop()
+	# 	print(a)
+	#
+	# exit(0)
 	print(f'->{center_string("Centered",40)}<-'
 			f'->{center_string("20 Centered",20)}<-'
 			f'->{center_string("to big123456 Centered",10)}<-'
 			)
 	#rand_test_list()
+	timestr = "2024:09:03 10:51:43+02:00"
+	print(f'{timestamp2epouch(timestr)}')
 	exit(0)
 	lct=LocalTimeString('fy')
 	print(lct.get_weekday())

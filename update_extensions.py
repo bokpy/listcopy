@@ -64,7 +64,8 @@ class FileinfoComRequester:
 def main() -> None:
 	print(f'''# This works for now 29 sept 2024.
 # When "{URL}" gets redesigned the script needs to be adopted.
-# A more robust parsing is maybe nicer.''')
+# A more robust parsing is maybe nicer.
+DO NOT EDIT regenerate with update_extensions.py > extensionsets.py''')
 	extensions_dict={}
 	for ext_type in TYPES:
 		#print(f'\n# noinspection SpellCheckingInspection')
@@ -82,7 +83,7 @@ def main() -> None:
 		print (f"\t'{key}':{extensions_dict[key]},")
 	print (f'\t}}\n')
 		
-	
+	print('''DO NOT EDIT regenerate with update_extensions.py > extensionsets.py''')
 	
 		# from bs4 import BeautifulSoup
 		#

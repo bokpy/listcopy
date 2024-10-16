@@ -5,14 +5,16 @@ import subprocess
 import time
 import re
 from collections import deque
+
 import metadata as meta
 import extensions as ext
-from listutils import LocalTimeString,get_extension,center_string
+from listutils import LocalTimeString,get_extension,center_string,get_cursor_position
 import brainzmusic as bzm
 from test_extensions import test_extensions
 
+from icecream import ic
 DEBUGPRINT=print
-
+exiftags=meta.ExifTags()
 
 _ext_types='","'.join(ext.collect_mime_types())
 
@@ -104,6 +106,33 @@ re_path= re.compile(
 + '|' +alt_or_re
 )
 
+TagTokenType=[
+	'+', # bind      = 0
+	'/', # slash     = 1
+	'B', # basic     = 2
+	'F', # filetype  = 3
+	'(', # alt_start = 4
+	')', # alt_close = 5
+	'N', # name      = 6
+	'|', # alt_or    = 7
+	'0'  # nop       = 8
+]
+
+def showTagToken(S):
+	S.show()
+	
+def TagTokenPrintShort(S):
+	print(S.str_short(),end=' ')
+	
+	
+def show_tag_stack(stack,title=''):
+	if title:
+		print(title)
+	for i in range(0,len(stack)):
+		print(f'{i:3} {str(stack[i])}')
+	
+TagTokenId=1
+	
 class TagToken:
 
 	bind      = 0
@@ -116,8 +145,8 @@ class TagToken:
 	alt_or    = 7
 	nop       = 8
 	
-	mainline_tokens=(bind ,slash, basic, name)
-	diverge_tokens =(filetype,alt_start)
+	# mainline_tokens=(bind ,slash, basic, name)
+	# diverge_tokens =(filetype,alt_start)
 	
 	token2str={
 		0:'bind',
@@ -129,14 +158,18 @@ class TagToken:
 		6:'name'
 		}
 	
+	file_path = None
 	file_data = None
 	exif_data = None
 	osm_data  = None
 	mbz_data  = None
 
 	def __init__(self,token_line_up=None,type=-1):
+		global TagTokenId
 		#DEBUGPRINT(f'{token_line_up=}')
 		#DEBUGPRINT('TagToken:init')
+		self.id=TagTokenId
+		TagTokenId+=1
 		self.tag_kind = ''
 		self.tag_name = ''
 		self.addition=''
@@ -225,50 +258,114 @@ class TagToken:
 			return
 
 	def __str__(S):
+		M=D='0'
+		ret=TagTokenType[S.token]+'.'
+		if S.mainline: M='M'
+		if S.diverge: D='D'
 		if S.addition:
+			S.addition=str(S.addition)
+			ret += S.addition
 			# these are:
 			# bind      = 0
 			# slash     = 1
 			# basic     = 2 if literal
+		elif S.token == TagToken.basic:
+			ret += f'({S.tag_kind}#{S.tag_name})'
+		elif S.token == TagToken.name:
+			ret += f'Name:{S.tag_kind}#{S.tag_name})'
+		if not len(ret)<2:
+			ret += S.tag_kind
+		return ret+'<'+M+D+'>'
+	
+	def __iter__(S):
+		S.it_cur=S
+		S.diverse_stack=deque()
+		return S
+	
+	def __next__(S):
+		next=S.it_cur.mainline
+		if S.it_cur.diverge:
+			S.diverse_stack.append(S.it_cur.diverge)
+			
+		
+	
+	def show(S,comment=''):
+		if comment: print(comment)
+		print (str(S))
+	
+	def get_token_info(S)->str:
+		if S.addition:
+			S.addition=str(S.addition)
 			return S.addition
+			# these are:
+			# bind      = 0
+			# slash     = 1
+			# basic     = 2 if literal
 		if S.token == TagToken.basic:
 			S.token_lookup()
-			return S.addition
-		if S.token == TagToken.name:
+		elif S.token == TagToken.name:
 			S.token_lookup()
-			return S.addition
-		
+		S.addition=str(S.addition)
+		return S.addition
+	
 	def token_lookup(S):
+		global exiftags
 		if S.tag_kind == 'exif':
-			if not S.exif_data:
-				S.exif_data=
+			S.addition=exiftags.get_exif_tag(S.tag_name)
+			return  S.addition
+		
+	def to_tuple(S):
+		m_id=d_id=0
+		if S.mainline: m_id=S.mainline.id
+		if S.diverge : d_id=S.diverge.id
+		return (S.id,m_id,d_id,S.token,S.tag_kind,S.tag_name,S.addition)
 	
-	
-	# def __str__(self):
-	# 	s='('
-	# 	add=''
-	# 	if self.tag_kind:
-	# 		s+=f'{self.tag_kind}'
-	# 		add='-'
-	# 	if self.tag_name:
-	# 		s+=f'{add}{self.tag_name}'
-	# 		add='>'
-	# 	if self.addition:
-	# 		s+=f'{add}{self.addition}'
-	# 	s+=')'
-	# 	return self.token2str[self.token] + s
-	
-	def set_free_diverge(self,other):
+	def str_short(S):
+		if S.mainline: M='M'
+		else: M='0'
+		if S.diverge : D='D'
+		else: D='0'
+		T = TagTokenType[S.token]
+		return f'{T}:{M}{D}'
+		
+	def save_to_file(S,file_name):
+		dump_file=0
+		def jdump(node):
+			nonlocal dump_file
+			json.dump(node.to_tuple(),dump_file)
+		
+		try:
+			with open(file_name,'w') as f:
+				dump_file=f
+				S.walk_broad(jdump)
+		except OSError as e:
+			print(f'TagToken.save_to_file(S,"{file_name}") Failed')
+			
+	def set_free_diverge(self,other:'TagToken'):
 		next=self
 		while next.diverge:
 			next=next.diverge
 		next.diverge=other
-		
-	def clear_data(self):
-		self.file_data=None
-		self.exif_data=None
-		self.osm_data =None
-		self.mbz_data =None
+		return next
+	
+	def append_to_line(S,other:'TagToken'):
+		tail=S
+		while tail.mainline:
+			tail=tail.mainline
+		tail.mainline=other
+	
+	def append_on_mainlines(S,other:'TagToken'):
+		knot=S
+		while knot:
+			knot.append_to_line(other)
+			knot=knot.diverge
+	
+	def set_file(S,file_path):
+		S.file_path=file_path
+		S.file_data=None
+		S.exif_data=None
+		S.osm_data =None
+		S.mbz_data =None
 		
 	def is_bind(self):     return self.token==TagToken.bind
 	def is_slash(self):    return self.token==TagToken.slash
@@ -278,13 +375,7 @@ class TagToken:
 	def is_alt_or(self):   return self.token==TagToken.alt_or
 	def is_alt_close(self):return self.token==TagToken.alt_close
 	def is_name(self):     return self.token==TagToken.name
-		
-	def show(self):
-		print(f'\n\nTagNode: {self.token} ',end='')
-		print(f' mainline({self.mainline!=None})',end='')
-		print(f' diverge({self.diverge!=None})',end='')
-		print(f' {self.tag_kind}{{{self.tag_name}}} "{self.addition}"')
-		
+	
 	def _columns(self):
 		try:
 			columns,_=os.get_terminal_size()
@@ -295,26 +386,78 @@ class TagToken:
 				exit(e.errno)
 		return 100
 	
+	def show_mainline(S):
+		next=S
+		while next:
+			print (str(next),end='')
+			next=next.mainline
+		print()
+		
+	def show_types(S):
+		cur=S
+		while cur:
+			print (f'"{TagTokenType[cur.token]}" ',end='')
+			cur=cur.mainline
+			if cur and cur.diverge:
+				cur.diverge.show_types()
+		print()
+	
 	def show_deep_tree(self):
-		diverse_node=None
+		diverse_nodes=deque()
+		split_node=None
 		print(f'TagToken:deep_tree:\n')
 		def show_deep(level,node):
-			nonlocal diverse_node
+			nonlocal diverse_nodes,split_node
 			if not node:
 				return False
-			print(str(node),end='->')
-			if (not diverse_node) and node.diverge:
-				diverse_node=node.diverge
+			s=str(node)
+			if not s:
+				s = f'[{node.tag_kind}:{node.tag_name}]'
+			print(s,end='->')
+			if node.diverge:
+				r,c=get_cursor_position()
+				diverse_nodes.append((node.diverge,c))
 			show_deep(level,node.mainline)
-			if diverse_node:
+			while diverse_nodes:
 				level+=1
-				print('\n'+'\t'*level,end='')
-				dv=diverse_node
-				diverse_node=None
+				dv,c=diverse_nodes.pop()
+				print('\n'+' '*c,end='')
 				show_deep(level,dv)
 				level-=1
 		show_deep(0,self)
 		print()
+		
+	def walk_broad(S,func):
+		stack=deque([S])
+		def _work_brache(stack):
+			nonlocal func
+			if not stack:
+				return
+			next_stack=deque()
+			while stack:
+				node=stack.pop()
+				func(node)
+				if node.mainline:
+					next_stack.append(node.mainline)
+				if node.diverge:
+					next_stack.append(node.diverge)
+			_work_brache(next_stack)
+		_work_brache(stack) # start stack contains root or root of branche self
+		
+	def yielder(S):
+		DEBUGPRINT(f'TagToken.yielder')
+		diverge_fifo=deque()
+		current=S
+		while True:
+			while current:
+				if current.diverge:
+					diverge_fifo.appendleft(current.diverge)
+				yield current
+				current=current.mainline
+			if not diverge_fifo:
+				return
+			print('pop '*10)
+			current=diverge_fifo.pop().diverge
 			
 	def show_broad_tree(self):
 		#DEBUGPRINT(f'show_broad_tree')
@@ -342,22 +485,13 @@ class TagToken:
 			_show_broad_tree(next_stack)
 		_show_broad_tree(stack) # start stack contains root or root of branche self
 		
-	def set_mainline(self,node):
-		self.mainline=node
-		
-	def set_diverge(self,node):
-		self.diverge=node
-		
-	def get_mainline(self):
-		return self.mainline
-		
-	def get_diverge(self):
-		return self.diverge
-
 class PathSeeker:
 	root=None
 
 	def __init__(self, path_format=None, gps_file=None,language='eng') -> None:
+		ic(path_format)
+		global exiftags
+		exiftags.set_language(language)
 		lines=self.read_format(path_format)
 		#DEBUGPRINT(f'{lines=}')
 		if lines:
@@ -372,7 +506,7 @@ class PathSeeker:
 					self.parse_dict=json.load(f)
 					return None
 			with open(try_file,'r') as f:
-				DEBUGPRINT(f'read file "{try_file}"')
+				DEBUGPRINT(f'read file "{try_file=}"')
 				format=f.read()
 		return self.clean_white(format)
 			
@@ -404,8 +538,10 @@ class PathSeeker:
 		return lines
 		
 	def grow_tree(self,lines):
-		main_nodes   = deque()
-		choice_stack = deque()
+		ic(self)
+		junction_nodes = deque()
+		current_line=''
+		tailnode = self.root    = None
 		
 		def tokenize(string):
 			tokens = []
@@ -416,50 +552,110 @@ class PathSeeker:
 				tokens.append(new_token)
 			return tokens
 		
-		def append_on_mainline(tok):
-			nonlocal main_nodes
-			while main_nodes:
-				node=main_nodes.pop()
-				node.mainline=tok
-			main_nodes.append(tok)
-		
+		def continue_on_main(tok):
+			nonlocal tailnode
+			tailnode.mainline=tok
+			tailnode=tok
+			
+		def continue_on_diverge(splitter:TagToken,tok:TagToken):
+			nonlocal tailnode
+			tailnode=splitter.set_free_diverge(tok)
+			
 		def append_filetype(tok):
-			nonlocal main_nodes
-			self.root.set_free_diverge(tok)
-			main_nodes.append(tok)
+			"""
+			make tok root if there is no root jet.
+			else connect to the frist free diverge node from the root up
+			make tok the tailnode.
+			:param tok: node of type filetype
+			:return:
+			"""
+			nonlocal tailnode
+			if not self.root:
+				self.root=tok
+			else:
+				tailnode=self.root.set_free_diverge(tok)
+
+		def append_slash(tok):
+			"""
+			if the current tail is a filetype node this slash starts a new path for all
+			open tail nodes from the root up.
+			else connect to the previous tail node
+			:param tok: / node
+			:return:
+			"""
+			nonlocal tailnode
+			#DEBUGPRINT('append_slash',str(tailnode),str(tok))
+			if tailnode.is_filetype():
+				#DEBUGPRINT('tailnode.is_filetype')
+				next=self.root
+				while next:
+					if not next.mainline:
+						next.mainline=tok
+					next=next.diverge
+				tailnode=tok
+				return
+			continue_on_main(tok)
 		
+		#( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( (
 		def append_switch(tok):
-			nonlocal main_nodes,choice_stack
-			end_node=TagToken(type=TagToken.alt_close)
-			choice_stack.append(end_node)
-			choice_stack.append(tok)
-			append_on_mainline(tok)
-			
-		def diverge_to_next(tok):
-			nonlocal main_nodes,choice_stack
-			choice_node=choice_stack.pop()
-			end_node   =choice_stack.pop()
-			append_on_mainline(end_node)
-			main_nodes.pop()               # don't continue on the mainline jet
-			branche=TagToken(type=TagToken.alt_start)
-			choice_node.diverge=branche
-			choice_stack.append(end_node)
-			choice_stack.append(branche)
-			append_on_mainline(branche)    # continue on diverge
-		
+			"""
+			Open round bracket ( starts a switch for alternate paths.
+			:param tok: (
+			:return:
+			"""
+			nonlocal tailnode,junction_nodes
+			junction_nodes.append(tok) # save the node where the divergence starts
+			show_tag_stack(junction_nodes,'append_switch')
+			continue_on_main(tok)
+		#| | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | |
+		def add_diverge_branche(tok:TagToken):
+			"""
+			add an alternative branche
+			:param tok: |
+			:return:
+			"""
+			nonlocal tailnode,junction_nodes,current_line
+			alt_closer=TagToken(type=TagToken.alt_close)
+			tailnode.mainline=alt_closer
+			try:
+				junction=junction_nodes[0]
+			except IndexError as e:
+				print (f'Probably missing ( in "{current_line}"')
+				exit (1)
+			junction.set_free_diverge(tok)
+			junction.show()
+			show_tag_stack(junction_nodes,'add_diverge_branche')
+			tailnode=tok
+		#) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) )
 		def merge_to_mainline(tok):
-			nonlocal main_nodes,choice_stack
-			_ = choice_stack.pop()
-			end_node   = choice_stack.pop()
-			append_on_mainline(end_node)
+			"""
+			connect the tail to all alternatives
+			:param tok: )
+			:return:
+			"""
+			nonlocal tailnode,junction_nodes
+			junction=junction_nodes.pop()
+			junction.append_on_mainlines(tok)
 			
+			tailnode=tok
+			
+		def append_name():
+			# make sure the end of a line yields a name for a file
+			nonlocal tailnode
+			if tailnode.is_name(): return
+			tailnode.mainline=TagToken(type=TagToken.name)
+
 		for line in lines:
+			#DEBUGPRINT(f'{line=}')
+			current_line=line
 			line_tokens=tokenize(line)
+			#DEBUGPRINT(f'{line_tokens=}')
 			for tokkie in line_tokens:
-				if not self.root:
-					self.root=tokkie
-					main_nodes.append(tokkie)
-					continue
+				# if self.root: self.root.show_types()
+				# if not self.root:
+				# 	self.root=tokkie
+				# 	main_nodes.append(tokkie)
+				# 	continue
 				
 				if tokkie.is_filetype():
 					append_filetype(tokkie)
@@ -470,37 +666,41 @@ class PathSeeker:
 					continue
 					
 				if tokkie.is_alt_or():
-					diverge_to_next(tokkie)
+					add_diverge_branche(tokkie)
 					continue
 					
 				if tokkie.is_alt_close():
 					merge_to_mainline(tokkie)
 					continue
 					
-				if tokkie.token in TagToken.mainline_tokens:
-					append_on_mainline(tokkie)
-			main_nodes.clear()
+				if tokkie.is_slash():
+					append_slash(tokkie)
+					continue
 					
-					
-				#print(str(tokkie),end=',')
-			#print('\n' + '-'*50)
+				#if tokkie.token in TagToken.mainline_tokens:
+				continue_on_main(tokkie)
+				
+			append_name()
+			self.root.show_deep_tree()
+			#self.root.walk_broad(showTagToken)
 		
-	def compose_path(s,source_file):
+	def compose_path(S,source_file):
+		global exiftags
+		exiftags.set_file(source_file)
 		DEBUGPRINT(f'PathSeeker:compose_path("{source_file}")')
-		s.root.clear_data()
 		path=[]
 		def match_file_to_branche():
 			extension = get_extension(source_file)
-			file_node=s.root
+			file_node=S.root
 			while file_node and not file_node.tag_kind == 'default':
 				if file_node.tag_kind == 'ext':
 					if ext.extension_is_of_type(extension,file_node.tag_name):
 						return file_node.mainline
 				elif file_node.tag_kind == 'file':
-					if not s.file_data:
-						s.file_data=file_i(source_file)
-						DEBUGPRINT(f'{s.file_data=}')
-					if file_node.tag_name in s.file_data:
+					if not S.file_data:
+						S.file_data=file_i(source_file)
+						DEBUGPRINT(f'{S.file_data=}')
+					if file_node.tag_name in S.file_data:
 						return file_node.mainline
 				file_node=file_node.diverge
 			if file_node.tag_kind == 'default':
@@ -511,6 +711,11 @@ class PathSeeker:
 		
 		cur_node=match_file_to_branche()
 		cur_node.show_deep_tree()
+		while cur_node:
+			path_item=str(cur_node)
+			path.append(path_item)
+			cur_node=cur_node.mainline
+		S.root.show_mainline()
 	
 	def add_old_subdir(self,pos):
 		return f'not yet subdir {pos}'
@@ -525,17 +730,25 @@ class PathSeeker:
 		return f'not jet mime "{mime}"'
 
 	def show(self):
+		print(f'PathSeeker.show:')
 		if not self.root:
 			print('PathSeeker:Tree is Empty')
 			return
-		print('\nPathSeeker:Tree:')
-		self.root.show_broad_tree()
-		
+		it=self.root.broad_iter()
+		print(it)
+		# for node in self.root.broad_iter():
+		# 	node.show()
 
 def main() -> None:
 	#generate_tags()
 	ps=PathSeeker("syntax.test")
-	ps.root.show_deep_tree()
+	rt=ps.root
+	yi=rt.yielder()
+	for node in yi:
+		print(str(node),end=' ')
+		if node.is_name():print()
+	rt.walk_broad(TagTokenPrintShort)
+	#ps.root.show_deep_tree()
 	
 if __name__ == '__main__':
 	main()
