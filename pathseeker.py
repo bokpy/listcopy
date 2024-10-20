@@ -6,6 +6,8 @@ import time
 import re
 from collections import deque
 
+from fontTools.misc.cython import returns
+
 import metadata as meta
 import extensions as ext
 from listutils import LocalTimeString,get_extension,center_string,get_cursor_position
@@ -76,7 +78,7 @@ def file_i(file_path):
 		return ''
 	return result
 	
-#'Bind','Choice','Basic','FileType','Alt_start','Alt_close'
+
 #filetype_re   =r'(?:ext|file|default):[^,^/]+)'
 filetype_re   =r'((?:ext|file|default):[^,^/]+)'
 #re.compile(filetype_re)
@@ -84,9 +86,9 @@ basic_re      =r'((?:exif|osm|mbz|subdir|literal){[^}]+})'
 #re.compile(basic_re)
 bind_re       =r'\+"([^"]+)"\+'
 slash_re      =r'(/)'
-alt_start_re  =r'(\()'
-alt_or_re     =r'(\|)'
-alt_close_re  =r'(\))'
+fork_re  =r'(\()'
+fork_branch_re     =r'(\|)'
+tie_forks_re  =r'(\))'
 name_re       =r'name:((?:exif|osm|mbz|subdir|literal){[^}]+})'
 
 split_basic_re=r'([^{]+){([^}]+)}'
@@ -100,21 +102,22 @@ re_path= re.compile(
 + '|' +slash_re
 + '|' +basic_re
 + '|' +filetype_re
-+ '|' +alt_start_re
-+ '|' +alt_close_re
++ '|' +fork_re
++ '|' +tie_forks_re
 + '|' +name_re
-+ '|' +alt_or_re
++ '|' +fork_branch_re
 )
+
 
 TagTokenType=[
 	'+', # bind      = 0
 	'/', # slash     = 1
 	'B', # basic     = 2
 	'F', # filetype  = 3
-	'(', # alt_start = 4
-	')', # alt_close = 5
+	'*', # fork      = 4
+	'#', # tie_forks = 5
 	'N', # name      = 6
-	'|', # alt_or    = 7
+	'|', # fork_branch    = 7
 	'0'  # nop       = 8
 ]
 
@@ -124,37 +127,66 @@ def showTagToken(S):
 def TagTokenPrintShort(S):
 	print(S.str_short(),end=' ')
 	
-	
 def show_tag_stack(stack,title=''):
 	if title:
 		print(title)
-	for i in range(0,len(stack)):
-		print(f'{i:3} {str(stack[i])}')
+	#for i in range(0,len(stack)):
+	for i in	range(len(stack)-1,-1,-1):
+		print(f'{i:3} {stack[i]}')
 	
-TagTokenId=1
+class Junction:
+	def __init__(S,junction,column=0):
+		S.stack=deque()
+		cur=junction
+		while cur:
+			S.stack.appendleft(cur)
+			cur=cur.diverge
+		S.pos=column
+		
+	def pop(S):
+		ret=S.stack.pop()
+		if S.stack:
+			return ret,S.pos
+		return ret,0
+		
+		#print(f'Junction:{junction},{column}')
 	
-class TagToken:
+class TokenTree:
+	
+	def __init__(S):
+		S.TagTokenId   = -1
+		S.TagTokenRoot = None
+		S.tag_tokens   = deque()
+		
+	def show_listed(S):
+		for tokkie in S.tag_tokens:
+			print(f'{str(tokkie)}')
 
+# globals for now ugly
+TagTokenRoot=None
+TagTokenId=-1
+TagTokenList=deque()
+
+class TagToken:
+	
+	
 	bind      = 0
 	slash     = 1
 	basic     = 2
 	filetype  = 3
-	alt_start = 4
-	alt_close = 5
+	fork      = 4
+	tie_forks = 5
 	name      = 6
-	alt_or    = 7
+	fork_branch    = 7
 	nop       = 8
-	
-	# mainline_tokens=(bind ,slash, basic, name)
-	# diverge_tokens =(filetype,alt_start)
 	
 	token2str={
 		0:'bind',
 		1:'slash',
 		2:'basic',
 		3:'filetype',
-		4:'alt_start',
-		5:'alt_close',
+		4:'fork',
+		5:'tie_forks',
 		6:'name'
 		}
 	
@@ -164,15 +196,22 @@ class TagToken:
 	osm_data  = None
 	mbz_data  = None
 
-	def __init__(self,token_line_up=None,type=-1):
-		global TagTokenId
+	def __init__(self,id=-1,token=-1,fixed=True,mainline=None,diverge=None,token_line_up=None, tag_kind='',tag_name='',payload='',token_line_up=None):
+		global TagTokenId,TagTokenRoot,TagTokenList
+		TagTokenList.append(self)
+		TagTokenId+=1
+		self.id=TagTokenId
+		if not TagTokenRoot:
+			DEBUGPRINT(f'TagToken.__init__ SET ROOT')
+			TagTokenRoot=self
+		if not token_line_up and type<0:
+			return
+		self.fixed=True
 		#DEBUGPRINT(f'{token_line_up=}')
 		#DEBUGPRINT('TagToken:init')
-		self.id=TagTokenId
-		TagTokenId+=1
 		self.tag_kind = ''
 		self.tag_name = ''
-		self.addition=''
+		self.payload=''
 		self.mainline = None
 		self.diverge  = None
 		
@@ -188,28 +227,32 @@ class TagToken:
 		# bind bind bind bind bind bind bind
 		if token_line_up[TagToken.bind] :
 			item=token_line_up[TagToken.bind]
-			self.addition=item
-			#DEBUGPRINT(f'bind {item}')
+			self.payload=item
+			self.fixed=True
+			DEBUGPRINT(f'bind {item}')
 			self.token = TagToken.bind
 			return
 		
 		# slash slash slash slash slash slash
 		if token_line_up[TagToken.slash] :
-			token=token_line_up[TagToken.slash]
+			#token=token_line_up[TagToken.slash]
 			#DEBUGPRINT(f'slash {token}')
-			self.addition='/'
+			#self.payload='/'
+			#self.fixed=True
 			self.tag_kind='slash'
 			self.token = TagToken.slash
 			return
 		
 		# basic basic basic basic basic basic
 		if token_line_up[TagToken.basic] :
+			self.token = TagToken.basic
+			self.fixed = False
 			item=token_line_up[TagToken.basic]
 			#DEBUGPRINT(f'name {item}')
 			self.tag_kind,self.tag_name=re_split_basic.match(item).groups()
 			if self.tag_kind=='literal':
-				self.addition=self.tag_name
-			self.token = TagToken.basic
+				self.payload=self.tag_name
+				self.fixed = True
 			return
 		
 		# filetype filetype filetype filetype
@@ -223,29 +266,29 @@ class TagToken:
 			self.token = TagToken.filetype
 			return
 		
-		# alt_start alt_start alt_start alt_start alt_start
-		if token_line_up[TagToken.alt_start] :
+		# fork fork fork fork fork
+		if token_line_up[TagToken.fork] :
 			self.tag_kind='cross'
 			self.tag_name='road'
-			#DEBUGPRINT(f'alt_start {token}')
-			self.token = TagToken.alt_start
+			#DEBUGPRINT(f'fork {token}')
+			self.token = TagToken.fork
 			return
 		
-		# alt_or alt_or alt_or alt_or alt_or alt_or
-		if token_line_up[TagToken.alt_or] :
-			self.tag_kind='bypass'
-			self.tag_name='road'
-			#DEBUGPRINT(f'alt_or {token}')
-			self.token = TagToken.alt_or
+		# fork_branch fork_branch fork_branch fork_branch fork_branch fork_branch
+		if token_line_up[TagToken.fork_branch] :
+			self.tag_kind='2@'
+			self.tag_name='alt'
+			#DEBUGPRINT(f'fork_branch {token}')
+			self.token = TagToken.fork_branch
 			return
 		
-		# alt_close alt_close alt_close alt_close
-		if token_line_up[TagToken.alt_close] :
-			token=token_line_up[TagToken.alt_close]
+		# tie_forks tie_forks tie_forks tie_forks
+		if token_line_up[TagToken.tie_forks] :
+			token=token_line_up[TagToken.tie_forks]
 			self.tag_kind='merge'
 			self.tag_name='roads'
-			#DEBUGPRINT(f'alt_close {token}')
-			self.token = TagToken.alt_close
+			#DEBUGPRINT(f'tie_forks {token}')
+			self.token = TagToken.tie_forks
 			return
 		
 		# name name name name name name name name
@@ -258,13 +301,11 @@ class TagToken:
 			return
 
 	def __str__(S):
-		M=D='0'
 		ret=TagTokenType[S.token]+'.'
-		if S.mainline: M='M'
-		if S.diverge: D='D'
-		if S.addition:
-			S.addition=str(S.addition)
-			ret += S.addition
+		payload=''
+		if S.payload:
+			payload=str(S.payload)
+			ret += payload
 			# these are:
 			# bind      = 0
 			# slash     = 1
@@ -275,7 +316,7 @@ class TagToken:
 			ret += f'Name:{S.tag_kind}#{S.tag_name})'
 		if not len(ret)<2:
 			ret += S.tag_kind
-		return ret+'<'+M+D+'>'
+		return ret+'<'+S._FDM()+'>'
 	
 	def __iter__(S):
 		S.it_cur=S
@@ -286,79 +327,45 @@ class TagToken:
 		next=S.it_cur.mainline
 		if S.it_cur.diverge:
 			S.diverse_stack.append(S.it_cur.diverge)
+
+	# diverging + appendig  diverging + appendig  diverging + appendig  diverging + appendig  diverging + appendig
+	def connect_on_mainline(S,other):
+		S.mainline=other
+		return other
+	
+	def append_slash_to_file_nodes_with_open_mainline(S,slash):
+		if not S.is_filetype() or not slash.is_slash():
+			raise ValueError (f'expected: TagToken.filetype,TagToken.slash. got: {S.str_type()},{slash.str_type()} ')
+		cur=S
+		while cur:
+			if not cur.mainline:
+				cur.mainline=slash
+			cur=cur.diverge
+
+	def merge_forks(S,fork_tie):
+		if not S.is_fork() or not fork_tie.is_tie_forks():
+			raise ValueError (f'expected: TagToken.fork,TagToken.tie_forks. got: {S.str_type()},{fork_tie.str_type()} ')
+		cur=S
+		while cur:
+			tail=cur.get_last_of_mainline()
+			tail.mainline=fork_tie
+			#cur.show_mainline()
+			cur=cur.diverge
 			
-		
+	def append_diverge(S,switch:'TagToken'):
+		DEBUGPRINT(f'append_diverge {S.str_short()} -> {switch.str_short()}')
+		cur=S
+		while cur.diverge:
+			DEBUGPRINT(f'{cur.str_short()} is tied')
+			cur=cur.diverge
+		cur.diverge=switch
 	
-	def show(S,comment=''):
-		if comment: print(comment)
-		print (str(S))
-	
-	def get_token_info(S)->str:
-		if S.addition:
-			S.addition=str(S.addition)
-			return S.addition
-			# these are:
-			# bind      = 0
-			# slash     = 1
-			# basic     = 2 if literal
-		if S.token == TagToken.basic:
-			S.token_lookup()
-		elif S.token == TagToken.name:
-			S.token_lookup()
-		S.addition=str(S.addition)
-		return S.addition
-	
-	def token_lookup(S):
-		global exiftags
-		if S.tag_kind == 'exif':
-			S.addition=exiftags.get_exif_tag(S.tag_name)
-			return  S.addition
-		
-	def to_tuple(S):
-		m_id=d_id=0
-		if S.mainline: m_id=S.mainline.id
-		if S.diverge : d_id=S.diverge.id
-		return (S.id,m_id,d_id,S.token,S.tag_kind,S.tag_name,S.addition)
-	
-	def str_short(S):
-		if S.mainline: M='M'
-		else: M='0'
-		if S.diverge : D='D'
-		else: D='0'
-		T = TagTokenType[S.token]
-		return f'{T}:{M}{D}'
-		
-	def save_to_file(S,file_name):
-		dump_file=0
-		def jdump(node):
-			nonlocal dump_file
-			json.dump(node.to_tuple(),dump_file)
-		
-		try:
-			with open(file_name,'w') as f:
-				dump_file=f
-				S.walk_broad(jdump)
-		except OSError as e:
-			print(f'TagToken.save_to_file(S,"{file_name}") Failed')
-			
-	def set_free_diverge(self,other:'TagToken'):
-		next=self
-		while next.diverge:
-			next=next.diverge
-		next.diverge=other
-		return next
-	
-	def append_to_line(S,other:'TagToken'):
-		tail=S
-		while tail.mainline:
-			tail=tail.mainline
-		tail.mainline=other
-	
-	def append_on_mainlines(S,other:'TagToken'):
-		knot=S
-		while knot:
-			knot.append_to_line(other)
-			knot=knot.diverge
+	def get_last_of_mainline(S):
+		cur=S
+		while cur.mainline:
+			cur=cur.mainline
+		return cur
+	#end diverging + appendig end diverging + appendig end diverging + appendig end diverging + appendig
 	
 	def set_file(S,file_path):
 		S.file_path=file_path
@@ -367,14 +374,25 @@ class TagToken:
 		S.osm_data =None
 		S.mbz_data =None
 		
-	def is_bind(self):     return self.token==TagToken.bind
-	def is_slash(self):    return self.token==TagToken.slash
-	def is_basic(self):    return self.token==TagToken.basic
-	def is_filetype(self): return self.token==TagToken.filetype
-	def is_alt_start(self):return self.token==TagToken.alt_start
-	def is_alt_or(self):   return self.token==TagToken.alt_or
-	def is_alt_close(self):return self.token==TagToken.alt_close
-	def is_name(self):     return self.token==TagToken.name
+	def is_root(self):
+		global TagTokenRoot
+		return self==TagTokenRoot
+	
+	def root(S):
+		global TagTokenRoot
+		return TagTokenRoot
+	
+	def is_bind(self):       return self.token==TagToken.bind
+	def is_slash(self):      return self.token==TagToken.slash
+	def is_basic(self):      return self.token==TagToken.basic
+	def is_filetype(self):   return self.token==TagToken.filetype
+	def is_fork(self):       return self.token==TagToken.fork
+	def is_fork_branch(self):return self.token==TagToken.fork_branch
+	def is_tie_forks(self):  return self.token==TagToken.tie_forks
+	def is_name(self):       return self.token==TagToken.name
+	def is_fixed(self):    return self.fixed
+	
+	#def set_fixed(self): self.fixed=True
 	
 	def _columns(self):
 		try:
@@ -386,11 +404,58 @@ class TagToken:
 				exit(e.errno)
 		return 100
 	
+	#Showers Showers Showers Showers Showers Showers Showers Showers
+	def show_listed(S):
+		global TagTokenList
+		count=0
+		for tokkie in TagTokenList:
+			print(f'{count:3} {tokkie.str_short()}')
+			count+=1
+			
+	def _FDM(S):
+		"""
+		Fixed Diverged Mainline
+		:return: three symbol string
+		"""
+		F=' '
+		D='-'
+		M=' '
+		if S.fixed:    F='$'
+		if S.diverge:  D='^'
+		if S.mainline: M='>'
+		return F+D+M
+	
+	def str_type(S):
+		try:
+			ret = TagTokenType[S.token]
+			
+		except IndexError as e:
+			print(f'str_type({S.token=})')
+			exit(1)
+		return ret
+	
+	def str_short(S):
+		payload=''
+		
+		if S.payload:
+			#DEBUGPRINT(f'str_short(->{S.payload}<-)')
+			payload = S.payload + '-'*4
+			payload='"' + payload[:5] + '"'
+			#DEBUGPRINT(f'->{payload}<-')
+		return f'{S.str_type()}:{payload}{S._FDM()} '
+	
 	def show_mainline(S):
-		next=S
-		while next:
-			print (str(next),end='')
-			next=next.mainline
+		cur=S
+		while cur:
+			print (cur.str_short(),end='')
+			cur=cur.mainline
+		print()
+	
+	def show_diverge(S):
+		cur=S
+		while cur:
+			print (cur.str_short(),end='')
+			cur=cur.diverge
 		print()
 		
 	def show_types(S):
@@ -400,33 +465,173 @@ class TagToken:
 			cur=cur.mainline
 			if cur and cur.diverge:
 				cur.diverge.show_types()
-		print()
 	
-	def show_deep_tree(self):
-		diverse_nodes=deque()
-		split_node=None
-		print(f'TagToken:deep_tree:\n')
-		def show_deep(level,node):
-			nonlocal diverse_nodes,split_node
-			if not node:
-				return False
-			s=str(node)
-			if not s:
-				s = f'[{node.tag_kind}:{node.tag_name}]'
-			print(s,end='->')
-			if node.diverge:
-				r,c=get_cursor_position()
-				diverse_nodes.append((node.diverge,c))
-			show_deep(level,node.mainline)
-			while diverse_nodes:
-				level+=1
-				dv,c=diverse_nodes.pop()
-				print('\n'+' '*c,end='')
-				show_deep(level,dv)
-				level-=1
-		show_deep(0,self)
-		print()
+	def show_structure(S,heading=''):
+		if heading:
+			print(f'show structure "{heading}":')
+		pos=0
+		split_buds=deque()
+		current=S
 		
+		def _spaces_to(column):
+			nonlocal pos
+			print(f"\n{'-'*column}",end='')
+			pos=column
+			
+		def _print(tag):
+			nonlocal pos
+			# if tag.is_fixed():
+			# 	return
+			txt=tag.str_short()
+			if not pos:
+				print(f'\n{txt}',end='')
+			else:
+				print(f'{txt}',end='')
+			pos+=len(txt)
+		
+		panic = 100
+		print(f'TagToken.show_structure:')
+		file_tag=S
+		while file_tag:
+			panic-=1
+			if panic < 0: return
+			cur=file_tag
+			while cur:
+				if cur.is_filetype():
+					pos=0
+					_print(cur)
+					if cur.diverge:
+						if cur.diverge.mainline == cur.mainline:
+							cur=cur.diverge
+							continue
+					cur=cur.mainline
+					continue
+					
+				if cur.is_fork():
+					fork=Junction(cur.diverge,pos)
+					split_buds.append(fork)
+					_print(cur)
+					cur=cur.mainline
+					continue
+					
+				if cur.is_tie_forks():
+					_print(cur)
+					bud,saved_pos=split_buds[0].pop()
+					if saved_pos>0:
+						_spaces_to(saved_pos)
+						#_print(bud)
+						cur=bud
+						continue
+					split_buds.pop()
+					cur=cur.mainline
+					continue
+				_print(cur)
+				cur=cur.mainline
+			file_tag=file_tag.diverge
+	
+	def __repr__(S):
+		def connected(true):
+			if true : return f'{true.id:4}'
+			return 'None'
+		
+		def something(thing):
+			empty="''"
+			if thing: return thing
+			return empty
+		
+		def true(true):
+			if true: return 'True '
+			return 'False'
+		
+		ret = f'''TagToken(id={S.id:4},token={S.token:2},fixed={true(S.fixed)},mainline={connected(S.mainline)},diverge={connected(S.diverge)}, tag_kind={something(S.tag_kind)},tag_name={something(S.tag_name)},payload={something(S.payload)})'''
+		return ret
+	# showers end showers end showers end showers end showers end showers end
+	
+	# save and load  save and load  save and load  save and load  save and load
+	def write(S,file):
+		file.write(f'({S.token},{S.id},{S.fixed},{S.tag_kind },{S.tag_name},{S.payload},')
+		if S.mainline == None:
+			file.write(f'None,')
+		else:
+			file.write(f'{S.mainline.id},')
+		
+		if S.diverge == None:
+			file.write(f'None')
+		else:
+			file.write(f'{S.diverge.id}')
+		file.write('),\n')
+	
+	def save_tree(S,file_name,mode='w'):
+		global TagTokenList
+		try:
+			with open(file_name,mode) as f:
+				f.write(f'{{TagTokens:[\n')
+				for tokkie in TagTokenList:
+					f.write(tokkie.__repr__()+',\n')
+				f.write(f']\n}}\n')
+		except OSError as e:
+			print(f'writing "{file_name}" failed.')
+			print(f'{e.errno=} "{e.strerror}"')
+			exit(e.errno)
+	
+	def init_from_read(S,line):
+		#(2, 13, True, literal, pictures, 14, None),
+		f=line.find('(')
+		r=line.rfind(')')
+		peeled = line[f+1:r]
+		ls=peeled.split(',')
+		# DEBUGPRINT(f'{line}')
+		# DEBUGPRINT(f'{peeled}')
+		# DEBUGPRINT(f'{ls}')
+		S.id       =int(ls[0])
+		S.token    =int(ls[1])
+		S.fixed    =(ls[2]=='True')
+		S.tag_kind =ls[3]
+		S.tag_name =ls[4]
+		S.payload  =ls[5]
+		
+		if ls[6] == 'None':
+			S.mainline =None
+		else:
+			S.mainline =int(ls[6])
+			
+		if ls[7] == 'None':
+			S.diverge  =None
+		else:
+			S.diverge  =int(ls[7])
+			
+	def load_tree(S,file_name):
+		global TagTokenList,TagTokenId,TagTokenRoot
+		TagTokenList=deque()
+		TagTokenId=-1
+		TagTokenRoot=None
+		
+		try:
+			with open(file_name,'r') as f:
+				while True:
+					line = f.readline()
+					if 'TagTokens' in line:
+						break
+					
+					#(2, 13, True, literal, pictures, 14, None),
+				while True:
+					line = f.readline() # line someting like: (2,13,True,literal,pictures,pictures,14,None),
+					if ']' in line:
+						f.readline()
+						break
+					new=TagToken()
+					new.init_from_read(line)
+		except OSError as e:
+			print(f'Reading TagToken Tree from "{file_name}" failed.')
+			print(f'{e.errno=} {e.strerror}')
+			exit(e.errno)
+		for tokkie in TagTokenList:
+			DEBUGPRINT(f'{tokkie.mainline},{tokkie.diverge}')
+			if tokkie.mainline:
+				tokkie.mainline=TagTokenList[tokkie.mainline]
+			if tokkie.diverge:
+				tokkie.diverge=TagTokenList[tokkie.diverge]
+	
 	def walk_broad(S,func):
 		stack=deque([S])
 		def _work_brache(stack):
@@ -459,32 +664,7 @@ class TagToken:
 			print('pop '*10)
 			current=diverge_fifo.pop().diverge
 			
-	def show_broad_tree(self):
-		#DEBUGPRINT(f'show_broad_tree')
-		columns=self._columns()
-		stack=deque([self])
-		def _show_broad_tree(stack):
-			#DEBUGPRINT(stack)
-			stl=len(stack)
-			#DEBUGPRINT(f'_show_broad_tree stack len ({stl})')
-			if stl==0:
-				return
-			next_stack=deque()
-			item_len=columns//stl
-			while stack:
-				node=stack.pop()
-				#node.show()
-				print(center_string(str(node),item_len),end='')
-				if node.mainline:
-					#DEBUGPRINT(f'append(node.mainline)')
-					next_stack.append(node.mainline)
-				if node.diverge:
-					#DEBUGPRINT(f'append(node.diverge)')
-					next_stack.append(node.diverge)
-			print()
-			_show_broad_tree(next_stack)
-		_show_broad_tree(stack) # start stack contains root or root of branche self
-		
+
 class PathSeeker:
 	root=None
 
@@ -539,9 +719,8 @@ class PathSeeker:
 		
 	def grow_tree(self,lines):
 		ic(self)
-		junction_nodes = deque()
-		current_line=''
-		tailnode = self.root    = None
+		fork_buds = deque()
+		current=None
 		
 		def tokenize(string):
 			tokens = []
@@ -552,136 +731,66 @@ class PathSeeker:
 				tokens.append(new_token)
 			return tokens
 		
-		def continue_on_main(tok):
-			nonlocal tailnode
-			tailnode.mainline=tok
-			tailnode=tok
-			
-		def continue_on_diverge(splitter:TagToken,tok:TagToken):
-			nonlocal tailnode
-			tailnode=splitter.set_free_diverge(tok)
-			
-		def append_filetype(tok):
-			"""
-			make tok root if there is no root jet.
-			else connect to the frist free diverge node from the root up
-			make tok the tailnode.
-			:param tok: node of type filetype
-			:return:
-			"""
-			nonlocal tailnode
-			if not self.root:
-				self.root=tok
-			else:
-				tailnode=self.root.set_free_diverge(tok)
-
-		def append_slash(tok):
-			"""
-			if the current tail is a filetype node this slash starts a new path for all
-			open tail nodes from the root up.
-			else connect to the previous tail node
-			:param tok: / node
-			:return:
-			"""
-			nonlocal tailnode
-			#DEBUGPRINT('append_slash',str(tailnode),str(tok))
-			if tailnode.is_filetype():
-				#DEBUGPRINT('tailnode.is_filetype')
-				next=self.root
-				while next:
-					if not next.mainline:
-						next.mainline=tok
-					next=next.diverge
-				tailnode=tok
-				return
-			continue_on_main(tok)
-		
-		#( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( ( (
-		def append_switch(tok):
-			"""
-			Open round bracket ( starts a switch for alternate paths.
-			:param tok: (
-			:return:
-			"""
-			nonlocal tailnode,junction_nodes
-			junction_nodes.append(tok) # save the node where the divergence starts
-			show_tag_stack(junction_nodes,'append_switch')
-			continue_on_main(tok)
-		#| | | | | | | | | | | | | | | | | | | | | | | | | | | | | | | |
-		def add_diverge_branche(tok:TagToken):
-			"""
-			add an alternative branche
-			:param tok: |
-			:return:
-			"""
-			nonlocal tailnode,junction_nodes,current_line
-			alt_closer=TagToken(type=TagToken.alt_close)
-			tailnode.mainline=alt_closer
-			try:
-				junction=junction_nodes[0]
-			except IndexError as e:
-				print (f'Probably missing ( in "{current_line}"')
-				exit (1)
-			junction.set_free_diverge(tok)
-			junction.show()
-			show_tag_stack(junction_nodes,'add_diverge_branche')
-			tailnode=tok
-		#) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) ) )
-		def merge_to_mainline(tok):
-			"""
-			connect the tail to all alternatives
-			:param tok: )
-			:return:
-			"""
-			nonlocal tailnode,junction_nodes
-			junction=junction_nodes.pop()
-			junction.append_on_mainlines(tok)
-			
-			tailnode=tok
-			
 		def append_name():
 			# make sure the end of a line yields a name for a file
-			nonlocal tailnode
-			if tailnode.is_name(): return
-			tailnode.mainline=TagToken(type=TagToken.name)
+			nonlocal current
+			if current.is_name(): return
+			current.connect_on_mainline(TagToken(type=TagToken.name))
 
 		for line in lines:
-			#DEBUGPRINT(f'{line=}')
+			DEBUGPRINT('-'*80)
+			DEBUGPRINT(f'{line=}')
 			current_line=line
-			line_tokens=tokenize(line)
-			#DEBUGPRINT(f'{line_tokens=}')
-			for tokkie in line_tokens:
-				# if self.root: self.root.show_types()
-				# if not self.root:
-				# 	self.root=tokkie
-				# 	main_nodes.append(tokkie)
-				# 	continue
+			first_tokkie=None # DEBUG
+			if fork_buds:  # DEBUG should be empty here
+				fork_buds.clear()  # DEBUG
 				
+			tokkies=tokenize(line)
+			TagTokenRoot.show_structure()
+			#DEBUGPRINT(f'{tokkies=}')
+			for tokkie in tokkies:
+				
+				if tokkie.is_root():
+					current=tokkie
+					continue
+					
 				if tokkie.is_filetype():
-					append_filetype(tokkie)
-					continue
-					
-				if tokkie.is_alt_start():
-					append_switch(tokkie)
-					continue
-					
-				if tokkie.is_alt_or():
-					add_diverge_branche(tokkie)
-					continue
-					
-				if tokkie.is_alt_close():
-					merge_to_mainline(tokkie)
+					tokkie.root().append_diverge(tokkie)
+					current=tokkie
 					continue
 					
 				if tokkie.is_slash():
-					append_slash(tokkie)
+					if current.is_filetype():
+						tokkie.root().append_slash_to_file_nodes_with_open_mainline(tokkie)
+						current=tokkie
+						continue
+					current=current.connect_on_mainline(tokkie)
 					continue
 					
-				#if tokkie.token in TagToken.mainline_tokens:
-				continue_on_main(tokkie)
+				if tokkie.is_fork():
+					fork_buds.append(tokkie)
+					current=current.connect_on_mainline(tokkie)
+					continue
+					
+				if tokkie.is_fork_branch():
+					youngest_bud=fork_buds[0]
+					youngest_bud.append_diverge(tokkie)
+					current=tokkie
+					continue
+					
+				if tokkie.is_tie_forks():
+					youngest_bud=fork_buds.pop()
+					DEBUGPRINT(f'{youngest_bud=} {youngest_bud.str_short()} {youngest_bud.tie_forks}')
+					youngest_bud.merge_forks(tokkie)
+					current=tokkie
+					continue
+					
+				current=current.connect_on_mainline(tokkie)
 				
 			append_name()
-			self.root.show_deep_tree()
+			TagTokenRoot.show_structure() #DEBUG
+			#self.root.show_deep_tree()
+			
 			#self.root.walk_broad(showTagToken)
 		
 	def compose_path(S,source_file):
@@ -738,17 +847,27 @@ class PathSeeker:
 		print(it)
 		# for node in self.root.broad_iter():
 		# 	node.show()
+		#
+
 
 def main() -> None:
 	#generate_tags()
 	ps=PathSeeker("syntax.test")
-	rt=ps.root
-	yi=rt.yielder()
-	for node in yi:
-		print(str(node),end=' ')
-		if node.is_name():print()
-	rt.walk_broad(TagTokenPrintShort)
-	#ps.root.show_deep_tree()
-	
+	# yi=rt.yielder()
+	# for node in yi:
+	# 	print(str(node),end=' ')
+	# 	if node.is_name():print()
+	# rt.walk_broad(TagTokenPrintShort)
+	TagTokenRoot.show_structure()
+	print()
+	print('*'*80)
+	TagTokenRoot.show_listed()
+	TagTokenRoot.save_tree("test.save")
+	TagTokenRoot.load_tree("test.save")
+	print()
+	print('*'*80)
+	TagTokenRoot.show_listed()
+	#TagTokenRoot.show_structure('After save an load')
 if __name__ == '__main__':
+	
 	main()

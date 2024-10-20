@@ -498,6 +498,10 @@ def main() -> None:
 	global destination_path,ok_file,bad_file
 	print(f'{args.input=} {args.destination=}')
 	
+	if args.usage:
+		pathseeker_help()
+		exit(0)
+		
 	if args.substitute:
 		DEBUGPRINT(f'{args.substitute=}')
 		if args.substitute.upper() == 'HELP':
