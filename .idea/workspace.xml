@@ -65,47 +65,48 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Python.brainzmusic.executor&quot;: &quot;Run&quot;,
-    &quot;Python.extensions.executor&quot;: &quot;Run&quot;,
-    &quot;Python.geolocate.executor&quot;: &quot;Run&quot;,
-    &quot;Python.gps_data_kd_tree.executor&quot;: &quot;Run&quot;,
-    &quot;Python.gpstree.executor&quot;: &quot;Run&quot;,
-    &quot;Python.listcopy -b ~/meta.test.executor&quot;: &quot;Run&quot;,
-    &quot;Python.listcopy .executor&quot;: &quot;Run&quot;,
-    &quot;Python.listcopy.executor&quot;: &quot;Run&quot;,
-    &quot;Python.listfiles.executor&quot;: &quot;Run&quot;,
-    &quot;Python.listutils.executor&quot;: &quot;Run&quot;,
-    &quot;Python.metadata.executor&quot;: &quot;Run&quot;,
-    &quot;Python.musicbrains.executor&quot;: &quot;Run&quot;,
-    &quot;Python.pathseeker.executor&quot;: &quot;Run&quot;,
-    &quot;Python.scratch.data.executor&quot;: &quot;Run&quot;,
-    &quot;Python.slowcopy.executor&quot;: &quot;Run&quot;,
-    &quot;Python.test_Comprehensions.executor&quot;: &quot;Run&quot;,
-    &quot;Python.test_extensions.executor&quot;: &quot;Run&quot;,
-    &quot;Python.test_listdir.executor&quot;: &quot;Run&quot;,
-    &quot;Python.testiter.executor&quot;: &quot;Run&quot;,
-    &quot;Python.testtime.executor&quot;: &quot;Run&quot;,
-    &quot;Python.update_extensions.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;b1696a69&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/bob/python/listcopy/test.save&quot;,
-    &quot;run.code.analysis.last.selected.profile&quot;: &quot;aDefault&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.keymap&quot;,
-    &quot;settings.editor.splitter.proportion&quot;: &quot;0.47944444&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Python.brainzmusic.executor": "Run",
+    "Python.extensions.executor": "Run",
+    "Python.geolocate.executor": "Run",
+    "Python.gps_data_kd_tree.executor": "Run",
+    "Python.gpstree.executor": "Run",
+    "Python.listcopy -b ~/meta.test.executor": "Run",
+    "Python.listcopy .executor": "Run",
+    "Python.listcopy.executor": "Run",
+    "Python.listfiles.executor": "Run",
+    "Python.listutils.executor": "Run",
+    "Python.metadata.executor": "Run",
+    "Python.musicbrains.executor": "Run",
+    "Python.pathseeker.executor": "Debug",
+    "Python.scratch.data.executor": "Run",
+    "Python.slowcopy.executor": "Run",
+    "Python.test_Comprehensions.executor": "Run",
+    "Python.test_extensions.executor": "Run",
+    "Python.test_listdir.executor": "Run",
+    "Python.testdict.executor": "Run",
+    "Python.testiter.executor": "Run",
+    "Python.testtime.executor": "Run",
+    "Python.update_extensions.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "6c1d335c",
+    "last_opened_file_path": "/home/bob/python/listcopy/test.save",
+    "run.code.analysis.last.selected.profile": "aDefault",
+    "settings.editor.selected.configurable": "preferences.keymap",
+    "settings.editor.splitter.proportion": "0.47944444"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;GitStage.ChangesTree.GroupingKeys&quot;: [
-      &quot;directory&quot;,
-      &quot;module&quot;,
-      &quot;repository&quot;
+  "keyToStringList": {
+    "GitStage.ChangesTree.GroupingKeys": [
+      "directory",
+      "module",
+      "repository"
     ],
-    &quot;com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File&quot;: [
-      &quot;GitIgnore&quot;
+    "com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File": [
+      "GitIgnore"
     ]
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$" />
@@ -127,28 +128,6 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/brainzmusic.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="geolocate" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="pythonProject" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/geolocate.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -223,13 +202,35 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <configuration name="testdict" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="pythonProject" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/testdict.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <recent_temporary>
       <list>
         <item itemvalue="Python.pathseeker" />
+        <item itemvalue="Python.testdict" />
         <item itemvalue="Python.listutils" />
         <item itemvalue="Python.scratch.data" />
         <item itemvalue="Python.brainzmusic" />
-        <item itemvalue="Python.geolocate" />
       </list>
     </recent_temporary>
   </component>
@@ -337,5 +338,16 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Charning Commit" />
     <option name="LAST_COMMIT_MESSAGE" value="Charning Commit" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/pathseeker.py</url>
+          <line>558</line>
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>
