@@ -16,6 +16,8 @@ import brainzmusic as bzm
 from test_extensions import test_extensions
 
 from icecream import ic
+import inspect
+
 DEBUGPRINT=print
 exiftags=meta.ExifTags()
 
@@ -122,6 +124,18 @@ TAG_TOKEN_TYPE_SYMBOL=[
 	'0'  # nop       = 8
 ]
 
+TAG_TOKEN_TYPE_NAME=[
+	'bind  ',
+	'slash ',
+	'basic ',
+	'f_type',
+	'fork  ',
+	'tie   ',
+	'name  ',
+	'branch',
+	'nop   ',
+]
+
 def showTagToken(S):
 	S.show()
 	
@@ -171,6 +185,8 @@ TT_INIT_FROM_RE_GROUPS=0
 TT_INIT_FROM_REPR     =1
 TT_INIT_FROM_DICT     =2
 
+TT_INT_KEYS=("id","mainline","token","diverge")
+
 # globals for now ugly
 TagTokenRoot=None
 TagTokenId=-1
@@ -207,8 +223,16 @@ class TagToken(dict):
 		self.init_from_dict(init_data)
 	
 	def init_from_dict(S,tokdct):
+		DEBUGPRINT('\ninit_from_dict :',end='')
+		l=len('init_from_dict :')
+		spaces=''
 		for key,val in tokdct.items():
-			DEBUGPRINT(f'init {key=}:{val=}')
+			#DEBUGPRINT(f'init {key=}:{val=}')
+			if val and key in TT_INT_KEYS:
+				DEBUGPRINT(f'{spaces} {key} {val}')
+				S[key]=int(val)
+				spaces='-'*l
+				continue
 			S[key]=val
 		
 	def init_from_repr(S,data:dict):
@@ -237,7 +261,7 @@ class TagToken(dict):
 				
 		toktype,value=find_tag(dat)
 		S['token']=toktype
-		DEBUGPRINT(f'{TAG_TOKEN_TYPE_SYMBOL[toktype]} {value=}')
+		#DEBUGPRINT(f'{TAG_TOKEN_TYPE_SYMBOL[toktype]} {value=}')
 		if toktype in TT_SIMPLE: #TT_SLASH or TT_TIE or TT_NOP
 			return
 		
@@ -270,7 +294,7 @@ class TagToken(dict):
 
 	def __str__(S):
 		toktype=S['token']
-		strtype=TAG_TOKEN_TYPE_SYMBOL[toktype]
+		strtype=TAG_TOKEN_TYPE_NAME[toktype]
 		tokid=S['id']
 		ret=f"{strtype}[{tokid:3}]"
 		ml=S['mainline']
@@ -300,7 +324,13 @@ class TagToken(dict):
 		next=S.it_cur.mainline
 		if S.it_cur.diverge:
 			S.diverse_stack.append(S.it_cur.diverge)
-
+			
+	def reset_globals(S):
+		global TagTokenList,TagTokenId,TagTokenRoot
+		TagTokenList=deque()
+		TagTokenId=-1
+		TagTokenRoot=None
+			
 	# diverging + appendig  diverging + appendig  diverging + appendig  diverging + appendig  diverging + appendig
 	def connect_on_mainline(S,other):
 		S['mainline']=other
@@ -326,10 +356,10 @@ class TagToken(dict):
 			cur=cur['diverge']
 			
 	def append_diverge(S,switch:'TagToken'):
-		DEBUGPRINT(f'append_diverge {S.str_short()} -> {switch.str_short()}')
+		#DEBUGPRINT(f'append_diverge {S.str_short()} -> {switch.str_short()}')
 		cur=S
 		while cur['diverge']:
-			DEBUGPRINT(f'{cur.str_short()} is tied')
+			#DEBUGPRINT(f'{cur.str_short()} is tied')
 			cur=cur['diverge']
 		cur['diverge']=switch
 	
@@ -541,29 +571,43 @@ class TagToken(dict):
 	# showers end showers end showers end showers end showers end showers end
 	
 	# save and load  save and load  save and load  save and load  save and load
+	
+	def _link2id(S,key):
+		if not key in S:
+			return
+		if S[key]==None:
+			return
+		S[key]=S[key]['id']
+		
 	def links_to_ids(S):
 		global TagTokenList
 		for tag in TagTokenList:
-			DEBUGPRINT(f'links_to_ids {tag.str_short()}')
-			if tag['mainline']:
-				tag['mainline']=tag['mainline']['id']
-			if tag.has('diverge') and tag['diverge']:
-				tag['diverge']=tag['diverge']['id']
+			#DEBUGPRINT(f'links_to_ids {tag.str_short()}')
+			tag._link2id('mainline')
+			tag._link2id('diverge')
 	
+	def _int2link(S,key):
+		global TagTokenList
+		if not key in S:
+			return
+		if S[key] == None:
+			return
+		_int=S[key]
+		if not isinstance(_int,int):
+			DEBUGPRINT(f'BadBoy "{str(S)}"')
+			raise ValueError (f'expected int got {type(_int)}')
+			stck=inspect.stack()
+			while stck:
+				print(stck.pop())
+			exit(1)
+		S[key]=TagTokenList[_int]
+		
 	def ids_to_links(S):
 		global TagTokenList
-		
 		for tag in TagTokenList:
-			DEBUGPRINT(f'ids_to_links {str(tag)}')
-			mainline_id=tag['mainline']
-			if mainline_id: tag['mainline']=TagTokenList[mainline_id]
-			else: tag['mainline']=None
-			if not tag.has('diverge'):
-				continue
-			diverge_id= tag['diverge']
-			if diverge_id: tag['diverge']=TagTokenList[diverge_id]
-			else: tag['diverge']=None
-		
+			#DEBUGPRINT(f'ids_to_links {str(tag)}')
+			tag._int2link('mainline')
+			tag._int2link('diverge')
 	
 	def init_from_read(S,line):
 		#(2, 13, True, literal, pictures, 14, None),
@@ -604,11 +648,7 @@ class TagToken(dict):
 		S.ids_to_links()
 		
 	def load_tag_list(S,file_name):
-		global TagTokenList,TagTokenId,TagTokenRoot
-		TagTokenList=deque()
-		TagTokenId=-1
-		TagTokenRoot=None
-		
+		S.reset_globals()
 		jaysson=''
 		try:
 			with open(file_name,'r') as f:
@@ -618,10 +658,13 @@ class TagToken(dict):
 			print(f'Reading TagToken Tree from "{file_name}" failed.')
 			print(f'{e.errno=} {e.strerror}')
 			exit(e.errno)
-		DEBUGPRINT(json.dumps(jaysson,indent=4))
+		#DEBUGPRINT(json.dumps(jaysson,indent=4))
 		for tag_dct in jaysson:
+			#DEBUGPRINT(f'tag_dct red {json.dumps(tag_dct)}')
 			new_token=TagToken(TT_INIT_FROM_DICT,tag_dct )
-			TagTokenList.append(new_token)
+			#DEBUGPRINT(f'new_token= {str(new_token)}')
+			#TagTokenList.append(new_token)
+		S.show_listed_str()
 		S.ids_to_links()
 		TagTokenRoot=TagTokenList[0]
 		
@@ -731,15 +774,15 @@ class PathSeeker:
 			current.connect_on_mainline(TagToken(TT_INIT_FROM_DICT,{'token':TT_NAME,'kind':'default','name':'copy'}))
 
 		for line in lines:
-			DEBUGPRINT('-'*80)
-			DEBUGPRINT(f'{line=}')
+			#DEBUGPRINT('-'*80)
+			#DEBUGPRINT(f'{line=}')
 			current_line=line
 			first_tokkie=None # DEBUG
 			if fork_buds:  # DEBUG should be empty here
 				fork_buds.clear()  # DEBUG
 				
 			tokkies=tokenize(line)
-			TagTokenRoot.show_structure()
+			#TagTokenRoot.show_structure()
 			#DEBUGPRINT(f'{tokkies=}')
 			for tokkie in tokkies:
 				
@@ -773,7 +816,7 @@ class PathSeeker:
 					
 				if tokkie.is_tie_forks():
 					youngest_bud=fork_buds.pop()
-					DEBUGPRINT(f'{youngest_bud=} {youngest_bud.str_short()}')
+					#DEBUGPRINT(f'{youngest_bud=} {youngest_bud.str_short()}')
 					youngest_bud.merge_forks(tokkie)
 					current=tokkie
 					continue
@@ -781,7 +824,7 @@ class PathSeeker:
 				current=current.connect_on_mainline(tokkie)
 				
 			append_name()
-			TagTokenRoot.show_structure() #DEBUG
+			#TagTokenRoot.show_structure() #DEBUG
 			#self.root.show_deep_tree()
 			
 			#self.root.walk_broad(showTagToken)
@@ -854,14 +897,14 @@ def main() -> None:
 	TagTokenRoot.show_structure()
 	print()
 	print('*'*80)
-	TagTokenRoot.show_listed()
+	#TagTokenRoot.show_listed()
 	TagTokenRoot.save_tag_list("test.save")
 	TagTokenRoot.load_tag_list("test.save")
 	print()
 	print('*'*80)
-	TagTokenRoot.show_listed()
-	TagTokenRoot.show_listed_str()
+	#TagTokenRoot.show_listed()
+	#TagTokenRoot.show_listed_str()
 	#TagTokenRoot.show_structure('After save an load')
+
 if __name__ == '__main__':
-	
 	main()
