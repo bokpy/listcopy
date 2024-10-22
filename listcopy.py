@@ -99,10 +99,16 @@ parser.add_argument('-p', '--post-it',
 parser.add_argument('-s', '--substitute',
                     help=f'Assemble a destination path according to a list of expressions. '
 						f'Enter "help" for a detailed explanation. ',
-
                     nargs='?',
-                    metavar='expression',
+                    metavar='file or expression',
                     action='store'
+                    )
+#j j j j j j j j j j j j j j j j
+parser.add_argument('-j', '--json',
+						 help=f'Save the compiled --substitute string or file to a json file.',
+						 nargs='?',
+						 metavar='file.json',
+						 action='store'
                     )
 #l l l l l l l l l l l l l l l l
 langs='","'.join(lu.LANGUAGES.keys())
@@ -500,6 +506,15 @@ def main() -> None:
 	
 	if args.usage:
 		pathseeker_help()
+		exit(0)
+		
+	if args.json:
+		if not args.substitute:
+			print(f'Need a substitute string or file to work on.')
+			print(f'example: listcopy --substitute "file or expression" --json "file path"')
+			exit(1)
+		ps=PathSeeker(args.substitute)
+		ps.root().save_tag_list(args.json)
 		exit(0)
 		
 	if args.substitute:

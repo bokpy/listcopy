@@ -700,12 +700,11 @@ class TagToken(dict):
 			print('pop '*10)
 			current=diverge_fifo.pop().diverge
 			
-
 class PathSeeker:
 	root=None
 
 	def __init__(self, path_format=None, gps_file=None,language='eng') -> None:
-		ic(path_format)
+		#ic(path_format)
 		global exiftags
 		exiftags.set_language(language)
 		lines=self.read_format(path_format)
@@ -752,6 +751,10 @@ class PathSeeker:
 				continue
 			line+=format[head]
 		return lines
+	
+	def root(S):
+		global TagTokenRoot
+		return TagTokenRoot
 		
 	def grow_tree(self,lines):
 		ic(self)
