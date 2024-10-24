@@ -1,16 +1,15 @@
 #!/usr/bin/python3
 import json
+from magic import Magic
 import os.path
 import subprocess
 import time
 import re
 from collections import deque
 
-from fontTools.misc.cython import returns
-from pygments.lexer import default
-
 import metadata as meta
 import extensions as ext
+#from listcopy import prev_copy_speed
 from listutils import LocalTimeString,get_extension,center_string,get_cursor_position
 import brainzmusic as bzm
 from test_extensions import test_extensions
@@ -61,6 +60,7 @@ syntax: <path>       = <filetype>[,<filetype>]/<tag>[/<name>];
 Example: ext:image,ext:video/exif{{artist}}/exif{{album }}+" year "+ exif{{year}}/name:exif{{ title }}
          ext:image/osm{{addr:city}}/osm{{addr:street}} +" "+ osm{{addr:housenumber'}}/subdir{{-1}}
          file:audio\\flac/"literal:{{flac music}}/exif{{album}}/name:exif{{ title }}
+         (Use a backslash \\ in mime types!)
          
     <filetype> "default" <tag>|"copy"
 for <filetype> "ext"  look in "extensionsets.py"
@@ -70,17 +70,24 @@ for <tag>      "osm"  https://wiki.openstreetmap.org/wiki/Map_features(#Addresse
 for <tag>      "mbz"  {bzm.MusicTags().str_tags()}
 '''
 
+
 def pathseeker_help():
 	print(help_text)
 	
+mime_re=re.compile(r'[^:]*: *([^/]*)/([^;]*).*')
 def file_i(file_path):
 	try:
-		result = subprocess.check_output(["file", "-i", file_path])
+		result = subprocess.check_output(("file", "-i", file_path))
 	except FileNotFoundError as e:
 		print(f'{e}')
 		return ''
-	return result
-	
+	#print(f'(type of result = {type(result)}')
+	#DEBUGPRINT(f'{result=}')
+	result=str(result)
+	m=mime_re.match(result) # audio/x-wav
+	return {'general':m.group(1),
+		  'specific':m.group(2)
+		  }
 
 #filetype_re   =r'(?:ext|file|default):[^,^/]+)'
 filetype_re   =r'((?:ext|file|default):[^,^/]+)'
@@ -194,12 +201,6 @@ TagTokenList=deque()
 
 class TagToken(dict):
 
-	file_path = None
-	file_data = None
-	exif_data = None
-	osm_data  = None
-	mbz_data  = None
-
 	def __init__(self,tt_init_type,init_data):
 		global TagTokenId,TagTokenRoot,TagTokenList
 		dict.__init__(self)
@@ -223,15 +224,15 @@ class TagToken(dict):
 		self.init_from_dict(init_data)
 	
 	def init_from_dict(S,tokdct):
-		DEBUGPRINT('\ninit_from_dict :',end='')
-		l=len('init_from_dict :')
-		spaces=''
+		#DEBUGPRINT('\ninit_from_dict :',end='')
+		# l=len('init_from_dict :')
+		# spaces=''
 		for key,val in tokdct.items():
 			#DEBUGPRINT(f'init {key=}:{val=}')
 			if val and key in TT_INT_KEYS:
-				DEBUGPRINT(f'{spaces} {key} {val}')
+				#DEBUGPRINT(f'{spaces} {key} {val}')
 				S[key]=int(val)
-				spaces='-'*l
+				#spaces='-'*l
 				continue
 			S[key]=val
 		
@@ -263,10 +264,13 @@ class TagToken(dict):
 		S['token']=toktype
 		#DEBUGPRINT(f'{TAG_TOKEN_TYPE_SYMBOL[toktype]} {value=}')
 		if toktype in TT_SIMPLE: #TT_SLASH or TT_TIE or TT_NOP
+			if toktype == TT_SLASH:
+				S['payload']='/'
 			return
 		
 		if toktype == TT_BASIC:
 			S['kind'],S['name']=re_split_basic.match(value).groups()
+			S['payload']=None
 			if_literal(S)
 			return
 		
@@ -281,7 +285,7 @@ class TagToken(dict):
 			S['kind'],S['name'] = value.split(':')
 			# if needed swap \ with / to match file -i output
 			if (S['kind'] =='file') and ('\\' in S['name']):
-				S['name']=S['name'].replace('\\','/')
+				S['name'],S['specific']=S['name'].split('\\')
 			return
 		if (toktype == TT_FORK) or (toktype == TT_SWITCH): # 4 * or  |
 			S['diverge']=None
@@ -289,6 +293,7 @@ class TagToken(dict):
 		if toktype == TT_NAME:# N VALUE value and mainline
 			# name:exif{Title}
 			S['kind'],S['name'] = re_split_basic.match(value).groups()
+			S['payload']=None
 			if_literal(S)
 			return
 
@@ -299,31 +304,37 @@ class TagToken(dict):
 		ret=f"{strtype}[{tokid:3}]"
 		ml=S['mainline']
 		if isinstance(ml,int):
-			ret += ' int(' + str(ml) + ')'
+			ret += f' int({ml:3} )'
 		elif ml:
-			ret += ' TagTok('+ str(ml['id']) + ')'
+			ret += f" TagTok({ml['id']:3})"
 		else:
 			ret += ' None'
 		if not S.has('diverge'):
 			return ret
-		dv=S['diverge']
-		if isinstance(dv,int):
-			ret += ' ^int(' + str(dv) + ')'
-		elif dv:
-			ret += ' ^TagTok('+ str(dv['id']) + ')'
+		ml=S['diverge']
+		if isinstance(ml,int):
+			ret += f' ^int({ml:3} )'
+		elif ml:
+			ret += f" ^TagTok({ml['id']:3})"
 		else:
 			ret += ' ^None'
 		return ret
 
-	def __iter__(S):
-		S.it_cur=S
-		S.diverse_stack=deque()
-		return S
-	
-	def __next__(S):
-		next=S.it_cur.mainline
-		if S.it_cur.diverge:
-			S.diverse_stack.append(S.it_cur.diverge)
+	def file_iter(S):
+		filetype=S.root()
+		while filetype:
+			yield filetype
+			filetype=filetype['diverge']
+			
+	# def __iter__(S):
+	# 	S.it_cur=S
+	# 	S.diverse_stack=deque()
+	# 	return S
+	#
+	# def __next__(S):
+	# 	next=S.it_cur.mainline
+	# 	if S.it_cur.diverge:
+	# 		S.diverse_stack.append(S.it_cur.diverge)
 			
 	def reset_globals(S):
 		global TagTokenList,TagTokenId,TagTokenRoot
@@ -370,12 +381,35 @@ class TagToken(dict):
 		return cur
 	#end diverging + appendig end diverging + appendig end diverging + appendig end diverging + appendig
 	
-	def set_file(S,file_path):
-		S.file_path=file_path
-		S.file_data=None
-		S.exif_data=None
-		S.osm_data =None
-		S.mbz_data =None
+	# meta data tag lookup meta data tag lookup meta data tag lookup meta data tag lookup meta data tag lookup
+	
+	def can_produce(S,metadat):
+		if not (S.is_basic() or S.is_name()):
+			return True
+		if S['name'] == 'FIXED':
+			return True
+		S['payload']=metadat.get_tag(S['name'])
+		if S['payload']:
+			return True
+		
+		return False
+	
+	def production(S):
+		if S.has('payload') and S['payload']:
+			return S['payload']
+		return ''
+		
+# 		TT_BIND   = 0 # + VALUE value and mainline
+# TT_SLASH  = 1 # / SIMPLE only mainline
+# TT_BASIC  = 2 # B VALUE value and mainline
+# TT_FILE   = 3 # F value, mainline and diverge
+# TT_FORK   = 4 # * mainline and diverge
+# TT_TIE    = 5 # # SIMPLE only mainline
+# TT_NAME   = 6 # N VALUE value and mainline
+# TT_SWITCH = 7 # | mainline and diverge
+# TT_NOP    = 8 # 0 SIMPLE no value only mainline (Needed ?)
+	
+	# end meta data tag lookup end meta data tag lookup end meta data tag lookup end meta data tag lookup end
 		
 	def is_root(self):
 		global TagTokenRoot
@@ -409,6 +443,8 @@ class TagToken(dict):
 
 	#def set_fixed(self): self.fixed=True
 	
+	#Showers Showers Showers Showers Showers Showers Showers Showers
+	
 	def _columns(self):
 		try:
 			columns,_=os.get_terminal_size()
@@ -419,7 +455,37 @@ class TagToken(dict):
 				exit(e.errno)
 		return 100
 	
-	#Showers Showers Showers Showers Showers Showers Showers Showers
+	prev=None       #debug
+	beforeprev=None #debug
+	def show(S):
+		def int_key(key):
+			if not key in S:
+				return ''
+			if not S[key]:
+				return '-1'
+			return str(S[key]['id'])
+		
+		shw=''
+		for key in S:
+			if (key == 'mainline') or (key == 'diverge'):
+				shw += ' '+key +':' + int_key(key)
+				continue
+			shw += ' ' + key + ':' + str(S[key])
+			
+		print(f"TagToken: {shw}")
+		return
+		
+		#debug
+		if S==S.beforeprev:
+			ic('Handbreak',S)
+			exit(1)
+		if S==S.prev:
+			ic('Handbreak',S)
+			exit(1)
+		S.beforeprev=S.prev
+		S.prev=S
+		#debug end
+		
 	def show_listed(S):
 		global TagTokenList
 		count=0
@@ -458,14 +524,14 @@ class TagToken(dict):
 			exit(1)
 		return ret
 	
-	def str_short(S):
-		payload=''
-		if S.has('payload'):
-			#DEBUGPRINT(f'str_short(->{S.payload}<-)')
-			payload = S['payload'] + '-'*4
-			payload='"' + payload[:5] + '"'
-			#DEBUGPRINT(f'->{payload}<-')
-		return f'{S.str_type()}:{payload}{S._FDM()} '
+	# def str_short(S):
+	# 	#ic(S)
+	# 	payload=''
+	# 	if S.has('payload'):
+	# 		payload = 'empty'
+	# 		if S['payload']:
+	# 			payload='"' + payload[:5] + '"'
+	# 	return f'{S.str_type()}:{payload}{S._FDM()} '
 	
 	def show_mainline(S):
 		cur=S
@@ -473,21 +539,6 @@ class TagToken(dict):
 			print (cur.str_short(),end='')
 			cur=cur['mainline']
 		print()
-	
-	def show_diverge(S):
-		cur=S
-		while cur:
-			print (cur.str_short(),end='')
-			cur=cur.diverge
-		print()
-		
-	def show_types(S):
-		cur=S
-		while cur:
-			print (f'"{TAG_TOKEN_TYPE_SYMBOL[cur.token]}" ',end='')
-			cur=cur.mainline
-			if cur and cur.diverge:
-				cur.diverge.show_types()
 	
 	def show_structure(S,heading=''):
 		if heading:
@@ -511,13 +562,9 @@ class TagToken(dict):
 			else:
 				print(f'{txt}',end='')
 			pos+=len(txt)
-		
-		panic = 100
 		print(f'TagToken.show_structure:')
-		file_tag=S
+		file_tag=S.root()
 		while file_tag:
-			panic-=1
-			if panic < 0: return
 			cur=file_tag
 			while cur:
 				if cur.is_filetype():
@@ -568,7 +615,7 @@ class TagToken(dict):
 			S['diverge']=save_diverge
 		return ret
 	
-	# showers end showers end showers end showers end showers end showers end
+	# end showers end showers end showers end showers end showers end showers
 	
 	# save and load  save and load  save and load  save and load  save and load
 	
@@ -593,7 +640,7 @@ class TagToken(dict):
 		if S[key] == None:
 			return
 		_int=S[key]
-		if not isinstance(_int,int):
+		if not isinstance(_int,int): # should not happen again delete later
 			DEBUGPRINT(f'BadBoy "{str(S)}"')
 			raise ValueError (f'expected int got {type(_int)}')
 			stck=inspect.stack()
@@ -667,46 +714,91 @@ class TagToken(dict):
 		S.show_listed_str()
 		S.ids_to_links()
 		TagTokenRoot=TagTokenList[0]
-		
-	def walk_broad(S,func):
-		stack=deque([S])
-		def _work_brache(stack):
-			nonlocal func
-			if not stack:
-				return
-			next_stack=deque()
-			while stack:
-				node=stack.pop()
-				func(node)
-				if node.mainline:
-					next_stack.append(node.mainline)
-				if node.diverge:
-					next_stack.append(node.diverge)
-			_work_brache(next_stack)
-		_work_brache(stack) # start stack contains root or root of branche self
-		
-	def yielder(S):
-		DEBUGPRINT(f'TagToken.yielder')
-		diverge_fifo=deque()
-		current=S
-		while True:
-			while current:
-				if current.diverge:
-					diverge_fifo.appendleft(current.diverge)
-				yield current
-				current=current.mainline
-			if not diverge_fifo:
-				return
-			print('pop '*10)
-			current=diverge_fifo.pop().diverge
-			
-class PathSeeker:
-	root=None
 
+# end save and load end save and load end save and load end save and load
+
+# walk tree walk tree walk tree walk tree walk tree walk tree walk tree walk tree
+	def clean(S):
+		global TagTokenList
+		for tag in TagTokenList:
+			if not tag.has('payload'):
+				continue
+			if tag['name']=='FIXED':
+				continue
+			tag['payload']=None
+			
+	def walk_branche(S):
+		br=S['mainline']
+		while br:
+			DEBUGPRINT(f' {str(br)}\t',end='')
+			if br.has('diverge'):
+				dv = br['diverge']
+				if dv:
+					DEBUGPRINT(f'\nSplit on {str(br)}',end='')
+					dv.walk_branche()
+			br=br['mainline']
+			
+	def walk(S):
+		ft=S.root()
+		while ft:
+			DEBUGPRINT(f'\nFILE: {str(ft)}',end='')
+			ft.walk_branche()
+			ft=ft['diverge']
+	
+# end walk tree end walk tree end walk tree end walk tree end walk tree end walk
+
+class FileMetaData(dict):
+	def __init__(S):
+		dict.__init__(S)
+		
+	def clear(S):
+		S={}
+		
+	def set_path(S,source_file,source_path):
+		S['fullpath']=source_file
+		cut=len(source_path)
+		S['tailpath']=source_file[cut:]
+		S['tailsplit']=S['tailpath'].split('/')
+		S['extension']=get_extension(source_file)
+		
+	def get_file_mime(S):
+		if not 'mime' in S:
+			S['mime']=file_i(S['fullpath'])
+		return S['mime']
+	
+	def exiftool(S,tag):
+		if not S['extension'] in bzm.EXIFTOOL_EXTENSIONS:
+			return ''
+		if not 'exiftool' in S:
+			S['exiftool']=meta.do_exiftool_json(S['fullpath'])
+			ic(S['exiftool'])
+		if tag in S['exiftool']:
+			return S['exiftool'][tag]
+		return ''
+	
+	def use_brainz(S,tag):
+		if not 'musicbrainz' in S:
+			S['musicbrainz']=bzm.BrainzMusic(S['fullpath'])
+			#ic(S['musicbrainz'])
+		S['musicbrainz'].json_dump()
+		
+	def get_tag(S,tag):
+		tag_value=S.exiftool(tag)
+		if tag_value:
+			return tag_value
+		mime=file_i(S['fullpath'])
+		if mime['general']=='audio':
+			DEBUGPRINT('Audio -> musicbrainz')
+			tag_value=S.use_brainz(tag)
+			if tag_value:
+				return tag_value
+		return ''
+		
+class PathSeeker:
+	
 	def __init__(self, path_format=None, gps_file=None,language='eng') -> None:
-		#ic(path_format)
-		global exiftags
-		exiftags.set_language(language)
+		self.fmd=FileMetaData()
+		self.language=language
 		lines=self.read_format(path_format)
 		#DEBUGPRINT(f'{lines=}')
 		if lines:
@@ -757,7 +849,7 @@ class PathSeeker:
 		return TagTokenRoot
 		
 	def grow_tree(self,lines):
-		ic(self)
+		#ic(self)
 		fork_buds = deque()
 		current=None
 		
@@ -832,38 +924,67 @@ class PathSeeker:
 			
 			#self.root.walk_broad(showTagToken)
 		
-	def compose_path(S,source_file):
-		global exiftags
-		exiftags.set_file(source_file)
-		DEBUGPRINT(f'PathSeeker:compose_path("{source_file}")')
-		path=[]
-		def match_file_to_branche():
-			extension = get_extension(source_file)
-			file_node=S.root
-			while file_node and not file_node.tag_kind == 'default':
-				if file_node.tag_kind == 'ext':
-					if ext.extension_is_of_type(extension,file_node.tag_name):
-						return file_node.mainline
-				elif file_node.tag_kind == 'file':
-					if not S.file_data:
-						S.file_data=file_i(source_file)
-						DEBUGPRINT(f'{S.file_data=}')
-					if file_node.tag_name in S.file_data:
-						return file_node.mainline
-				file_node=file_node.diverge
-			if file_node.tag_kind == 'default':
-				DEBUGPRINT('This is wrong')
-				raise ValueError('default expected')
-				exit(0)
-			return file_node.mainline
+	def match_file(S,tokkie):
+		if tokkie['kind']=='default':
+			return True
+		if tokkie['kind']=='ext':
+			f_ext=S.fmd['extension']
+			if ext.extension_is_of_type(f_ext,tokkie['name']):
+				return True
+			return False
+		if tokkie['kind']=='file':
+			mime=S.fmd.get_file_mime()
+			if tokkie['name'] != mime['general']:
+				return False
+			if tokkie['payload'] in mime['specific']:
+				return True
+		return False
+				
+	def compose_path(S,source_file,source_dir):
+		DEBUGPRINT(f'\nPathSeeker.compose_path("{source_file}",\n{source_dir})')
+		S.fmd.clear()
+		S.fmd.set_path(source_file,source_dir)
 		
-		cur_node=match_file_to_branche()
-		cur_node.show_deep_tree()
-		while cur_node:
-			path_item=str(cur_node)
-			path.append(path_item)
-			cur_node=cur_node.mainline
-		S.root.show_mainline()
+		#DEBUGPRINT(f'{S.source_path_split}')
+		for ft in S.root().file_iter():
+			if not S.match_file(ft):
+				continue
+			#ft.show_mainline()
+			path=S.explore_branche(ft)
+			if path:
+				break
+				
+		#ic(path)
+		if not path: # should not happen
+			return S.fmd['tailpath']
+		ret=''
+		for symbol in path:
+			ret+=symbol.production()
+		DEBUGPRINT(f'Composed Path "{ret}"')
+		return ret
+		
+			
+	def explore_branche(S,file_tokkie):
+		path=deque()
+		tokkie=file_tokkie['mainline']
+		while tokkie:
+			# ic(tokkie)
+			tokkie.show()
+			if tokkie.can_produce(S.fmd):
+				path.append(tokkie)
+			if tokkie.is_name():
+				return path
+			tokkie=tokkie['mainline']
+			if tokkie:
+				DEBUGPRINT(f'NEXT tokkie: {str(tokkie)}')
+			
+			# while path:
+			# 	tokkie=path.pop()
+			# 	if not tokkie.has('diverge'):
+			# 		continue
+			# 	tokkie=tokkie['diverge']
+			# 	break
+		return None
 	
 	def add_old_subdir(self,pos):
 		return f'not yet subdir {pos}'
@@ -877,37 +998,48 @@ class PathSeeker:
 	def add_mime(self,mime):
 		return f'not jet mime "{mime}"'
 
-	def show(self):
-		print(f'PathSeeker.show:')
-		if not self.root:
-			print('PathSeeker:Tree is Empty')
-			return
-		it=self.root.broad_iter()
-		print(it)
-		# for node in self.root.broad_iter():
-		# 	node.show()
-		#
+# testdata=[
+# '/home/bob/temp/Users/',
+# '/home/bob/temp/Users/Sander/Dune  - Are You Ready To Fly (16-9) HQ.mp3',
+# '/home/bob/temp/Users/Sander/AppData/Roaming/Microsoft/Word/AutoHerstel-versie van Document1.asd',
+# '/home/bob/temp/Users/Sander/AppData/Roaming/Microsoft/Word/~WRA0001.asd',
+# '/home/bob/temp/Users/Sander/AppData/Roaming/Microsoft/Word/AutoHerstel-versie van IKEAlijstje.asd',
+# '/home/bob/temp/Users/Sander/AppData/Roaming/Microsoft/Word/AutoHerstel-versie van Document7.asd',
+# '/home/bob/temp/Users/Sander/AppData/Roaming/Microsoft/Word/~WRA0000.asd',
+# '/home/bob/temp/Users/Sander/AppData/Roaming/Microsoft/Word/AutoHerstel-versie van Datumprikker.asd',
+# '/home/bob/temp/Users/Sander/AppData/Roaming/Microsoft/Word/AutoHerstel-versie van Sanderenikzakje.asd',
+# '/home/bob/temp/Users/Sander/AppData/Roaming/BitComet/fav/download-complete.wav',
+# '/home/bob/temp/Users/Sander/AppData/Roaming/Apple Computer/iTunes/CD Info.cidb',
+# '/home/bob/temp/Users/Sander/AppData/Roaming/vlc/ml.xspf',
+# ]
+testdata=['/home/bob/temp/Users/',
+'/home/bob/temp/Users/Sander/Dune  - Are You Ready To Fly (16-9) HQ.mp3',
+'/home/bob/temp/Users/Sander/AppData/Roaming/BitComet/fav/download-complete.wav',
+'/home/bob/temp/Users/Sander/AppData/Roaming/Microsoft/Word/~WRA0000.asd',
+]
 
-
-def main() -> None:
-	#generate_tags()
+def testcompile():
+	print()
+	print('*'*80)
 	ps=PathSeeker("syntax.test")
-	# yi=rt.yielder()
-	# for node in yi:
-	# 	print(str(node),end=' ')
-	# 	if node.is_name():print()
-	# rt.walk_broad(TagTokenPrintShort)
-	TagTokenRoot.show_structure()
+	root=ps.root()
+	root.save_tag_list("test.save")
+	root.load_tag_list("test.save")
+	root.show_structure('After save an load')
+	root.walk()
 	print()
 	print('*'*80)
-	#TagTokenRoot.show_listed()
-	TagTokenRoot.save_tag_list("test.save")
-	TagTokenRoot.load_tag_list("test.save")
-	print()
-	print('*'*80)
-	#TagTokenRoot.show_listed()
-	#TagTokenRoot.show_listed_str()
-	#TagTokenRoot.show_structure('After save an load')
+	
+def test_compose():
+	ps=PathSeeker("syntax.test")
+	it = iter(testdata)
+	source_path = next(it)
+	for source in it:
+		ps.compose_path(source,source_path)
+	
+def main() -> None:
+	#testcompile()
+	test_compose()
 
 if __name__ == '__main__':
 	main()

@@ -1,11 +1,16 @@
 #!/usr/bin/python3
 
 import os
+from itertools import count
+
 import requests
 import subprocess
 import json
 import datetime
 import time
+from icecream import ic
+from numpy.version import release
+
 from listutils import get_extension
 
 # noinspection SpellCheckingInspection
@@ -1646,6 +1651,7 @@ ACOUSTID_URL = "https://api.acoustid.org/v2/lookup"
 ACOUSTID_CLIENT = ''
 USER_AGENT_STRING = "listcop.py/0.0.1 ( Bok.at.Git@gmail.com )"
 DEBUGPRINT = print
+LatestBrainCall=time.time()
 
 EXIFTOOL_EXTENSIONS = {
 		"3FR", "3G2", "3GP", "A", "AA", "AAX", "ACR", "AFM", "AI", "AIFF", "APE",
@@ -1676,128 +1682,40 @@ EXIFTOOL_EXTENSIONS = {
 		"ZIP"
 }
 
-
-
-
 def time_float(year, month, day) -> float:
 	dt = datetime.datetime(year, month, day)
 	return time.mktime(dt.timetuple())
 
-class MusicTags():
-	def __init__(self,name='MusicTags'):
-		self.reset()
-		self.name=name
-		
-	def reset(self):
-		self.dict={
-				'names'   : [],
-				'publiced': time_float(3000, 12, 31),
-				'title'   : '',
-				'format'  : '',
-				'tracks'  : 1000,
-				'position': 0,
-				'duration': 0
-			}
-		
-	def conditional_replace_title(self,title,tracks):
-		trks=self.dict['tracks']
-		if trks <= tracks:
-			return trks
-		self.dict['tracks']=tracks
-		self.dict['title']=title
+def time2date(secs):
+	st=time.gmtime(secs)
+	return (st.tm_year,st.tm_mon,st.tm_mday,st.tm_wday)
 	
-	def set_names_duration(self,names,duration):
-		if names != [] :
-			self.dict['names']=names
-		if duration > 0:
-			self.dict['duration'] = duration
-			
-	def set_format_position(self,format,position):
-		self.dict['format']=format
-		self.dict['position'] = position
-		
-	# def copy_if_younger(self,other):
-	# 	DEBUGPRINT(f'COMPARE')
-	# 	self.show()
-	# 	other.show()
-	# 	if self.dict['publiced'] < other.dict['publiced']:
-	# 		return
-	# 	for key in self.dict:
-	# 		if (key == 'names') and (other.dict['names'] == set()) : continue
-	# 		if (key == 'title'):
-	# 			self.dict['title'].update(other.dict['title'])
-	# 			continue
-	# 		self.dict[key]=other.dict[key]
-	#
-	# def set(self,key,value):
-	# 	if key not in self.dict:
-	# 		raise ValueError
-	# 	if isinstance(self.dict[key],set):
-	# 		self.dict[key]=set([value])
-	# 		return
-	# 	self.dict[key]=value
-	#
-	# def set_title(self,title):
-	# 	self.dict['title'].add(title)
-	#
-	def set_earliest_date(self,date:dict):
-		DEBUGPRINT(f'set_earliest_date{date=}')
-		y=3000
-		m=12
-		d=31
-		if 'year'  in date: y=date['year']
-		if 'month' in date: m=date['month']
-		if 'day'   in date: d=date['day']
-		new_date=time_float(year=y,month=m,day=d)
-		if new_date >= self.dict['publiced']:
-			return
-		self.dict['publiced']=new_date
+class BrainzMusic(dict):
 	
-	def set_format(self,format):
-		self.dict['format'].add(format)
-		
-	def set_position(self,position):
-		self.dict['position']=position
-		
-	# def set_track_count(self,tracks):
-	# 	self.dict['tracks']=tracks
-	#
-	# def add(self,key,value):
-	# 	if key not in self.dict:
-	# 		raise ValueError
-	# 	if isinstance(self.dict[key],set):
-	# 		self.dict[key].add(value)
-	# 		return
-	# 	self.dict[key]=value
-		
-	def get(self,key):
-		if key not in self.dict:
-			raise ValueError
-		return self.dict[key]
-	
-	# def is_younger(self,other):
-	# 	return other.dict['publiced'] > self.dict['publiced']
-	
-	def show(self):
-		sd=self.dict
-		print(f'\nMusicTags: "{self.name}"')
-		print(f'\tnames    : {sd["names"]}')
-		print(f'\tpubliced : {sd["publiced"]}')
-		print(f'\t           {time.ctime(sd["publiced"])}')
-		print(f'\ttitle    : {sd["title"]}')
-		print(f'\tformat   : {sd["format"]}')
-		print(f'\tposition : {sd["position"]}')
-		print(f'\ttracks   : {sd["tracks"]}')
-		print(f'\tduration : {sd["duration"]}')
-		print()
-		
-	def str_tags(self):
-		return ','.join(self.dict.keys())
-
-class BrainzMusic:
-	
-	def __init__(self):
+	def __init__(S,filepath,save_request=None):
 		global ACOUSTID_CLIENT
+		DEBUGPRINT(f'BrainzMusic("{filepath}")')
+		dict.__init__(S)
+		if isinstance(filepath,dict): #debug/test
+			request=filepath
+		else:
+			S.init_client()
+			request=S.fingerprint_request(filepath)
+			if save_request:
+				with open(save_request,'w') as f:
+					json.dump(request,f,indent=1)
+				print(f' BrainzMusic request saved to "{save_request}"')
+				exit(0)
+		S.winnow_request(request)
+	
+	def show(S):
+		print(f'BranzMusic.show:')
+		print(f'{json.dumps(S,indent=4)}')
+		
+	def init_client(S):
+		global ACOUSTID_CLIENT,ACOUSTID_URL
+		if ACOUSTID_CLIENT:
+			return
 		acoustid_client_file = os.path.expanduser('~/.local/listcopy/AcoustID.key')
 		if os.path.exists(acoustid_client_file):
 			with open(acoustid_client_file, 'r') as f:
@@ -1805,15 +1723,9 @@ class BrainzMusic:
 				print(f'{ACOUSTID_CLIENT=}')
 		else:
 			print(f'Possibly you need a AcoustID from {ACOUSTID_URL}.')
-	
-	def get_info(self, audio_file):
-		ext = get_extension(audio_file)
-		
-		if ext in EXIFTOOL_EXTENSIONS:
-			self.exec_exiftools(audio_file)
-			DEBUGPRINT(f'BrainzMusic.get_info("{ext}") not supported by exiftools.')
-			return None
-		self.exec_exiftools(audio_file)
+			
+	def json_dump(S):
+		json.dumps(S,indent=4)
 	
 	def exec_fpcalc(self, audio_file) -> dict:
 		try:
@@ -1830,113 +1742,277 @@ class BrainzMusic:
 		result = json.loads(result)
 		return result
 	
-	def exec_exiftools(self, audio_file):
-		result = subprocess.check_output(["exiftool", "-j", audio_file])
-		result_dct = json.loads(result)[0]
-		#DEBUGPRINT(json.dumps(result_dct, indent=4))
-		return result_dct
+	def bee_patient(S):
+		# max 3 calls per second to MusicBrainz
+		global LatestBrainCall
+		now=time.time()
+		from_then_to_now=now-LatestBrainCall
+		if from_then_to_now < 0.3:
+			time.sleep(0.3-from_then_to_now)
+		LatestBrainCall=time.time()
 	
-
-	# def rosa_fingerprint(self, audio_file):
-	# 	try:
-	# 		y, sr = roos.load(audio_file)
-	# 	except roos.LibrosaError as e:
-	# 		print(f'rosa_fingerprint("{audio_file}" Failed.')
-	# 		print(f'{e}')
-	# 		return 0
-	# 	fingerprint = roos.feature.fingerprint(y, sr=sr)
-	# 	return fingerprint
-	
-	def acoustid_lookup(self, acoustid, meta=['releases', 'recordings', 'tracks',
-															'compress', 'usermeta',
-															'sources']):
+	def fingerprint_request(S,
+		filepath,
+		meta=['releases', 'recordings', 'tracks','compress', 'usermeta','sources']
+		):
+		"""
+			Do a request for MusicBrainz data via "https://api.acoustid.org/v2/lookup"
+			with a with "fpcalc" fingerprint.
+		:param  filepath: file to "fpcalc" fingerprint and request the data
+		:param meta: a list of data fields to retrieve
+		:return: MusicBrainz data dict
+		"""
+		S.bee_patient()
+		finger = S.exec_fpcalc(filepath)
 		meta = '+'.join(meta)
-		duration = str(int(acoustid[
-									 "duration"]))  # floats are not accepted return a bad request 400
-		request = f'{ACOUSTID_URL}?client={ACOUSTID_CLIENT}&duration={duration}&fingerprint={acoustid["fingerprint"]}&meta={meta}'
+		duration = str(int(finger["duration"])) # floats are not accepted return a bad request 400
+		request = (f'{ACOUSTID_URL}?client={ACOUSTID_CLIENT}'
+					  f'&duration={duration}&fingerprint={finger["fingerprint"]}&meta={meta}')
 		DEBUGPRINT(f'{request}')
 		# request ='''https://api.acoustid.org/v2/lookup?client=r820ALkehAc&duration=641&fingerprint=AQABz0qUkZK4oOfhL-CPc4e5C_wW2H2QH9uDL4cvoT8UNQ-eHtsE8cceeFJx-LiiHT-aPzhxoc-Opj_eI5d2hOFyMJRzfDk-QSsu7fBxqZDMHcfxPfDIoPWxv9C1o3yg44d_3Df2GJaUQeeR-cb2HfaPNsdxHj2PJnpwPMN3aPcEMzd-_MeB_Ej4D_CLP8ghHjkJv_jh_UDuQ8xnILwunPg6hF2R8HgzvLhxHVYP_ziJX0eKPnIE1UePMByDJyg7wz_6yELsB8n4oDmDa0Gv40hf6D3CE3_wH6HFaxCPUD9-hNeF5MfWEP3SCGym4-SxnXiGs0mRjEXD6fgl4LmKWrSChzzC33ge9PB3otyJMk-IVC6R8MTNwD9qKQ_CC8kPv4THzEGZS8GPI3x0iGVUxC1hRSizC5VzoamYDi-uR7iKPhGSI82PkiWeB_eHijvsaIWfBCWH5AjjCfVxZ1TQ3CvCTclGnEMfHbnZFA8pjD6KXwd__Cn-Y8e_I9cq6CR-4S9KLXqQcsxxoWh3eMxiHI6TIzyPv0M43YHz4yte-Cv-4D16Hv9F9C9SPUdyGtZRHV-OHEeeGD--BKcjVLOK_NCDXMfx44dzHEiOZ0Z44Rf6DH5R3uiPj4d_PKolJNyRJzyu4_CTD2WOvzjKH9GPb4cUP1Av9EuQd8fGCFee4JlRHi18xQh96NLxkCgfWFKOH6WGeoe4I3za4c5hTscTPEZTES1x8kE-9MQPjT8a8gh5fPgQZtqCFj9MDvp6fDx6NCd07bjx7MLR9AhtnFnQ70GjOcV0opmm4zpY3SOa7HiwdTtyHa6NC4e-HN-OfC5-OP_gLe2QDxfUCz_0w9l65HiPAz9-IaGOUA7-4MZ5CWFOlIfe4yUa6AiZGxf6w0fFxsjTOdC6Itbh4mGD63iPH9-RFy909XAMj7mC5_BvlDyO6kGTZKJxHUd4NDwuZUffw_5RMsde5CWkJAgXnDReNEaP6DTOQ65yaD88HoeX8fge-DSeHo9Qa8cTHc80I-_RoHxx_UHeBxrJw62Q34Kd7MEfpCcu6BLeB1ePw6OO4sOF_sHhmB504WWDZiEu8sKPpkcfCT9xfej0o0lr4T5yNJeOvjmu40w-TDmqHXmYgfFhFy_M7tD1o0cO_B2ms2j-ACEEQgQgAIwzTgAGmBIKIImNQAABwgQATAlhDGCCEIGIIM4BaBgwQBogEBIOESEIA8ARI5xAhxEFmAGAMCKAURKQQpQzRAAkCCBQEAKkQYIYIQQxCixCDADCABMAE0gpJIgyxhEDiCKCCIGAEIgJIQByAhFgGACCACMRQEyBAoxQiHiCBCFOECQFAIgAABR2QAgFjCDMA0AUMIoAIMChQghChASGEGeYEAIAIhgBSErnJPPEGWYAMgw05AhiiGHiBBBGGSCQcQgwRYJwhDDhgCSCSSEIQYwILoyAjAIigBFEUQK8gAYAQ5BCAAjkjCCAEEMZAUQAZQCjCCkpCgFMCCiIcVIAZZgilAQAiSHQECOcQAQIc4QClAHAjDDGkAGAMUoBgyhihgEChFCAAWEIEYwIJYwViAAlHCBIGEIEAEIQAoBwwgwiEBAEEEOoEwBY4wRwxAhBgAcKAESIQAwwIowRFhoBhAE'''
 		# print(f'f{request}')
 		# response = requests.get(ACOUSTID_URL,url,parameters)
 		response = requests.get(request)
-		retcode = response.status_code
+		retcode  = response.status_code
 		if retcode == 200:
-			return json.loads(response.text)
-		print(f"BrainzMusic:acoustid_lookup err {retcode}")
+			DEBUGPRINT(f'{response.text}')
+			ret=json.loads(response.text)
+			DEBUGPRINT(json.dumps(ret,indent=4))
+			return ret
+		print(f"BrainzMusic:fingerprint_request err {retcode}")
 		for err in requests.status_codes._codes[retcode]: print(f'\t{err}')
 		return {}
-
-	def parse_acoustid_lookup(self, info)->MusicTags:
-		if not 'results' in info: return {}
-		# youngest_result=MusicTags("Young")
-		# current_result=MusicTags("Current")
-		tags=MusicTags("tags")
-		names=[]
-		duration=-1
+	
+	def try_winnow_request(S, harvest)->dict:
+		"""
+		Try to separate the wheat from the chaff.
+	 	on the guess:
+			most seen artists name and title wins except "Various Artists"
+			earilest date met wins.
+	  	:param harvest: the dictionairy returned by "fingerprint_request"
+		:return: the wheat as dict
+		"""
+	
+		if not 'results' in harvest:
+			DEBUGPRINT(f'BranzMusic.winnow_request got an empty harvest.')
+			return {}
+		names={}
+		titles={}
+		release_titles={}
+		release_names={}
+		early=time_float(3000,12,31)
+		release=False
 		
-		def recording(record):
-			if "artists" in record:
-				for artist in record["artists"]:
-					if 'name' in artist:
-						names.append(artist['name'])
-			if "duration" in record:
-				duration=record["duration"]
-			tags.set_names_duration(names,duration)
-			if "releases" in record: return record['releases']
-			return  None
+		def store_name(name):
+			DEBUGPRINT(f'store_name("{name}")')
+			if name.upper() == "VARIOUS ARTISTS":
+				return
+			if name in names:
+				names[name]+=1
+				return
+			names[name]=1
 		
-		def release(rd):
-			DEBUGPRINT(f'release({rd=}')
-			# {
-			# 'country': 'US',
-			# 'date': {'day': 6, 'month': 3, 'year': 2012},
-			# 'id': 'ca9a2903-a684-4546-80cf-b60f27fba6de',
-			# 'medium_count': 1,
-			# 'mediums': [
-			#             {
-			#              'format': 'Digital Media', 'position': 1, 'track_count': 1,
-			#              'tracks': [{'id': 'd29ae1a0-ddac-388b-aa18-a8089cac1b35', 'position': 1}]
-			#             }
-			#             ],
-			# 'releaseevents': [{'country': 'US', 'date': {'day': 6, 'month': 3, 'year': 2012}}],
-			# 'title': 'Shadow Days',
-			# 'track_count': 1
-			# }
-			track_count=-1
-			title=''
-			medium_count=-1
-			format=''
-			position=-1
-			if 'mediums' in rd:
-				medium_0=rd['mediums'][0]
-				if 'format' in medium_0:
-					format= medium_0['format']
-				if 'position' in medium_0:
-					position=medium_0['position']
-				tags.set_format_position(format,position)
+		def store_title(title):
+			nonlocal release,release_titles
+			DEBUGPRINT(f'store_title("{title}" {release=})')
+			if release:
+				if title in release_titles:
+					release_titles[title]+=1
+					return
+				release_titles[title]=1
+				return
+			if title in titles:
+				titles[title]+=1
+				return
+			titles[title]=1
 			
-			if 'date'         in rd: tags.set_earliest_date(rd['date'])
-			if 'title'        in rd: title=rd['title']
-			if 'track_count'  in rd: track_count  = rd['track_count']
-			if 'medium_count' in rd: medium_count = rd['medium_count']
-			tags.conditional_replace_title(title,track_count)
-			return track_count
-			# if 'mediums' in rd:
-			# 	med0=rd['mediums'][0]
-			# 	if 'format'      in med0: current_result.set_format(med0['format'])
-			# 	if 'position'    in med0: current_result.set_position(med0['position'])
-			# 	if 'track_count' in med0: current_result.set_track_count(med0['track_count'])
+		def store_date(date):
+			nonlocal early
+			DEBUGPRINT(f'store_date({date})')
+			if not (('year' in date) and ('month' in date) and ('day' in date)):
+				return
+			ftime = time_float(date['year'],date['month'],date['day'])
+			if ftime < early:
+				early = ftime
+			
+		action={"name":store_name,"date":store_date,"title":store_title}
+		def walk_dict(item):
+			nonlocal release
+			if not item:
+				return
+			DEBUGPRINT(f'{release=} {item}')
+			if isinstance(item,list):
+				for i in item:
+					walk_dict(i)
+				return
+			if isinstance(item,dict):
+				for key in item:
+					DEBUGPRINT(key)
+					if key == "releases":
+						release=True
+					if key in action:
+						action[key](item[key])
+					walk_dict(item[key])
+					release=False
+				return
+			
+			return
+		walk_dict(harvest['results'])
 
-		for result in info['results']:
-			print(f"result-> {result}")
-			if 'recordings' in result:
-				print(f"\tresult->recordings {result['recordings']} ")
-				for _recording in result['recordings']:
-					_releases=recording(_recording)
-					if _releases == None: continue
-					for _release in _releases:
-						if release(_release) == 1:
-							return tags
+		DEBUGPRINT(f'names:\n{json.dumps(names,indent=4)}')
+		DEBUGPRINT(f'titles:\n{json.dumps(titles, indent=4)}')
+		DEBUGPRINT(f'release_titles:\n{json.dumps(release_titles, indent=4)}')
+		DEBUGPRINT(f'early: {time.ctime(early)}')
+		
+	def winnow_request(S, harvest)->dict:
+		"""
+		Try to separate the wheat from the chaff.
+	 	on the guess:
+			most seen artists name and title wins except "Various Artists"
+			earilest date met wins.
+	  	:param harvest: the dictionairy returned by "fingerprint_request"
+		:return: the wheat as dict
+		"""
+	
+		if not 'results' in harvest:
+			DEBUGPRINT(f'BranzMusic.winnow_request got an empty harvest.')
+			return {}
+		names={}
+		titles={}
+		release_titles={}
+		release_names={}
+		early=0
+		
+		def pic_the_winner(dct):
+			top=''
+			top_count=0
+			for key in dct:
+				count = dct[key]
+				if count > top_count:
+					top_count=count
+					top=key
+			return top
+		
+		def cick_or_make(dct,key):
+			if key in dct:
+				dct[key]+=1
+				return
+			dct[key]=1
+			
+		def store_artists(artists):
+			DEBUGPRINT(f'store_artists')
+			for artist in artists:
+				name=artist['name']
+				if name.upper() == "VARIOUS ARTISTS":
+					continue
+				cick_or_make(names,name)
+				
+		def store_title(title):
+			nonlocal titles
+			cick_or_make(titles,title)
+			
+		def store_date(date):
+			nonlocal early
+			DEBUGPRINT(f'store_date({date})')
+			day = 28
+			month =12
+			if not 'year' in date:
+				return
+			year=date['year']
+			if 'month' in date:
+				mouth = date['month']
+			if 'day' in date:
+				day = date['day']
+			ftime = time_float(year=year,month=month,day=day)
+			if not early:
+				early = ftime
+				return
+			if ftime < early:
+				early = ftime
+			
+		def store_sources(sources):
+			DEBUGPRINT(f'store_sources')
+			
+		def store_releases(releases):
+			DEBUGPRINT(f'store_releases')
+			for release in releases:
+				for key in release:
+					release_actions[key](release[key])
+			
+		def store_duration(duration):
+			DEBUGPRINT(f'store_duration')
+			
+		def store_id(id):
+			DEBUGPRINT(f'store_id')
+			
+		def release_artists(artists):
+			for artist in artists:
+				cick_or_make(release_names, artist['name'])
+			
+		def release_country(country     ):
+			DEBUGPRINT(f' "country"     ')
+			
+		# def release_date(date        ):
+		# 	DEBUGPRINT(f' "date"        ')
+			
+		def release_id (id          ):
+			DEBUGPRINT(f' "id"          ')
+			
+		def release_medium_count(medium_count):
+			DEBUGPRINT(f' "medium_count"')
+			
+		def release_mediums (mediums     ):
+			DEBUGPRINT(f' "mediums"     ')
+			
+		def release_releaseevents(releaseevents):
+			DEBUGPRINT(f'releaseevents')
+			
+		def release_title (title       ):
+			cick_or_make(release_titles,title)
+			#DEBUGPRINT(f' "title"       ')
+			
+		def release_track_count(track_count ):
+			DEBUGPRINT(f' "track_count" ')
+
+
+		action={"id"       :store_id,
+				  "artists"  :store_artists,
+				  "date"     :store_date,
+				  "title"    :store_title,
+				  "sources"  :store_sources,
+				  "releases" :store_releases,
+				  'duration' :store_duration
+				  }
+		release_actions={
+			"artists"      :release_artists,
+			"country"      :release_country,
+			"date"         :store_date,
+			"id"           :release_id,
+			"medium_count" :release_medium_count,
+			"mediums"      :release_mediums,
+			"releaseevents":release_releaseevents,
+			"title"        :release_title,
+			"track_count"  :release_track_count
+			}
+		for result in harvest['results']:
+			for recording in result["recordings"]:
+				for key in recording:
+					action[key](recording[key])
+
+		DEBUGPRINT(f'names:\n{json.dumps(names,indent=4)}')
+		DEBUGPRINT(f'titles:\n{json.dumps(titles, indent=4)}')
+		DEBUGPRINT(f'release_titles:\n{json.dumps(release_titles, indent=4)}')
+		DEBUGPRINT(f'release_names:\n{json.dumps(release_names, indent=4)}')
+		DEBUGPRINT(f'early: {time.ctime(early)}')
+		
+		S['names']= ','.join(names.keys())
+		S['title']= pic_the_winner(titles)
+		S['album']= pic_the_winner(release_titles)
+		S['release'] = pic_the_winner(release_names)
+		S['year'],S['month'],S['day'],S['weekday']=time2date(early)
+		S.show()
+		
+		
 '''
 Yes, there are several alternative libraries available for audio fingerprinting in Python:
 
@@ -1972,15 +2048,21 @@ The best alternative for you will depend on your specific needs and the features
 def main() -> None:
 	song = "/home/bob/temp/Users/Sander/Desktop/Foto's/2015/201512/Mobiel/WhatsApp Audio/AUD-20151223-WA0000.mp3"
 	nosong = "/home/bob/temp/Users/Sander/Desktop/Foto's/2015.wav"
-	mb = BrainzMusic()
-	tags=mb.parse_acoustid_lookup(testDict)
+	testdictfile='testrequest.json'
+	#mb = BrainzMusic(song,'testrequest.json')
+	if os.path.exists(testdictfile):
+		with open(testdictfile,'r') as f:
+			testdict=json.load(f)
+			mb = BrainzMusic(testdict)
+			exit(0)
+	tags=mb.winnow_request(testDict)
 	tags.show()
 	exit(0)
 	# mb.get_rosa_info(song)
 	finger = mb.exec_fpcalc(song)
 	print(f'{finger=}')
-	info = mb.acoustid_lookup(finger)
-	mb.parse_acoustid_lookup(info)
+	info = mb.fingerprint_request(finger)
+	mb.winnow_request(info)
 	# finger=mb.exec_fpcalc(nosong)
 	# print(f'{mbzngs.set_useragent("listcopy.py",version="0.0.1",contact="Bok.at.Git@gmail.com")}')
 	exit(0)

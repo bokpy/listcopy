@@ -294,9 +294,9 @@ class ExifTags:
 		except subprocess.SubprocessError as e:
 			print(f'exiftool_j subprocess.SubprocessError {e}')
 			return {}
-		#DEBUGPRINT(f'{res=}')
-		dct=json.loads(res)
-		if isinstance(dct,list) : return dct[0]
+		# DEBUGPRINT(f'{res=}')
+		dct = json.loads(res)
+		if isinstance(dct, list): return dct[0]
 		return dct
 	
 	def get_exif_tag(S,tag)->str:
@@ -1550,6 +1550,7 @@ TAG_PROCESSOR={
  'ZoomStepCount':('none',ExifTags.store_none),
  'ZoomTargetWidth':('none',ExifTags.store_none),
  }
+
 
 def main() -> None:
 	pass
