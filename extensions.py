@@ -763,7 +763,9 @@ DEBUGEXIT=exit
 # 	return re.compile(r'\.(' + reg_str + r')$',flags=re_flags)
 
 def extension_is_of_type(ext,file_type):
-	return ext in extension_dict[file_type]
+	if file_type in extension_dict:
+		return ext in extension_dict[file_type]
+	return False
 
 class SelectOnExtension:
 	def __init__(self,*args):

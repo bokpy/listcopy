@@ -9,67 +9,66 @@ from collections import deque
 
 import metadata as meta
 import extensions as ext
+from extensionsets import extension_dict
 #from listcopy import prev_copy_speed
 from listutils import LocalTimeString,get_extension,center_string,get_cursor_position
 import brainzmusic as bzm
-from test_extensions import test_extensions
-
-from icecream import ic
+from garlic import *
 import inspect
 
-DEBUGPRINT=print
+def try_int(val):
+	if val == None:
+		return '---'
+	try:
+		return int(val)
+	except ValueError:
+		return val.strip()
+
 exiftags=meta.ExifTags()
 
 _ext_types='","'.join(ext.collect_mime_types())
+def upcase_initial(s):return s[:1].upper()+s[1:]
 
 help_text=f'''
-Fore every class of files like: "{_ext_types}"
-categorized by extension.
-or categorized by a call to "file -i" (slow)
-a substitution path can be defined by a list of tags.
+Fore every class of files categorized by a comma separated list of "mime types" and/or "extension(s)" 
+a substitution path can be defined by a list of labels.
+mime are: "{_ext_types}"
 
-This can be tags extracted with "exiftool".
+This labels are retrieved if possible in order "exiftool".
 
-for images with gps data:
+for audio: if needed followed with a "https://api.acoustid.org/v2/lookup" request.
+           "brainzmusic.py" expects to find a key in "~/.local/listcopy/AcoustID.key"
+           maybe not needed but easy to get from "acoustid.org".
 
-tags resulting from an "Overpass" "OpenStreetMap" lookup can be used.
-
-For audio:
-
-If "exiftool" does not provide all the wanted data.
-A call to "fpcalc" to calculate a fingerprint followed
-by request to "https://api.acoustid.org/v2/lookup"
-to get the "MusicBrainz" data is tried.
-"brainzmusic.py" expects to find a key in '~/.local/listcopy/AcoustID.key' maybe not needed
-but easy to get from above site.
+for images with gps data: geological label data is retrieved from "Overpass" "OpenStreetMap".
 
 The subdirectories of the original path can be copied.
 Positive numbers indicate a subdirectory above the source directory.
 Negative numbers indicate a subdirectory below the filename.
-Zero the full path above the source directory.
+Zero or "copy" full path above the source directory.
 
-syntax: <path>       = <filetype>[,<filetype>]/<tag>[/<name>];
+syntax: <path>       = <filetype>[,<filetype>]:/<tag>[/<name>];
         <join>       = <+{{str}}+>
-        <switch>     = (<aternative 1>|<aternative 2>[|...|<aternative n>)]
-        <filetype>   = <ext|file|default>:<class>
-        <tag>        = <exif|osm|mbz|subdir|literal>{{string}}
+        <switch>     = (<alternative 1>|<alternative 2>[|...|<alternative n>)]
+        <filetype>   = <default|mime|extension>[,<filetype>]:
+        <tag>        = <label|subdir|literal>{{string}}
         <tag>        = <tag>[<join><tag>]
-        <tag>        = (<tag>)<tag>)
+        <tag>        = <tag>/<tag>
         <name>       = name:<tag>
 
-Example: ext:image,ext:video/exif{{artist}}/exif{{album }}+" year "+ exif{{year}}/name:exif{{ title }}
-         ext:image/osm{{addr:city}}/osm{{addr:street}} +" "+ osm{{addr:housenumber'}}/subdir{{-1}}
-         file:audio\\flac/"literal:{{flac music}}/exif{{album}}/name:exif{{ title }}
-         (Use a backslash \\ in mime types!)
-         
-    <filetype> "default" <tag>|"copy"
-for <filetype> "ext"  look in "extensionsets.py"
-for <filetype> "file" see "listfiles.py --show-mime general" "listfiles --show-mime general_mime_type"
-for <tag>      "exif" https://manpages.org/exiftool "exiftool -list"
-for <tag>      "osm"  https://wiki.openstreetmap.org/wiki/Map_features(#Addresses)
-for <tag>      "mbz"  {bzm.MusicTags().str_tags()}
-'''
+Example: image,video:/label{{artist}}/label{{album }}+" year "+ label{{year}}/name:label{{ title }}
+         image:/label{{addr:city}}/label{{addr:street}} +" "+ label{{addr:housenumber'}}/subdir{{-1}}
+         audio/flac:/literal:{{flac music}}/label{{album}}/name:label{{ title }}
+                 
+<filetype> for "extension" look in "extensionsets.py"
+           for "mime" see "listfiles.py --show-mime general" 
+               "listfiles --show-mime general_mime_type"
+           default fits all.
+           
+<tag> for "label" all labels the current program can retrieve.
 
+Order is important so put the most specific in front.
+'''
 
 def pathseeker_help():
 	print(help_text)
@@ -85,9 +84,17 @@ def file_i(file_path):
 	#DEBUGPRINT(f'{result=}')
 	result=str(result)
 	m=mime_re.match(result) # audio/x-wav
-	return {'general':m.group(1),
-		  'specific':m.group(2)
+	return {'General':m.group(1),
+		  'Specific':m.group(2)
 		  }
+
+class FilePaths(deque):
+
+	def __init__(S):
+		deque.__init__(S)
+
+	def add(S,file_type):
+		S.append(file_type)
 
 #filetype_re   =r'(?:ext|file|default):[^,^/]+)'
 filetype_re   =r'((?:ext|file|default):[^,^/]+)'
@@ -131,7 +138,7 @@ TAG_TOKEN_TYPE_SYMBOL=[
 	'0'  # nop       = 8
 ]
 
-TAG_TOKEN_TYPE_NAME=[
+TAG_TOKEN_TYPE_STR=[
 	'bind  ',
 	'slash ',
 	'basic ',
@@ -191,6 +198,7 @@ TT_SIMPLE=( TT_SLASH,TT_NOP,TT_TIE  )
 TT_INIT_FROM_RE_GROUPS=0
 TT_INIT_FROM_REPR     =1
 TT_INIT_FROM_DICT     =2
+TT_APPEND_DEFAULT    =3
 
 TT_INT_KEYS=("id","mainline","token","diverge")
 
@@ -219,6 +227,10 @@ class TagToken(dict):
 		if tt_init_type==TT_INIT_FROM_RE_GROUPS:
 			self.init_from_groups(init_data)
 			return
+
+		if tt_init_type==TT_APPEND_DEFAULT:
+			self.append_default()
+			return
 		
 		# TT_INIT_FROM_DICT
 		self.init_from_dict(init_data)
@@ -235,22 +247,43 @@ class TagToken(dict):
 				#spaces='-'*l
 				continue
 			S[key]=val
+
+	def append_default(S):
+		global TagTokenRoot
+		name_dict={'token':TT_NAME,'kind':'subdir','name':'0','mainline':None,'payload':''}
+		end_name=TagToken(TT_INIT_FROM_DICT,name_dict)
+		S['token']=TT_FILE
+		S['kind']='default'
+		S['mainline']=end_name
+		S['diverge']=None
+		TagTokenRoot.append_diverge(S)
+
 		
-	def init_from_repr(S,data:dict):
-		def try_int(val):
-			try:
-				I=int(val)
-				return I
-			except ValueError:
-				pass
-			return val
-		
-		dct=json.loads(data)
-		for key,val in dct.items():
-			S[key]=try_int(val)
+	# def init_from_repr(S,data:dict):
+	# 	def try_int(val):
+	# 		try:
+	# 			I=int(val)
+	# 			return I
+	# 		except ValueError:
+	# 			pass
+	# 		return val
+	#
+	# 	dct=json.loads(data)
+	# 	for key,val in dct.items():
+	# 		S[key]=try_int(val)
 
 	def init_from_groups(S,dat):
+		"""
+		construct a TagToken of the match groups of re_path.match(string)
+		:param dat: re match object
+		:return
+		"""
 		def find_tag(dat):
+			"""
+			find the index of a the dat list with data
+			:param dat: list of results ,  re_path.match(string).groups()
+			:return: index in the list = type of token and the contents of dat[index]
+			"""
 			for i in TT_RANGE:
 				if dat[i]:
 					return i,dat[i]
@@ -263,43 +296,61 @@ class TagToken(dict):
 		toktype,value=find_tag(dat)
 		S['token']=toktype
 		#DEBUGPRINT(f'{TAG_TOKEN_TYPE_SYMBOL[toktype]} {value=}')
-		if toktype in TT_SIMPLE: #TT_SLASH or TT_TIE or TT_NOP
-			if toktype == TT_SLASH:
-				S['payload']='/'
+
+		def act_slash(value):
+			S['payload']='/'
+			S['name']='FIXED'
+
+		def act_tie(value):
 			return
 		
-		if toktype == TT_BASIC:
+		def act_basic(value):
 			S['kind'],S['name']=re_split_basic.match(value).groups()
 			S['payload']=None
 			if_literal(S)
 			return
 		
-		if toktype == TT_BIND: # 0 # + VALUE value and mainline
+		def act_bind(value):
 			S['kind']    ='chain'
 			S['payload'] =value
-			S['name']    ='FIXED'
+			S['label']    ='FIXED'
 			return
 		
-		if toktype == TT_FILE: # F value, mainline and diverge
+		def act_file(value):
 			S['diverge'] = None
-			S['kind'],S['name'] = value.split(':')
+			S['kind'],S['label'] = value.split(':')
 			# if needed swap \ with / to match file -i output
-			if (S['kind'] =='file') and ('\\' in S['name']):
-				S['name'],S['specific']=S['name'].split('\\')
+			if (S['kind'] =='file') and ('\\' in S['label']):
+				S['label'],S['specific']=S['label'].split('\\')
 			return
-		if (toktype == TT_FORK) or (toktype == TT_SWITCH): # 4 * or  |
+
+		def act_fork(value):
 			S['diverge']=None
 			return
-		if toktype == TT_NAME:# N VALUE value and mainline
-			# name:exif{Title}
-			S['kind'],S['name'] = re_split_basic.match(value).groups()
+
+		def act_switch(value):
+			S['diverge']=None
+			return
+
+		def act_name(value):
+			# label:exif{Title}
+			S['kind'],S['label'] = re_split_basic.match(value).groups()
 			S['payload']=None
 			if_literal(S)
 			return
 
+		def act_nop(value):
+			return
+
+		action={TT_BIND:act_bind,TT_SLASH:act_slash,TT_BASIC:act_basic,TT_FILE:act_file,TT_FORK:act_fork,
+		TT_TIE:act_tie,TT_NAME:act_name,TT_SWITCH:act_switch,TT_NOP:act_nop}
+		tokkie_type,tokkie_content=find_tag(dat)
+		action[tokkie_type](tokkie_content)
+
+
 	def __str__(S):
 		toktype=S['token']
-		strtype=TAG_TOKEN_TYPE_NAME[toktype]
+		strtype=TAG_TOKEN_TYPE_STR[toktype]
 		tokid=S['id']
 		ret=f"{strtype}[{tokid:3}]"
 		ml=S['mainline']
@@ -384,19 +435,34 @@ class TagToken(dict):
 	# meta data tag lookup meta data tag lookup meta data tag lookup meta data tag lookup meta data tag lookup
 	
 	def can_produce(S,metadat):
-		if not (S.is_basic() or S.is_name()):
+		if not (S.is_basic() or S.is_label()):
 			return True
-		if S['name'] == 'FIXED':
+		if S['label'] == 'FIXED':
 			return True
-		S['payload']=metadat.get_tag(S['name'])
+		if S['kind'] == 'subdir':
+			label=S['label']
+			if (label == 'copy') or (label == '0'):
+				S['payload']=metadat['Tailpath']
+				return True
+
+		if 'payload' in S:
+			if S['payload']:
+				return True
+		S['payload']=metadat.get_tag(S['label'])
 		if S['payload']:
+			DEBUGPRINT(f"Production: {S['label']} {S['payload']}")
+			if S.is_label():
+				S['payload']=S['payload']+'.'+metadat["FileTypeExtension"]
 			return True
-		
+		DEBUGPRINT(f'CANNOT PRODUCE {S.str_short()}')
 		return False
 	
 	def production(S):
+		DEBUGPRINT(f'Production {S.str_short()}',end=' ')
 		if S.has('payload') and S['payload']:
+			DEBUGPRINT('YES')
 			return S['payload']
+		DEBUGPRINT('NO')
 		return ''
 		
 # 		TT_BIND   = 0 # + VALUE value and mainline
@@ -405,7 +471,7 @@ class TagToken(dict):
 # TT_FILE   = 3 # F value, mainline and diverge
 # TT_FORK   = 4 # * mainline and diverge
 # TT_TIE    = 5 # # SIMPLE only mainline
-# TT_NAME   = 6 # N VALUE value and mainline
+# TT_LABEL   = 6 # N VALUE value and mainline
 # TT_SWITCH = 7 # | mainline and diverge
 # TT_NOP    = 8 # 0 SIMPLE no value only mainline (Needed ?)
 	
@@ -477,20 +543,21 @@ class TagToken(dict):
 		
 		#debug
 		if S==S.beforeprev:
-			ic('Handbreak',S)
+			IC('Handbreak',S)
 			exit(1)
 		if S==S.prev:
-			ic('Handbreak',S)
+			IC('Handbreak',S)
 			exit(1)
 		S.beforeprev=S.prev
 		S.prev=S
 		#debug end
 		
-	def show_listed(S):
+	def show_listed(S,formatter=json.dumps):
 		global TagTokenList
 		count=0
 		for tokkie in TagTokenList:
-			print(f'{count:3} {tokkie.str_short()}')
+			s=formatter(tokkie)
+			print(f'{count:3} {s}')
 			count+=1
 	
 	def show_listed_str(S):
@@ -524,14 +591,32 @@ class TagToken(dict):
 			exit(1)
 		return ret
 	
-	# def str_short(S):
-	# 	#ic(S)
-	# 	payload=''
-	# 	if S.has('payload'):
-	# 		payload = 'empty'
-	# 		if S['payload']:
-	# 			payload='"' + payload[:5] + '"'
-	# 	return f'{S.str_type()}:{payload}{S._FDM()} '
+	def str_short(S):
+		ret =''
+		def cut_of(string,pos):
+			ppos=abs(pos)
+			s=string[:ppos]
+			if pos > 0:
+				return f'{s:>{ppos}}'
+			return f'{s:<{ppos}}'
+
+		S._link2id('mainline')
+		S._link2id('diverge')
+
+		for key in S:
+			i = try_int(S[key])
+			ret+=cut_of(key,5)+':'
+			if key =='token':
+				ret+=cut_of(S.str_type(),-2)+', '
+				continue
+			if isinstance(i,int):
+				ret+=f'{i:>4}'+', '
+				continue
+			ret+=cut_of(i,-4)+', '
+		S._int2link('diverge')
+		S._int2link('mainline')
+
+		return ret
 	
 	def show_mainline(S):
 		cur=S
@@ -669,7 +754,7 @@ class TagToken(dict):
 		S.token    =int(ls[1])
 		S.fixed    =(ls[2]=='True')
 		S.tag_kind =ls[3]
-		S.tag_name =ls[4]
+		S.tag_label =ls[4]
 		S.payload  =ls[5]
 		
 		if ls[6] == 'None':
@@ -711,7 +796,7 @@ class TagToken(dict):
 			new_token=TagToken(TT_INIT_FROM_DICT,tag_dct )
 			#DEBUGPRINT(f'new_token= {str(new_token)}')
 			#TagTokenList.append(new_token)
-		S.show_listed_str()
+		#S.show_listed_str()
 		S.ids_to_links()
 		TagTokenRoot=TagTokenList[0]
 
@@ -723,7 +808,9 @@ class TagToken(dict):
 		for tag in TagTokenList:
 			if not tag.has('payload'):
 				continue
-			if tag['name']=='FIXED':
+			if not 'label' in tag:
+				continue
+			if tag['label']=='FIXED':
 				continue
 			tag['payload']=None
 			
@@ -747,58 +834,67 @@ class TagToken(dict):
 	
 # end walk tree end walk tree end walk tree end walk tree end walk tree end walk
 
-class FileMetaData(dict):
-	def __init__(S):
+class TreeOfKnowledge(dict):
+	def __init__(S,source_file,source_path):
 		dict.__init__(S)
-		
-	def clear(S):
-		S={}
-		
-	def set_path(S,source_file,source_path):
-		S['fullpath']=source_file
+		S['Fullpath']=source_file
 		cut=len(source_path)
-		S['tailpath']=source_file[cut:]
-		S['tailsplit']=S['tailpath'].split('/')
-		S['extension']=get_extension(source_file)
-		
-	def get_file_mime(S):
-		if not 'mime' in S:
-			S['mime']=file_i(S['fullpath'])
-		return S['mime']
+		S['Tailpath']=source_file[cut:]
+		S['Tailsplit']=S['Tailpath'].split('/')
+		S['Extension']=get_extension(source_file)
+
+	def match_file_token(S,file_token:TagToken)->bool:
+		if not file_token.is_file():
+			raise ValueError ('Not a TagToken File Token.')
+		if file_token['kind']=='default':
+			# fits all
+			return True
+		if file_token['kind']=='ext':  # ext name audio
+			# check if the extension fits the content type
+			content=file_token['label']
+			# if not content in extension_dict:
+			#
+			# 	for
+			# exstension_set=extension_dict[file_token['label']]
+			#if file_extension=S['Extension']
+
+	def file_i(S):
+		if not 'File_i' in S:
+			mime=file_i(S['Fullpath'])
+			S['File_i']=mime
+			S.update(mime)
+		return S['File_i']
 	
-	def exiftool(S,tag):
-		if not S['extension'] in bzm.EXIFTOOL_EXTENSIONS:
-			return ''
-		if not 'exiftool' in S:
-			S['exiftool']=meta.do_exiftool_json(S['fullpath'])
-			ic(S['exiftool'])
-		if tag in S['exiftool']:
-			return S['exiftool'][tag]
-		return ''
-	
-	def use_brainz(S,tag):
-		if not 'musicbrainz' in S:
-			S['musicbrainz']=bzm.BrainzMusic(S['fullpath'])
-			#ic(S['musicbrainz'])
-		S['musicbrainz'].json_dump()
-		
+	def exiftool(S):
+		S['exiftool']='Checked'
+		if not S['Extension'] in bzm.EXIFTOOL_EXTENSIONS:
+			return
+		S.update(meta.do_exiftool_json(S['Fullpath']))
+
+	def use_brainz(S):
+		S['brainz']='used'
+		S.update(bzm.BrainzMusic(S['Fullpath']))
+
 	def get_tag(S,tag):
-		tag_value=S.exiftool(tag)
-		if tag_value:
-			return tag_value
-		mime=file_i(S['fullpath'])
-		if mime['general']=='audio':
-			DEBUGPRINT('Audio -> musicbrainz')
-			tag_value=S.use_brainz(tag)
-			if tag_value:
-				return tag_value
-		return ''
-		
+		tag=upcase_initial(tag)
+		if tag in S:
+			return S[tag]
+		if not 'exiftool' in S:
+			S.exiftool()
+			if tag in S:
+				return S[tag]
+		if "MIMEType" in S:
+			if "audio/" in  S["MIMEType"]:
+				if not 'brainz' in S:
+					S.use_brainz()
+				if tag in S:
+					return S[tag]
+
 class PathSeeker:
 	
 	def __init__(self, path_format=None, gps_file=None,language='eng') -> None:
-		self.fmd=FileMetaData()
 		self.language=language
+		self.filepaths=FilePaths()
 		lines=self.read_format(path_format)
 		#DEBUGPRINT(f'{lines=}')
 		if lines:
@@ -852,7 +948,14 @@ class PathSeeker:
 		#ic(self)
 		fork_buds = deque()
 		current=None
-		
+
+		def extract_filetags(string):
+			filetype_re = re.compile(r'((?:ext|file|default):(\[[^\]]+\]|[^,^/]+))')
+			match=filetype_re.findall(string)
+			# ('ext:misc', 'misc'), ('ext:vector_image', 'vector_image'), ('ext:[mp3,wav,acc]', '[mp3,wav,acc]')]
+			# for filetag in match:
+			# 	append a new file token to the list root.
+
 		def tokenize(string):
 			tokens = []
 			for match in re_path.findall(string):
@@ -866,9 +969,10 @@ class PathSeeker:
 			# make sure the end of a line yields a name for a file
 			nonlocal current
 			if current.is_name(): return
-			current.connect_on_mainline(TagToken(TT_INIT_FROM_DICT,{'token':TT_NAME,'kind':'default','name':'copy'}))
+			current.connect_on_mainline(TagToken(TT_INIT_FROM_DICT,{'token':TT_NAME,'kind':'default','label':'copy'}))
 
 		for line in lines:
+			tail=self.filepaths.add(line)
 			#DEBUGPRINT('-'*80)
 			#DEBUGPRINT(f'{line=}')
 			current_line=line
@@ -919,73 +1023,75 @@ class PathSeeker:
 				current=current.connect_on_mainline(tokkie)
 				
 			append_name()
+		self.root().append_default()
+		self.root().show_listed(TagToken.str_short)
+
 			#TagTokenRoot.show_structure() #DEBUG
 			#self.root.show_deep_tree()
 			
 			#self.root.walk_broad(showTagToken)
 		
-	def match_file(S,tokkie):
-		if tokkie['kind']=='default':
-			return True
-		if tokkie['kind']=='ext':
-			f_ext=S.fmd['extension']
-			if ext.extension_is_of_type(f_ext,tokkie['name']):
-				return True
-			return False
-		if tokkie['kind']=='file':
-			mime=S.fmd.get_file_mime()
-			if tokkie['name'] != mime['general']:
-				return False
-			if tokkie['payload'] in mime['specific']:
-				return True
-		return False
-				
 	def compose_path(S,source_file,source_dir):
 		DEBUGPRINT(f'\nPathSeeker.compose_path("{source_file}",\n{source_dir})')
-		S.fmd.clear()
-		S.fmd.set_path(source_file,source_dir)
-		
+		knowledge=TreeOfKnowledge(source_file,source_dir)
+		root=S.root()
+		root.clean()
+		def match_file(file_tokkie)->bool:
+			"""
+			test if TagToken file_tokkie fits to the file being remodeled
+			:param file_tokkie: candidate TagToken
+			:return: True if can be usable for path remodeling
+			"""
+			#DEBUGPRINT(file_tokkie.__repr__())
+			if file_tokkie['kind']=='default': # fits all
+				return True
+			if file_tokkie['kind']=='ext': # look if the extension fits
+				f_ext=knowledge['Extension']
+				if ext.extension_is_of_type(f_ext,file_tokkie['label']):
+					return True
+				return False
+			if file_tokkie['kind']=='file': # look if th mime type fits with the opinion of "file -i"
+											# eg {'General':'audio','Specific':'x-wav'}
+				mime=knowledge.file_i()
+				if file_tokkie['label'] != mime['General']:
+					return False
+				if 'payload' in file_tokkie:
+					if not file_tokkie['payload'] in mime['Specific']:
+						return False
+				return True
+
+		def explore_branche(file_tokkie):
+			DEBUGPRINT(f'explore_branche({file_tokkie.str_short()})')
+			path=deque()
+			tokkie=file_tokkie['mainline']
+			while tokkie:
+				# ic(tokkie)
+				#tokkie.show()
+				if tokkie.can_produce(knowledge):
+					path.append(tokkie)
+				if tokkie.is_label():
+					return path
+				tokkie=tokkie['mainline']
+			return None
+
 		#DEBUGPRINT(f'{S.source_path_split}')
-		for ft in S.root().file_iter():
-			if not S.match_file(ft):
+		for file_categorie in root.file_iter():
+			if not match_file(file_categorie):
 				continue
 			#ft.show_mainline()
-			path=S.explore_branche(ft)
+			path=explore_branche(file_categorie)
 			if path:
 				break
 				
 		#ic(path)
 		if not path: # should not happen
-			return S.fmd['tailpath']
+			return S.knowledge['tailpath']
 		ret=''
 		for symbol in path:
 			ret+=symbol.production()
 		DEBUGPRINT(f'Composed Path "{ret}"')
 		return ret
 		
-			
-	def explore_branche(S,file_tokkie):
-		path=deque()
-		tokkie=file_tokkie['mainline']
-		while tokkie:
-			# ic(tokkie)
-			tokkie.show()
-			if tokkie.can_produce(S.fmd):
-				path.append(tokkie)
-			if tokkie.is_name():
-				return path
-			tokkie=tokkie['mainline']
-			if tokkie:
-				DEBUGPRINT(f'NEXT tokkie: {str(tokkie)}')
-			
-			# while path:
-			# 	tokkie=path.pop()
-			# 	if not tokkie.has('diverge'):
-			# 		continue
-			# 	tokkie=tokkie['diverge']
-			# 	break
-		return None
-	
 	def add_old_subdir(self,pos):
 		return f'not yet subdir {pos}'
 	

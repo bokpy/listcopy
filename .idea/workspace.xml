@@ -15,7 +15,6 @@
     <list default="true" id="7d47a416-3b1c-466e-a851-3e5a458f6704" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/brainzmusic.py" beforeDir="false" afterPath="$PROJECT_DIR$/brainzmusic.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/metadata.py" beforeDir="false" afterPath="$PROJECT_DIR$/metadata.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pathseeker.py" beforeDir="false" afterPath="$PROJECT_DIR$/pathseeker.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -70,6 +69,7 @@
   &quot;keyToString&quot;: {
     &quot;Python.brainzmusic.executor&quot;: &quot;Run&quot;,
     &quot;Python.extensions.executor&quot;: &quot;Run&quot;,
+    &quot;Python.garlic.executor&quot;: &quot;Run&quot;,
     &quot;Python.geolocate.executor&quot;: &quot;Run&quot;,
     &quot;Python.gps_data_kd_tree.executor&quot;: &quot;Run&quot;,
     &quot;Python.gpstree.executor&quot;: &quot;Run&quot;,
@@ -91,7 +91,7 @@
     &quot;Python.testtime.executor&quot;: &quot;Run&quot;,
     &quot;Python.update_extensions.executor&quot;: &quot;Run&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;dd66600f&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;8ac67195&quot;,
     &quot;last_opened_file_path&quot;: &quot;/home/bob/python/listcopy/test.save&quot;,
     &quot;run.code.analysis.last.selected.profile&quot;: &quot;aDefault&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;preferences.keymap&quot;,
@@ -114,7 +114,7 @@
       <recent name="$USER_HOME$/mouse_project" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.brainzmusic">
+  <component name="RunManager" selected="Python.garlic">
     <configuration name="brainzmusic" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pythonProject" />
       <option name="ENV_FILES" value="" />
@@ -129,6 +129,28 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/brainzmusic.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="garlic" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="pythonProject" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/garlic.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -181,28 +203,6 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="scratch.data" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="pythonProject" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scratch.data" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
     <configuration name="testdict" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pythonProject" />
       <option name="ENV_FILES" value="" />
@@ -227,18 +227,18 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.brainzmusic" />
+        <item itemvalue="Python.garlic" />
         <item itemvalue="Python.pathseeker" />
+        <item itemvalue="Python.brainzmusic" />
         <item itemvalue="Python.testdict" />
         <item itemvalue="Python.listutils" />
-        <item itemvalue="Python.scratch.data" />
       </list>
     </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-0e3be3396995-c546a90a8094-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-242.23339.19" />
+        <option value="bundled-python-sdk-d7ad00fb9fc3-c546a90a8094-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-242.23726.102" />
       </set>
     </attachedChunks>
   </component>
