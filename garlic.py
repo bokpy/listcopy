@@ -17,6 +17,17 @@ def JDUMP(dct,title=''):
 # 		list.__init__(S)
 # 		S+=[a,b,d,c]
 #
+class Args:
+
+	def __init__(S,*args):
+		argslen=len(args)
+		if not argslen:
+			print("empty")
+			return
+		print(f'{argslen=} {type(args[0])= } "{args[0]= }"')
+		for i in range(0,argslen):
+			print(f'\t{args[i]}')
+
 
 def recurse(P):
 	if P<2:
@@ -38,5 +49,11 @@ def main() -> None:
 	match=filetype_re.findall(s)
 	print(match)
 '\[([^\]]+)\]'
+
 if __name__ == '__main__':
-	main()
+	A=Args()
+	B=Args(1)
+	C=Args(2,"abcd",3,4,5)
+	D=Args((1,2,3,4,5))
+
+	#main()

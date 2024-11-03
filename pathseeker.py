@@ -7,14 +7,17 @@ import time
 import re
 from collections import deque
 
+from scipy.constants import value
+
 import metadata as meta
-import extensions as ext
+#import extensions as ext
 from extensionsets import extension_dict
 #from listcopy import prev_copy_speed
 from listutils import LocalTimeString,get_extension,center_string,get_cursor_position
 import brainzmusic as bzm
 from garlic import *
 import inspect
+from icecream import ic
 
 def try_int(val):
 	if val == None:
@@ -26,13 +29,10 @@ def try_int(val):
 
 exiftags=meta.ExifTags()
 
-_ext_types='","'.join(ext.collect_mime_types())
-def upcase_initial(s):return s[:1].upper()+s[1:]
-
 help_text=f'''
 Fore every class of files categorized by a comma separated list of "mime types" and/or "extension(s)" 
 a substitution path can be defined by a list of labels.
-mime are: "{_ext_types}"
+mime are: "{extension_dict.keys()}"
 
 This labels are retrieved if possible in order "exiftool".
 
@@ -50,7 +50,7 @@ Zero or "copy" full path above the source directory.
 syntax: <path>       = <filetype>[,<filetype>]:/<tag>[/<name>];
         <join>       = <+{{str}}+>
         <switch>     = (<alternative 1>|<alternative 2>[|...|<alternative n>)]
-        <filetype>   = <default|mime|extension>[,<filetype>]:
+        <filetype>   = <mime>|<class>|<extension>
         <tag>        = <label|subdir|literal>{{string}}
         <tag>        = <tag>[<join><tag>]
         <tag>        = <tag>/<tag>
@@ -72,92 +72,41 @@ Order is important so put the most specific in front.
 
 def pathseeker_help():
 	print(help_text)
-	
-mime_re=re.compile(r'[^:]*: *([^/]*)/([^;]*).*')
-def file_i(file_path):
+
+def service_call(*args,splitlines=True):
 	try:
-		result = subprocess.check_output(("file", "-i", file_path))
-	except FileNotFoundError as e:
-		print(f'{e}')
-		return ''
-	#print(f'(type of result = {type(result)}')
-	#DEBUGPRINT(f'{result=}')
-	result=str(result)
-	m=mime_re.match(result) # audio/x-wav
-	return {'General':m.group(1),
-		  'Specific':m.group(2)
-		  }
+		info = subprocess.check_output(args)
+	except subprocess.SubprocessError as e:
+		print(f'{args} failed')
+		print(f'subprocess.SubprocessError {e}')
+		return None
+	str_info=info.decode('utf-8')
+	if splitlines:
+		return str_info.splitlines()
+	return str_info
 
-class FilePaths(deque):
-
-	def __init__(S):
-		deque.__init__(S)
-
-	def add(S,path_line):
-		"""
-		store entries for mime and/or extensions
-		:param path_line: path_line
-		       something like:  wav,aac:/literal{"wav and aac"}/label{Album}+" year "+label{Year}/ name :label{Title};
-		:return: path_line tail like: /literal{"wav and aac"}/label{Album}+" year "+label{Year}/ name :label{Title};
-				 ,empty TagToken connected to the file entries
-		"""
-		young_bud=TagToken()
-		collon   =path_line.find(':')
-		tail     =path_line[collon+1:]
-		files    =path_line[:collon]
-		for ft in files.split(','):
-			S.append([ft,young_bud])
-		return tail,young_bud
-
-#filetype_re   =r'((?:ext|file|default):[^,^/]+)'
-#re.compile(filetype_re)
 label_re      =r'((?:label|subdir|literal){[^}]+})'
-#re.compile(label_re)
-bind_re       =r'\+"([^"]+)"\+'
-slash_re      =r'(/)'
-fork_re  =r'(\()'
-fork_branch_re     =r'(\|)'
-tie_forks_re  =r'(\))'
-name_re       =r'name:((?:exif|osm|mbz|subdir|literal){[^}]+})'
+bind_re        =r'\+"([^"]+)"\+'
+slash_re       =r'(/)'
+fork_re        =r'(\()'
+split_re =r'(\|)'
+tie_re   =r'(\))'
+name_re        =r'name:'+ label_re
 
-split_label_re=r'([^{]+){([^}]+)}'
-re_split_label=re.compile(split_label_re)
+split_value_re=re.compile('([^{]+){([^}]+)}')
+#split_label_re=r'([^{]+){([^}]+)}'
+#re_split_label=re.compile(split_label_re)
 
-#re.compile(name_re)
-# start\s+(?:false|good|bad)\s+good luck
-#exit(0)
 re_path= re.compile(
        bind_re
 + '|' +slash_re
 + '|' +label_re
 + '|' +fork_re
-+ '|' +tie_forks_re
++ '|' +tie_re
 + '|' +name_re
-+ '|' +fork_branch_re
++ '|' +split_re
 )
-TAG_TOKEN_TYPE_SYMBOL=[
-	'+', # bind      = 0
-	'/', # slash     = 1
-	'B', # label     = 2
-#	'F', # filetype  = 3
-	'*', # fork      = 4
-	'#', # tie_forks = 5
-	'N', # name      = 6
-	'|', # fork_branch    = 7
-	'0'  # nop       = 8
-]
-
-TAG_TOKEN_TYPE_STR=[
-	'bind  ',
-	'slash ',
-	'label ',
-#	'f_type',
-	'fork  ',
-	'tie   ',
-	'name  ',
-	'branch',
-	'nop   ',
-]
+int_re=re.compile('[+-]*\d+')
 
 def showTagToken(S):
 	S.show()
@@ -171,23 +120,6 @@ def show_tag_stack(stack,title=''):
 	#for i in range(0,len(stack)):
 	for i in	range(len(stack)-1,-1,-1):
 		print(f'{i:3} {stack[i]}')
-	
-class Junction:
-	def __init__(S,junction,column=0):
-		S.stack=deque()
-		cur=junction
-		while cur:
-			S.stack.appendleft(cur)
-			cur=cur['diverge']
-		S.pos=column
-		
-	def pop(S):
-		ret=S.stack.pop()
-		if S.stack:
-			return ret,S.pos
-		return ret,0
-		
-		#print(f'Junction:{junction},{column}')
 
 TT_BIND   = 0 # + VALUE value and mainline
 TT_SLASH  = 1 # / SIMPLE only mainline
@@ -196,14 +128,11 @@ TT_LABEL  = 2 # B VALUE value and mainline
 TT_FORK   = 3 # * mainline and diverge
 TT_TIE    = 4 # # SIMPLE only mainline
 TT_NAME   = 5 # N VALUE value and mainline
-TT_SWITCH = 6 # | mainline and diverge
+TT_SPLIT = 6 # | mainline and diverge
 TT_NOP    = 7 # 0 SIMPLE no value only mainline (Needed ?)
 
 TT_CLEAN = {TT_LABEL,TT_NAME}
-
 TT_RANGE  = range(TT_BIND ,TT_NOP + 1)
-
-TT_SIMPLE=( TT_SLASH,TT_NOP,TT_TIE  )
 
 TT_INIT_FROM_RE_GROUPS=0
 TT_INIT_FROM_REPR     =1
@@ -214,7 +143,7 @@ TT_INT_KEYS=("id","mainline","token","diverge")
 
 # globals for now ugly
 TagTokenId=-1
-TagTokenList=deque()
+TagTokenList=[]
 
 def clean_tagtokens():
 	global TagTokenList
@@ -225,47 +154,173 @@ def clean_tagtokens():
 			tokkie['payload']=''
 
 class TagToken(dict):
+	"""
+	keys:
+		all:
+			'id'       : index in TagTokenList order of birth
+			'token'    : type of the token
+			'mainline' : next TagToken or None
 
-	def __init__(self):
-		global TagTokenId,TagTokenList
-		dict.__init__(self)
-		TagTokenList.append(self)
+		fork,split :
+			'diverge'  : alternative next TagToken or None
+
+		bind:
+			'fixed'    : fixed value
+
+		label, name:
+			'fixed'    : fixed value
+		or
+			'subdir'   : number indexing in to the original subdirectories
+			'payload'  : subdirectory name or '' if 'subdir' exceeds path length
+		or
+			'label'    : label to find from knowledge sources as "exiftool", "MusicBrainz", "OpenStreetMap" for now
+			'payload'  : result of lookup or None
+	"""
+
+	def __init__(S,*args):
+		global TagTokenId,TagTokenList,TagTokenGist
+		dict.__init__(S)
+		def find_token():
+			a0=args[0]
+			for token in TT_RANGE:
+				if a0[token]:
+					return token,a0[token]
+
+		TagTokenList.append(S)
 		TagTokenId+=1
-		self['id']=TagTokenId
-		self['mainline']=None
-		self['token']=TT_NOP
+		S['id']      =TagTokenId
+		S['mainline']=None
+		arglen=len(args)
+		if not len(args):
+			S['token']   = TT_NOP
+			return
+		a0=args[0]
+		value=''
+		if isinstance(a0,int):
+			token=args[0]
+			S['token']   = token
+			if arglen>1:
+				value=args[1]
+			DEBUGPRINT(f'Init from int {token} {str(S)}')
+		elif isinstance(a0,dict):
+			S.init_from_dict(args)
+			return
+		elif isinstance(a0,tuple):
+			# the results of "re_path" match
+			# the index of the item with a value is also the token type
+			token,value=find_token()
+
+		S['token']=token
+		init_func=TagTokenGist[token][2]
+		DEBUGPRINT(f'{token:2} {value=} {init_func}')
+		if not init_func:
+			return
+		init_func(S,value)
+
+	def init_bind(S,value):
+		ic(value)
+		S['fixed']=value
+
+	def init_fork(S,value):
+		ic(value)
+		S['diverge']=None
+
+	def init_split(S,value):
+		ic(value)
+		S['diverge']=None
+
+	def init_label(S,value):
+		ic(value)
+		global split_value_re
+		type,val=split_value_re.search(value).groups()
+		if type == 'literal':
+			S['fixed']=val
+			return
+		if type == 'subdir':
+			S['subdir']=int(val)
+			S['payload']=None
+			return
+		if type == 'label':
+			S['label']=val
+			S['payload']=None
+			return
+		raise ValueError (f'"{value}" unsupported label type.')
+
+	def init_fork(S,value):
+		ic(value)
+		S['diverge']=None
+
+	def init_name(S,value):
+		DEBUGPRINT(f'name {value=}')
+		ic(value)
+		S.init_label(value)
+
+	def chain_in_length(S,shackle):
+		S['mainline']=shackle
+		return shackle
+
+	def chain_sideways(S,shackle):
+		S['diverge']=shackle
+		return shackle
 
 	def grow_tail(S,tail_string):
-			tail=S
-			matches=re_path.findall(tail_string)
-			#DEBUGPRINT(matches)
-			stop = len (matches) - 1
-			if stop < 0:
-				print(f'grow_tail "{tail_string}"')
-				print(f'No length')
-				return
-			i  = 0
-			forks=deque()
-			while True:
-				#DEBUGPRINT(f'{i=} {stop}')
-				tail.init_from_groups(matches[i])
-				if tail.is_fork():
-					forks.append(tail)
+		DEBUGPRINT(f'TagToken.grow_tail("{tail_string})"')
+		tokens=re_path.findall(tail_string)
+		fork_stack=deque()
 
-				if tail.is_fork_branch():
-					split=forks[0]
-					while split['diverge']:
-						split=split['diverge']
-					split['diverge']=tail
-				if tail.is_tie_forks():
-					split=forks.pop()
-					split.tie_forks(tail)
+		def _peek():
+			val=fork_stack.pop()
+			fork_stack.append(val)
+			return val
 
-				i+=1
-				if i>=stop:
-					break
-				tail['mainline']=TagToken()
-				tail=tail['mainline']
+		def sprout(junction,new_bud):
+			sprout=junction
+			while sprout['diverge']:
+				sprout=sprout['diverge']
+			DEBUGPRINT(f'sprout {sprout.string()}')
+			sprout['diverge']=new_bud
+			return new_bud
+
+		def tie_bud(bud,leaf):
+			branche=bud
+			while branche:
+				twig=branche
+				while twig['mainline']:
+					twig=twig['mainline']
+				twig['mainline']=leaf
+				DEBUGPRINT(f'branche {branche.string()}')
+				branche=branche['diverge']
+
+		tail=S
+
+		for token in tokens:
+			new_token=TagToken(token)
+			DEBUGPRINT(f'new_token {new_token.string()}')
+			if new_token.is_split():
+				# split of a new branche
+				try:
+					bud=_peek()
+				except IndexError as e:
+					#print(f'IndexError {e}')
+					print(f'Error no matching parentheses\nIn "{tail_string}"')
+					exit(1)
+
+				tail=sprout(bud,new_token)
+				continue
+
+			if new_token.is_tie():
+				# tie  # alternatives together
+				bud=fork_stack.pop()
+				tie_bud(bud,new_token)
+				tail=tail.chain_in_length(new_token)
+				continue
+
+			if new_token.is_fork():
+				# ( prepare to split
+				fork_stack.append(new_token)
+				tail=tail.chain_in_length(new_token)
+				continue
+			tail=tail.chain_in_length(new_token)
 
 	def init_from_dict(S,tokdct):
 		#DEBUGPRINT('\ninit_from_dict :',end='')
@@ -280,131 +335,17 @@ class TagToken(dict):
 				continue
 			S[key]=val
 
-	def init_from_groups(S,dat):
-		"""
-		construct a TagToken of the match groups of re_path.match(string)
-		:param dat: re match object
-		:return
-		"""
-		def find_tag(dat):
-			"""
-			find the index of a the dat list with data
-			:param dat: list of results ,  re_path.match(string).groups()
-			:return: index in the list = type of token and the contents of dat[index]
-			"""
-			for i in TT_RANGE:
-				if dat[i]:
-					return i,dat[i]
-				
-		def if_literal(S):
-			if S['kind']=='literal':
-				S['payload']=S['label']
-				S['name']='FIXED'
-				
-		toktype,value=find_tag(dat)
-		S['token']=toktype
-		#DEBUGPRINT(f'{TAG_TOKEN_TYPE_SYMBOL[toktype]} {value=}')
-
-		def act_slash(value):
-			S['payload']='/'
-			S['name']='FIXED'
-
-		def act_tie(value):
-			return
-		
-		def act_label(value):
-			S['kind'],S['label']=re_split_label.match(value).groups()
-			S['payload']=None
-			if_literal(S)
-			return
-		
-		def act_bind(value):
-			S['kind']    ='chain'
-			S['payload'] =value
-			S['label']    ='FIXED'
-			return
-		
-		def act_file(value):
-			S['diverge'] = None
-			S['kind'],S['label'] = value.split(':')
-			# if needed swap \ with / to match file -i output
-			if (S['kind'] =='file') and ('\\' in S['label']):
-				S['label'],S['specific']=S['label'].split('\\')
-			return
-
-		def act_fork(value):
-			S['diverge']=None
-			return
-
-		def act_switch(value):
-			S['diverge']=None
-			return
-
-		def act_name(value):
-			# label:exif{Title}
-			S['kind'],S['label'] = re_split_label.match(value).groups()
-			S['payload']=None
-			if_literal(S)
-			return
-
-		def act_nop(value):
-			return
-
-		action={TT_BIND:act_bind,TT_SLASH:act_slash,TT_LABEL:act_label,TT_FORK:act_fork,
-		TT_TIE:act_tie,TT_NAME:act_name,TT_SWITCH:act_switch,TT_NOP:act_nop}
-		tokkie_type,tokkie_content=find_tag(dat)
-		action[tokkie_type](tokkie_content)
-
 	def __str__(S):
-		toktype=S['token']
-		strtype=TAG_TOKEN_TYPE_STR[toktype]
-		tokid=S['id']
-		ret=f"{strtype}[{tokid:3}]"
-		ml=S['mainline']
-		if isinstance(ml,int):
-			ret += f' int({ml:3} )'
-		elif ml:
-			ret += f" TagTok({ml['id']:3})"
-		else:
-			ret += ' None'
-		if not S.has('diverge'):
-			return ret
-		ml=S['diverge']
-		if isinstance(ml,int):
-			ret += f' ^int({ml:3} )'
-		elif ml:
-			ret += f" ^TagTok({ml['id']:3})"
-		else:
-			ret += ' ^None'
+		global TagTokenGist
+		return f'TagToken({TagTokenGist[S["token"]][1]})'
+
+	def string(S):
+		global TagTokenGist
+		token=S['token']
+		gist=TagTokenGist[token]
+		ret=f'[{token:3}]{gist[0]}'
 		return ret
 
-	def file_iter(S):
-		filetype=S.root()
-		while filetype:
-			yield filetype
-			filetype=filetype['diverge']
-			
-	# def reset_globals(S):
-	# 	global TagTokenList,TagTokenId
-	# 	TagTokenList=deque()
-	# 	TagTokenId=-1
-			
-	# diverging + appendig  diverging + appendig  diverging + appendig  diverging + appendig  diverging + appendig
-	def connect_on_mainline(S,other):
-		S['mainline']=other
-		return other
-
-	def tie_forks(S,fork_tie):
-		fork = S
-		if not S.is_fork():
-			raise ValueError (f'Expected a TT_FORK TagToken')
-
-		while fork:
-			fork.connect_on_mainline(fork_tie)
-			fork=fork['diverge']
-
-	#end diverging + appendig end diverging + appendig end diverging + appendig end diverging + appendig
-	
 	# meta data tag lookup meta data tag lookup meta data tag lookup meta data tag lookup meta data tag lookup
 	
 	def can_produce(S,metadat):
@@ -445,7 +386,7 @@ class TagToken(dict):
 # TT_FORK   = 4 # * mainline and diverge
 # TT_TIE    = 5 # # SIMPLE only mainline
 # TT_LABEL   = 6 # N VALUE value and mainline
-# TT_SWITCH = 7 # | mainline and diverge
+# TT_SPLIT = 7 # | mainline and diverge
 # TT_NOP    = 8 # 0 SIMPLE no value only mainline (Needed ?)
 	
 	# end meta data tag lookup end meta data tag lookup end meta data tag lookup end meta data tag lookup end
@@ -454,18 +395,42 @@ class TagToken(dict):
 	def is_slash(self):      return self['token']==TT_SLASH
 	def is_label(self):      return self['token']==TT_LABEL
 	def is_fork(self):       return self['token']==TT_FORK
-	def is_fork_branch(self):return self['token']==TT_SWITCH
-	def is_tie_forks(self):  return self['token']==TT_TIE
+	def is_split(self):return self['token']==TT_SPLIT
+	def is_tie(self):  return self['token']==TT_TIE
 	def is_name(self):       return self['token']==TT_NAME
-	#def is_fixed(self):      return self.fixed
-	
+	def is_fixed(self):      return self['name']=='FIXED'
+	def diverges(S):
+		if not 'diverge' in S:
+			return None
+		return S['diverge']
+
 	def has(S,key):
 		return key in S
 
 	#def set_fixed(self): self.fixed=True
 	
 	#Showers Showers Showers Showers Showers Showers Showers Showers
-	
+	def show_tail(S):
+		stack=deque()
+		cur=S
+		PANIC=20
+		while True:
+			PANIC-=1
+			if PANIC<0:
+				raise RuntimeError ('PANIC')
+			while cur:
+				print(f'{cur.string()}',end='')
+				if branche:=cur.diverges():
+					stack.append(branche)
+				cur=cur['mainline']
+			print()
+			if not stack:
+				break
+			print("--"*len(stack),end='>')
+			cur=stack.pop()
+			cur=cur['mainline']
+		print('++-'*30)
+
 	def _columns(self):
 		try:
 			columns,_=os.get_terminal_size()
@@ -476,14 +441,6 @@ class TagToken(dict):
 				exit(e.errno)
 		return 100
 
-	def show_tail(S,title=''):
-		if title:
-			print(f'showing tail: "{title}".')
-		cur=S
-		while cur:
-			print(f'\t{cur.str_short()}')
-			cur=cur['mainline']
-	
 	prev=None       #debug
 	beforeprev=None #debug
 	def show(S):
@@ -546,8 +503,9 @@ class TagToken(dict):
 		return D+M
 	
 	def str_type(S):
+		global TagTokenGist
 		try:
-			ret = TAG_TOKEN_TYPE_SYMBOL[S['token']]
+			ret = TagTokenGist[S['token']][1]
 			
 		except IndexError as e:
 			print(f'str_type({S["token"]=})')
@@ -567,6 +525,8 @@ class TagToken(dict):
 		S._link2id('diverge')
 
 		for key in S:
+			val=S[key]
+			DEBUGPRINT(f'{key=} , {val=}')
 			i = try_int(S[key])
 			ret+=cut_of(key,5)+':'
 			if key =='token':
@@ -580,14 +540,7 @@ class TagToken(dict):
 		S._int2link('mainline')
 
 		return ret
-	
-	def show_mainline(S):
-		cur=S
-		while cur:
-			print (cur.str_short(),end='')
-			cur=cur['mainline']
-		print()
-	
+
 	def show_structure(S,heading=''):
 		if heading:
 			print(f'show structure "{heading}":')
@@ -625,14 +578,14 @@ class TagToken(dict):
 					cur=cur['mainline']
 					continue
 					
-				if cur.is_fork():
-					fork=Junction(cur['diverge'],pos)
-					split_buds.append(fork)
-					_print(cur)
-					cur=cur['mainline']
-					continue
+				# if cur.is_fork():
+				# 	fork=Junction(cur['diverge'],pos)
+				# 	split_buds.append(fork)
+				# 	_print(cur)
+				# 	cur=cur['mainline']
+				# 	continue
 					
-				if cur.is_tie_forks():
+				if cur.is_tie():
 					_print(cur)
 					bud,saved_pos=split_buds[0].pop()
 					if saved_pos>0:
@@ -795,12 +748,12 @@ class TreeOfKnowledge(dict):
 			# exstension_set=extension_dict[file_token['label']]
 			#if file_extension=S['Extension']
 
-	def file_i(S):
-		if not 'File_i' in S:
-			mime=file_i(S['Fullpath'])
-			S['File_i']=mime
-			S.update(mime)
-		return S['File_i']
+	# def file_i(S):
+	# 	if not 'File_i' in S:
+	# 		mime=file_i(S['Fullpath'])
+	# 		S['File_i']=mime
+	# 		S.update(mime)
+	# 	return S['File_i']
 	
 	def exiftool(S):
 		S['exiftool']='Checked'
@@ -844,17 +797,32 @@ class AutoList(list):
 			S.append(0)
 		return S[index]
 
+TagTokenGist= [
+	('bind ','+',TagToken.init_bind),
+	('slash','/',None),
+	('label','B',TagToken.init_label),
+	('fork ','*',TagToken.init_fork),
+	('tie  ','#',None),
+	('name ','N',TagToken.init_name),
+	('split','|',TagToken.init_split),
+	('nop  ','?',None)
+]
 class PathSeeker:
 	
 	def __init__(self, path_format=None, gps_file=None,language='eng') -> None:
 		self.language=language
-		self.filepaths=FilePaths()
+		self.file_braches=[]
 		lines=self.read_format(path_format)
 		#DEBUGPRINT(f'{lines=}')
 		if lines:
 			self.grow_tree(lines)
 		# 	self.tree.show_broad_tree()
-			
+
+	def show(S):
+		for branche in S.file_braches:
+			print(f'{str(branche)}->')
+			branche.tagtoken.show_branche()
+
 	def read_format(self,format):
 		try_file=os.path.expanduser(format)
 		if os.path.exists(try_file):
@@ -908,27 +876,20 @@ class PathSeeker:
 		"""
 		current=None
 
-		def extract_filetags(string):
-			filetype_re = re.compile(r'((?:ext|file|default):(\[[^\]]+\]|[^,^/]+))')
-			match=filetype_re.findall(string)
-			# ('ext:misc', 'misc'), ('ext:vector_image', 'vector_image'), ('ext:[mp3,wav,acc]', '[mp3,wav,acc]')]
-			# for filetag in match:
-			# 	append a new file token to the list root.
-
-		def append_name():
-			# make sure the end of a line yields a name for a file
-			nonlocal current
-			if current.is_name(): return
-			current.connect_on_mainline(TagToken(TT_INIT_FROM_DICT,{'token':TT_NAME,'kind':'default','label':'copy'}))
-
 		for line in lines:
+			DEBUGPRINT(f'{line=}')
+			#mp3,aac,raster_image:/literal{pictures}/(osm{adrr:street} + " in " + osm{city}|label{month} +"-"+label{year})
+			colonslash=line.find(':/')
+			if colonslash < 0:
+				print(f'Error in "{line}"')
+				raise SyntaxError ('Lines need to start with a comma separated list of file mime or extensions ending with :/')
+			tokkie=TagToken(TT_SLASH)
+			mime=line[:colonslash]
+			DEBUGPRINT(f'{mime=}')
+			self.file_braches.append(FileType(mime,tokkie))
+			tokkie.grow_tail(line[colonslash+1:])
 			DEBUGPRINT('-' * 80)
-			tail,bud=self.filepaths.add(line)
-			bud.grow_tail(tail)
-			DEBUGPRINT(f'{tail=}')
-			#tokkies=tokenize(tail)
-			bud.show_tail('grow tree')
-			print(bud)
+			#current.show_tail()
 
 	def compose_path(S,source_file,source_dir):
 		"""
@@ -943,30 +904,6 @@ class PathSeeker:
 		clean_tagtokens()
 		token_path=AutoList()
 
-		def match_file(file_tokkie)->bool:
-			"""
-			test if TagToken file_tokkie fits to the file being remodeled
-			:param file_tokkie: candidate TagToken
-			:return: True if can be usable for path remodeling
-			"""
-			#DEBUGPRINT(file_tokkie.__repr__())
-			if file_tokkie['kind']=='default': # fits all
-				return True
-			if file_tokkie['kind']=='ext': # look if the extension fits
-				f_ext=knowledge['Extension']
-				if ext.extension_is_of_type(f_ext,file_tokkie['label']):
-					return True
-				return False
-			if file_tokkie['kind']=='file': # look if th mime type fits with the opinion of "file -i"
-											# eg {'General':'audio','Specific':'x-wav'}
-				mime=knowledge.file_i()
-				if file_tokkie['label'] != mime['General']:
-					return False
-				if 'payload' in file_tokkie:
-					if not file_tokkie['payload'] in mime['Specific']:
-						return False
-				return True
-
 		def explore_branche(tokkie,pos=0):
 			if tokkie == None:
 				return pos # -1
@@ -979,27 +916,24 @@ class PathSeeker:
 			if tokkie.has_diverge():
 				return explore_branche(tokkie['diverge'],pos+1)
 
-		#DEBUGPRINT(f'{S.source_path_split}')
-		for file_categorie in S.filepaths:
-			DEBUGPRINT(f'Match to : "{file_categorie[0]}"')
-			if not match_file(file_categorie[0]):
-				continue
-			if match:=explore_branche(file_categorie[1]['mainline']) < 0:
-				continue
-			break
+		for brache in S.file_braches:
+			if brache.matches(source_file):
+				if name_pos:=explore_branche(brache.tagtoken) < 0:
+					continue
+				break
 
 		#ic(path)
-		if match < 0 : # should not happen
+		if name_pos < 0 : # should not happen
 			return S.knowledge['tailpath']
 
 		path=''
-		for i in range(0,match):
+		for i in range(0,name_pos):
 			produce=token_path.get(i)['production']
 			print(f'>{produce}<',end='')
 			path+=produce
 
-		DEBUGPRINT(f'Composed Path "{produce}"')
-		return produce
+		DEBUGPRINT(f'Composed Path "{path}"')
+		return path
 		
 	def add_old_subdir(self,pos):
 		return f'not yet subdir {pos}'
@@ -1012,6 +946,54 @@ class PathSeeker:
 	
 	def add_mime(self,mime):
 		return f'not jet mime "{mime}"'
+
+class FileType:
+
+	def __init__(S,category_string,tagtoken):
+		#DEBUGPRINT(f'FileType.__init__({category_string},TagToken({str(tagtoken)}))')
+		S.string=category_string
+		extensions=set()
+		for cat in category_string.split(','):
+			#DEBUGPRINT(f'{cat=}')
+			if cat in extension_dict:
+				extensions=extensions.union(extension_dict[cat])
+				#DEBUGPRINT(f'extensions type {type(extensions)}')
+				continue
+			if '/' in cat:
+				extensions.add(cat)
+				#DEBUGPRINT(f'add ({cat}) extensions type {type(extensions)}')
+				continue
+			#DEBUGPRINT(f'add cat.upper() ({cat.upper()}) extensions type {type(extensions)}')
+			extensions.add(cat.upper())
+			#DEBUGPRINT(f'add cat.upper() ({cat.upper()}) extensions type {type(extensions)}')
+
+		S.extensions=extensions
+		S.tagtoken=tagtoken
+
+	def __str__(S):
+		return S.string
+
+	def matches(S,path:str)->TagToken:
+		# if not S.tagtoken:
+		# 	raise RuntimeError ( 'FileType.tagtoken is None')
+		dot=path.rfind('.')
+		if dot > 0:
+			ext=path[dot+1:].upper()
+			if ext in S.extensions:
+				return True
+		mime=service_call('file','-i',splitlines=False)
+		# listcopy.py: text/x-script.python; charset=us-ascii
+		colon=mime.find(':')+1
+		semicolon=mime.rfind(';')
+		mime=mime[colon:semicolon].strip()
+		for mim in S.extensions:
+			if mim in mime:
+				return True
+		return False
+
+def upcase_initial(s):return s[:1].upper()+s[1:]
+
+
 
 # testdata=[
 # '/home/bob/temp/Users/',
@@ -1051,6 +1033,7 @@ def test_compose():
 	source_path = next(it)
 	for source in it:
 		ps.compose_path(source,source_path)
+	ps.show()
 	
 def main() -> None:
 	#testcompile()
