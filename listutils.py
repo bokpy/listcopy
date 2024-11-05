@@ -6,9 +6,9 @@ from collections import deque
 import os
 import sys
 import re
-from idlelib.iomenu import errors
-from os import write
+import traceback
 from time import sleep
+
 NL_MAAND= {
     "Jan": "Jan",
     "Feb": "Feb",
@@ -114,7 +114,8 @@ DEBUGPRINT=print
 #
 # 	def peek(S):
 # 		return S[0]
-	
+
+
 
 class LocalTimeString:
 	
