@@ -1,159 +1,27 @@
 #!/usr/bin/python3
-from inspect import stack
 import json
-from os.path import curdir
-
-from magic import Magic
 import os.path
 import subprocess
 import time
 import re
 from collections import deque
 
+from scipy.constants import value
+
 import metadata as meta
 #import extensions as ext
 from extensionsets import extension_dict
-from tagtoken import TagToken,clean_tagtokens
+from tagtoken import TagToken,FileToken,clean_tagtokens
+from wisdomtree import TreeOfKnowledge
 #from listcopy import prev_copy_speed
 from listutils import LocalTimeString,get_extension,center_string,get_cursor_position
-from brainzmusic import BrainzMusic
+#from brainzmusic import BrainzMusic
 from garlic import *
-import inspect
+#import inspect
 from icecream import ic
-
-def service_call(*args,splitlines=True):
-	try:
-		info = subprocess.check_output(args)
-	except subprocess.SubprocessError as e:
-		print(f'{args} failed')
-		print(f'subprocess.SubprocessError {e}')
-		return None
-	str_info=info.decode('utf-8')
-	if splitlines:
-		return str_info.splitlines()
-	return str_info
-
-mime_re=re.compile(r'.*: ([^/]+/)([^;]+); charset=(.*)')
-
-def call_exiftool(path):
-	lines=service_call('exiftool',path)
-	if not lines:
-		return {}
-	ret={}
-	collon=lines[0].find(':')
-	for i in range(3,len(lines)):
-		line=lines[i]
-		key=line[:collon].strip().lower()
-		key=key.replace(' ','_')
-		key=key.replace('/','_')
-		ret[key]=line[collon+2:]
-	return ret
-
-# def file_i(path):
-# 	try:
-# 		info = subprocess.check_output(['file','-i',path])
-# 	except subprocess.SubprocessError as e:
-# 		ic()
-# 		print(f'file -i "{path}" failed')
-# 		print(f'subprocess.SubprocessError {e}')
-# 		return {}
-# 	str_info=info.decode('utf-8')
-# 	match=mime_re.match(str_info)
-# 	return {'general':match.group(1),'specific':match.group(2),'charset':match.group(2)}
-
 
 
 exiftags=meta.ExifTags()
-
-help_text=f'''
-Fore every class of files categorized by a comma separated list of "mime types" and/or "extension(s)" 
-a substitution path can be defined by a list of labels.
-mime are: "{extension_dict.keys()}"
-
-This labels are retrieved if possible in order "exiftool".
-
-for audio: if needed followed with a "https://api.acoustid.org/v2/lookup" request.
-           "brainzmusic.py" expects to find a key in "~/.local/listcopy/AcoustID.key"
-           maybe not needed but easy to get from "acoustid.org".
-
-for images with gps data: geological label data is retrieved from "Overpass" "OpenStreetMap".
-
-The subdirectories of the original path can be copied.
-Positive numbers indicate a subdirectory above the source directory.
-Negative numbers indicate a subdirectory below the filename.
-Zero or "copy" full path above the source directory.
-
-syntax: <path>       = <filetype>[,<filetype>]:/<tag>[/<name>];
-        <join>       = <+{{str}}+>
-        <switch>     = (<alternative 1>|<alternative 2>[|...|<alternative n>)]
-        <filetype>   = <mime>|<class>|<extension>
-        <tag>        = <label|subdir|literal>{{string}}
-        <tag>        = <tag>[<join><tag>]
-        <tag>        = <tag>/<tag>
-        <name>       = name:<tag>
-
-Example: image,video:/label{{artist}}/label{{album }}+" year "+ label{{year}}/name:label{{ title }}
-         image:/label{{addr:city}}/label{{addr:street}} +" "+ label{{addr:housenumber'}}/subdir{{-1}}
-         audio/flac:/literal:{{flac music}}/label{{album}}/name:label{{ title }}
-                 
-<filetype> for "extension" look in "extensionsets.py"
-           for "mime" see "listfiles.py --show-mime general" 
-               "listfiles --show-mime general_mime_type"
-           default fits all.
-           
-<tag> for "label" all labels the current program can retrieve.
-
-Order is important so put the most specific in front.
-'''
-
-def pathseeker_help():
-	print(help_text)
-
-
-
-class TreeOfKnowledge(dict):
-	def __init__(S,source_file,source_path):
-		dict.__init__(S)
-		S.reset(source_file,source_path)
-
-	def reset(S,source_file,source_path):
-		S['Fullpath']=source_file
-		cut=len(source_path)
-		S['Tailpath']=source_file[cut:]
-		S['Tailsplit']=S['Tailpath'].split('/')
-		S['Extension']=get_extension(source_file)
-		for key in 'exiftool','brainz','mime':
-			S.pop(key,None)
-
-	def subdir(S,index):
-		if index == 0:
-			return S['Tailpath']
-		tailsplit=S['Tailsplit']
-		tail_len=len(tailsplit)
-		if abs(index) > tail_len:
-			return ''
-		if index > 0:
-			return tailsplit[index-1]
-		return tailsplit[tail_len+index]
-
-	def get_tag(S,tag):
-		tag=tag.lower()
-		if not 'exiftool' in S:
-			S['exiftool']=call_exiftool(S['Fullpath'])
-		exif=S['exiftool']
-		if tag in exif:
-			return exif[tag]
-		if not 'mime_type' in exif:
-			ic()
-			print(f'exiftool did not produce a mime type for "{S["Fullpath"]}"')
-			exit(113)
-		mime,special=exif['mime_type'].split('/')
-		if mime == 'audio':
-			if not 'brainz' in S:
-				S['brainz']=BrainzMusic(S['Fullpath'])
-			if tag in S['brainz']:
-				 return S['brainz'][tag]
-		return ''
 
 class AutoList(list):
 
@@ -172,11 +40,12 @@ class AutoList(list):
 			S.append(0)
 		return S[index]
 
+ext_re=re.compile(r'[^.]*\.([^/]+)$')
 class PathSeeker:
 
 	def __init__(self, path_format=None, gps_file=None,language='eng') -> None:
 		self.language=language
-		self.file_branches=[]
+		self.root=None
 		lines=self.read_format(path_format)
 		#DEBUGPRINT(f'{lines=}')
 		if lines:
@@ -184,9 +53,9 @@ class PathSeeker:
 		# 	self.tree.show_broad_tree()
 
 	def show(S):
-		for branche in S.file_branches:
+		for branche in S.root.traverse():
 			print(f'{str(branche)}->')
-			for tokkie,pos in branche.tagtoken.walk():
+			for tokkie,pos in branche.walk():
 				print(f'{pos:3} {str(tokkie)}')
 
 	def read_format(self,format):
@@ -199,16 +68,16 @@ class PathSeeker:
 			with open(try_file,'r') as f:
 			#DEBUGPRINT(f'read file "{try_file=}"')
 				format=f.read()
-		return self.clean_white(format)
+		return self.remove_whitespace(format)
 
-	def clean_white(self,format:str)->list:
+	def remove_whitespace(self,format:str)->list:
 		"""
 		Removes all characters ord() < 33 from format except between " or '.
 		split lines on ';' and remove it.
 		:param format:
 		:return: list of strings
 		"""
-		#DEBUGPRINT(f'clean_white {format} type({type(format)})')
+		#DEBUGPRINT(f'remove_whitespace {format} type({type(format)})')
 		head=-1
 		quote=False
 		end=len(format)-1
@@ -225,6 +94,9 @@ class PathSeeker:
 			if quote:
 				line+=format[head]
 				continue
+			if format[head]=='#':
+				while format[head]!='\n':
+					head+=1
 			if ord(format[head]) < 33:
 				continue
 			if format[head]==';':
@@ -232,28 +104,41 @@ class PathSeeker:
 				line=''
 				continue
 			line+=format[head]
+		for line in lines:
+			DEBUGPRINT(line)
 		return lines
 
 	def grow_tree(self,lines:list)->list:
 		"""
 		For every filetype that is characterized make a branche of TagTokens.
-		:param lines: by "PathSeeker.clean_white" prepairded lines
+		:param lines: by "PathSeeker.remove_whitespace" prepairded lines
 		:return: list of TagToken tree's
 		"""
-		current=None
-
-		for line in lines:
-		#DEBUGPRINT(f'{line=}')
-			#mp3,aac,raster_image:/literal{pictures}/(osm{adrr:street} + " in " + osm{city}|label{month} +"-"+label{year})
+		def collonslash_split(line):
 			colonslash=line.find(':/')
 			if colonslash < 0:
 				print(f'Error in "{line}"')
 				raise SyntaxError ('Lines need to start with a comma separated list of file mime or extensions ending with :/')
-			tokkie=TagToken('/')
 			mime=line[:colonslash]
-		#DEBUGPRINT(f'{mime=}')
-			self.file_branches.append(FileType(mime,tokkie))
-			tokkie.grow_tail(line[colonslash+2:])
+			tail=line[colonslash+1:]
+			return mime,tail
+
+		last_added_filetoken=None
+
+		for line in lines:
+			#DEBUGPRINT(line)
+			mime,tail=collonslash_split(line)
+			#DEBUGPRINT(f'{mime=}')
+			#DEBUGPRINT(f'{tail=}')
+			filetoken=FileToken(mime)
+			#DEBUGPRINT(f'{str(filetoken)}')
+			if not self.root:
+				self.root=filetoken
+				last_added_filetoken=filetoken
+			else:
+				last_added_filetoken['next_mime']=filetoken
+				last_added_filetoken=filetoken
+			filetoken.grow_tail(tail)
 		#DEBUGPRINT('-' * 80)
 			#current.show_tail()
 
@@ -264,92 +149,80 @@ class PathSeeker:
 		:param source_dir: base directory of the source file
 		:return: a substitute destination path
 		"""
-	#DEBUGPRINT('-+'*80)
-	#DEBUGPRINT(f'\nPathSeeker.compose_path("{source_file}",\n{source_dir})')
+		DEBUGPRINT('-+'*80)
+		#DEBUGPRINT(f'\nPathSeeker.compose_path("{source_file}",\n{source_dir})')
 		tree_of_good_and_evil=TreeOfKnowledge(source_file,source_dir)
 		clean_tagtokens()
-		token_path=AutoList()
+		split_stack=deque() #AutoList()
+		path_stack =deque()
+		path=''
 
-		def explore_branche(tokkie,pos=0):
-			if tokkie == None:
-				return -1 # -1
-		#DEBUGPRINT(f'explore_branche({tokkie.str_short()})')
-			if tokkie.can_produce(tree_of_good_and_evil):
-				token_path.set(pos,tokkie)
-				if tokkie.is_name():
-					return pos
-				return explore_branche(tokkie['mainline'],pos+1)
-			if side_track:=tokkie.diverges():
-				return explore_branche(side_track,pos+1)
-			return pos
+		def prepare_stack(tokkie):
+			nonlocal path
+			split_stack.clear()
+			path_stack.clear()
+			split_stack.append(tokkie)
+			path_stack.append('')
 
-		for file_branche in S.file_branches:
-			if file_branche.matches(source_file):
-				succes=True
-				for tokkie,pos in file_branche.tagtoken.walk():
-					yes,item=tokkie.deliver(tree_of_good_and_evil)
+		def push(tokkie):
+			nonlocal path
+			split_stack.append(tokkie)
+			path_stack.append(path)
 
-					DEBUGPRINT(f'{pos:3}:{tokkie.string(True)}')
-			#DEBUGPRINT(f'branche {file_branche.extensions=}')
-				# if name_pos:=explore_branche(file_branche.tagtoken) < 0:
-				# 	continue
-				# break
+		def pop():
+			nonlocal path
+			tokkie = split_stack.pop()
+			path   = path_stack.pop()
+			if 'diverge' in tokkie:
+				if tokkie['diverge']:
+					split_stack.append(tokkie['diverge'])
+					path_stack.append(path)
+			return tokkie
 
-		#ic(path)
-		# if name_pos < 0 : # should not happen
-		# 	return S.knowledge['tailpath']
-		#
-		# path=''
-		# for i in range(0,name_pos):
-		# 	tokkie=token_path.get(i)
-		# 	path+=tokkie.production()
+		#FileType.knowledge=tree_of_good_and_evil
+		def tokkie_bares_fruit(tokkie):
+			nonlocal path
+			while True:
+				apple=tokkie.produce()
+				#DEBUGPRINT(f'good_tokkie_fruit {tokkie.string(True)}')
+				if apple != None:
+					#if not isinstance(apple,str):
+					path+=str(apple)
+					#DEBUGPRINT(path)
+					return True
+				apple=tree_of_good_and_evil.consult_the_serpent(tokkie)
+				if apple == None:
+					#DEBUGPRINT(f'No Fruit')
+					return False
 
-		#DEBUGPRINT(f'Composed Path "{path}"')
-		return 'ABOUT LINE 969'
-
-class FileType:
-
-	def __init__(S,category_string,tagtoken):
-		#DEBUGPRINT(f'FileType.__init__({category_string},TagToken({str(tagtoken)}))')
-		S.string=category_string
-		extensions=set()
-		for cat in category_string.split(','):
-			#DEBUGPRINT(f'{cat=}')
-			if cat in extension_dict:
-				extensions=extensions.union(extension_dict[cat])
-				#DEBUGPRINT(f'extensions type {type(extensions)}')
-				continue
-			if '/' in cat:
-				extensions.add(cat)
-				#DEBUGPRINT(f'add ({cat}) extensions type {type(extensions)}')
-				continue
-			#DEBUGPRINT(f'add cat.upper() ({cat.upper()}) extensions type {type(extensions)}')
-			extensions.add(cat.upper())
-			#DEBUGPRINT(f'add cat.upper() ({cat.upper()}) extensions type {type(extensions)}')
-
-		S.extensions=extensions
-		S.tagtoken=tagtoken
-
-	def __str__(S):
-		return S.string
-
-	def matches(S,path:str)->TagToken:
-		# if not S.tagtoken:
-		# 	raise RuntimeError ( 'FileType.tagtoken is None')
-		dot=path.rfind('.')
-		if dot > 0:
-			ext=path[dot+1:].upper()
-			if ext in S.extensions:
-				return True
-		mime=service_call('file','-i',path,splitlines=False)
-		# listcopy.py: text/x-script.python; charset=us-ascii
-		colon=mime.find(':')+1
-		semicolon=mime.rfind(';')
-		mime=mime[colon:semicolon].strip()
-		for mim in S.extensions:
-			if mim in mime:
-				return True
-		return False
+		def vanguard():
+			nonlocal path
+			file_branche=S.root
+			while file_branche:
+				if not tree_of_good_and_evil.match_mime(file_branche):
+					file_branche=file_branche['next_mime']
+					continue
+				DEBUGPRINT(f'File Hit ({str(file_branche)}')
+				prepare_stack(file_branche)
+				while split_stack:
+					tracker=pop()['mainline']
+					while tracker:
+						if tracker.is_fork():
+							push(tracker)
+						if tokkie_bares_fruit(tracker):
+							DEBUGPRINT(f'Fruit : {tracker}')
+							if not tracker['mainline']: # reached the end with success
+								return True
+							tracker=tracker['mainline']
+							continue
+						DEBUGPRINT(f'Bad Fruit {str(tracker)}')
+						break
+					file_branche=file_branche['next_mime']
+		vanguard()
+		ext = ext_re.match(path)
+		if ext == None:
+			path+='.'+tree_of_good_and_evil.exstension()
+		return path
 
 def upcase_initial(s):return s[:1].upper()+s[1:]
 
@@ -370,7 +243,15 @@ def upcase_initial(s):return s[:1].upper()+s[1:]
 testdata=['/home/bob/temp/Users/',
 '/home/bob/temp/Users/Sander/AppData/Roaming/BitComet/fav/download-complete.wav',
 '/home/bob/temp/Users/Sander/AppData/Roaming/Microsoft/Word/~WRA0000.asd',
-'/home/bob/temp/Users/Sander/Dune  - Are You Ready To Fly (16-9) HQ.mp3'
+ '/home/bob/temp/Users/Sander/Dune  - Are You Ready To Fly (16-9) HQ.mp3'
+]
+testdata=[
+'/home/bob/temp/geo_pics/',
+'/home/bob/temp/geo_pics/IMG_20181213_103400.jpg',
+'/home/bob/temp/geo_pics/IMG_20181231_220248.jpg',
+'/home/bob/temp/geo_pics/IMG_20181121_192427_1.jpg',
+'/home/bob/temp/geo_pics/IMG_20181231_220307.jpg',
+'/home/bob/temp/geo_pics/IMG_20180808_175952.jpg',
 ]
 
 def testcompile():
@@ -390,8 +271,9 @@ def test_compose():
 	it = iter(testdata)
 	source_path = next(it)
 	for source in it:
-		ps.compose_path(source,source_path)
-	ps.show()
+		path=ps.compose_path(source,source_path)
+		print(path)
+	#ps.show()
 
 def main() -> None:
 	#testcompile()

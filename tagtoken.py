@@ -4,7 +4,7 @@ import os
 import json
 from collections import deque
 
-from numba.np.arrayobj import array0d_to_scalar
+from brainzmusic import DEBUGPRINT
 
 
 def try_int(val):
@@ -54,12 +54,12 @@ def show_tag_stack(stack,title=''):
 TT_BIND   = 0 # + VALUE value and mainline
 TT_SLASH  = 1 # / SIMPLE only mainline
 TT_LABEL  = 2 # B VALUE value and mainline
-#TT_FILE   = 3 # F value, mainline and diverge
 TT_FORK   = 3 # * mainline and diverge
 TT_TIE    = 4 # # SIMPLE only mainline
 TT_NAME   = 5 # N VALUE value and mainline
 TT_SPLIT  = 6 # | mainline and diverge
 TT_NOP    = 7 # 0 SIMPLE no value only mainline (Needed ?)
+TT_FILE   = 8 # F mime, extensions, mainline and diverge
 
 #TT_CLEAN = {TT_LABEL,TT_NAME}
 TT_RANGE  = range(TT_BIND ,TT_NOP + 1)
@@ -167,22 +167,26 @@ class TagToken(dict):
 	def clean(S):
 		if 'fixed' in S:
 			return
-		S['payload']=None
+		S.pop('payload',None)
 
 	def init_label(S,value):
 		#ic(value)
 		global split_value_re
 		type,val=split_value_re.search(value).groups()
 		if type == 'literal':
+			if (val[:1]=='"') and (val[-1:]=='"'):
+				val=val[1:-1]
+			if (val[:1]=="'") and (val[-1:]=="'"):
+				val=val[1:-1]
 			S['fixed']=val
 			return
 		if type == 'subdir':
 			S['subdir']=int(val)
-			S['payload']=None
+			#S['payload']=None
 			return
 		if type == 'label':
 			S['label']=val
-			S['payload']=None
+			#S['payload']=None
 			return
 		raise ValueError (f'"{value}" unsupported label type.')
 
@@ -202,6 +206,12 @@ class TagToken(dict):
 	def chain_sideways(S,shackle):
 		S['diverge']=shackle
 		return shackle
+
+	def expand_sideways(S,shackle):
+		chain=S
+		while chain['diverge']:
+			chain=chain['diverge']
+		chain['diverge']=shackle
 
 	def grow_tail(S,tail_string):
 	#DEBUGPRINT(f'TagToken.grow_tail("{tail_string})"')
@@ -259,6 +269,9 @@ class TagToken(dict):
 				tail=tail.chain_in_length(new_token)
 				continue
 			tail=tail.chain_in_length(new_token)
+		# if not tail.is_name():
+		# 	file_name
+		# 	tail['mainline']=
 
 	def init_from_dict(S,tokdct):
 		#DEBUGPRINT('\ninit_from_dict :',end='')
@@ -275,7 +288,16 @@ class TagToken(dict):
 
 	def __str__(S):
 		global TagTokenGist
-		return f'TagToken({TagTokenGist[S["token"]][1]})'
+		label=''
+		if 'label' in S:
+			label=f'[label:{S["label"]}]'
+		fixed=''
+		if 'fixed' in S:
+			fixed=f' fixed:{S["fixed"]}'
+		payload=''
+		if ' payload' in S:
+			payload=f'  payload:{S[" payload"]}'
+		return f'TagToken({TagTokenGist[S["token"]][1]}[{fixed} {payload}]{label})'
 
 	def string(S,verbose=False):
 		global TagTokenGist
@@ -296,7 +318,7 @@ class TagToken(dict):
 				keys+=f' {key}:{S[key]}'
 		return 	ret	+ mainline +  diverge + keys
 
-	def needs(S):
+	def produce(S):
 		"""
 		If the token need's data to be looked up is advertises what it needs
 		:return: False,path_substring,None else True,wanted type of data,label value
@@ -305,49 +327,49 @@ class TagToken(dict):
 		token=S['token']
 		key=TagTokenGist[token][4]
 		if not key:
-			return True,key,None
+			return ''
 		if 'fixed' in S:
-			return False,S['fixed'],None
+			return S['fixed']
 		if 'payload' in S:
-			return False,S['payload'],None
-		if 'subdir' in S:
-			return True,'subdir',S['subdir']
-		if 'label' in S:
-			return True,'label',S['label']
-		raise ("This is Bad.")
+			return S['payload']
+		return None
 
 	def portage(S,box):
+		if not box:
+			raise (f'got empty box {box}')
 		S['payload']=box
 
-	def deliver(S,wisdom_tree):
-		"""
-		try to produce a part of a path
-		:param wisdom_tree: Tree to retrieve values of labels
-		:return: succes True,string
-		"""
-		global TagTokenGist
-		token=S['token']
-		key=TagTokenGist[token][4]
-		if not key:
-			return True,key
-		if key == 'fixed':
-			return True,S['fixed']
-		if 'subdir' in 'S':
-			subdir=wisdom_tree.subdir(S ['subdir'])
-			if subdir:
-				return True
-			return False,''
-		if 'label' in S:
-			apple=wisdom_tree.get_tag(S['label'])
-			if apple:
-				S['payload']=apple
-				return True,apple
-		return False,None
+	# def deliver(S,wisdom_tree):
+	# 	"""
+	# 	try to produce a part of a path
+	# 	:param wisdom_tree: Tree to retrieve values of labels
+	# 	:return: succes True,string
+	# 	"""
+	# 	global TagTokenGist
+	# 	token=S['token']
+	# 	key=TagTokenGist[token][4]
+	# 	if not key:
+	# 		return True,key
+	# 	if key == 'fixed':
+	# 		return True,S['fixed']
+	# 	if 'subdir' in 'S':
+	# 		subdir=wisdom_tree.subdir(S ['subdir'])
+	# 		if subdir:
+	# 			return True
+	# 		return False,''
+	# 	if 'label' in S:
+	# 		apple=wisdom_tree.get_tag(S['label'])
+	# 		if apple:
+	# 			S['payload']=apple
+	# 			return True,apple
+	# 	return False,None
 
 	def walk(S):
 		step=-1
 		retrackt=deque()
 		cur=S
+		if S.is_file:
+			cur=S['mainline']
 		while True:
 			while cur:
 				step+=1
@@ -377,12 +399,17 @@ class TagToken(dict):
 	def is_fork(self):       return self['token']==TT_FORK
 	def is_split(self):return self['token']==TT_SPLIT
 	def is_tie(self):  return self['token']==TT_TIE
-	def is_name(self):       return self['token']==TT_NAME
+
+	def is_name(self):
+		return self['token'] == TT_NAME
+	def is_file(self):       return self['token']==TT_FILE
 	def is_fixed(self):      return 'fixed' in self
 	def diverges(S):
 		if not 'diverge' in S:
 			return None
 		return S['diverge']
+	def is_subdir(S):
+		return 'subdir' in S
 
 	def has(S,key):
 		return key in S
@@ -664,7 +691,48 @@ class TagToken(dict):
 		#S.show_listed_str()
 		S.ids_to_links()
 
-# end save and load end save and load end save and load end save and load
+class FileToken(TagToken):
+
+	def __init__(S,category_string:str):
+		TagToken.__init__(S)
+		S['token']=TT_FILE
+		#DEBUGPRINT(f'FileToken {category_string}')
+		S['mime']=[]
+		S['extension']=[]
+		S['next_mime']=None
+		for item in category_string.split(','):
+			if item.isupper():
+				S['extension'].append(item)
+			else:
+				S['mime'].append(item.lower())
+
+	def __str__(S):
+		mime_str=''
+		if S['mime']:
+			mime_str=''
+			comma=''
+			for mime in S['mime']:
+				mime_str+= comma + mime
+				comma=','
+		ext_str=''
+		if S['extension']:
+			ext_str=''
+			comma=''
+			for ext in S['extension']:
+				ext_str+= comma + ext.lower()
+				comma=','
+		keys=''
+		comma=''
+		for key in S.keys():
+			keys+= f'{comma}"{key}"'
+			comma=','
+		return f'FileToken( mime[{mime_str}] ext[{ext_str}] keys[{keys}])'
+
+	# def traverse(S):
+	# 	current=S
+	# 	while current:
+	# 		yield current
+	# 		current=current['diverge']
 
 #TagTokenGist
 # tokenstring,symbol,init_function,need_clean,production
@@ -677,11 +745,15 @@ TagTokenGist= [
 	('tie  ','#',None               ,False,''),
 	('name ','N',TagToken.init_name ,True ,'payload'),
 	('split','|',TagToken.init_split,False,''),
-	('nop  ','?',None               ,False,'')
+	('nop  ','?',None               ,False,''),
+	('file ','F',None               ,False,'')
 ]
 
 def main() -> None:
-	pass
+	for mime in "application,audio","chemical", "font",   "image","inode,message",  "misc,model,text","video",  "x-content",  "x-scheme-handler":
+		print(f'{mime}')
+		ft=FileToken(mime)
+		print(f'{str(ft)}')
 
 
 if __name__ == '__main__':

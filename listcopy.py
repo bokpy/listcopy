@@ -8,7 +8,8 @@ import pathlib
 import time
 import signal
 import listutils as lu
-from pathseeker import PathSeeker,pathseeker_help
+from pathseeker import PathSeeker
+from pathsyntax import syntax_text
 from metadata import ExifTags
 import metadata as meta
 DEBUGPRINT=print
@@ -505,7 +506,7 @@ def main() -> None:
 	print(f'{args.input=} {args.destination=}')
 	
 	if args.usage:
-		pathseeker_help()
+		print(syntax_text)
 		exit(0)
 		
 	if args.json:
@@ -520,7 +521,7 @@ def main() -> None:
 	if args.substitute:
 		DEBUGPRINT(f'{args.substitute=}')
 		if args.substitute.upper() == 'HELP':
-			pathseeker_help()
+			print(syntax_text)
 			exit(0)
 	
 	if args.todo:

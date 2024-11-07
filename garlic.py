@@ -50,10 +50,19 @@ def main() -> None:
 	print(match)
 '\[([^\]]+)\]'
 
+class Something:
+	litle_nothing=None
+	def __init__(S):
+		print(S.litle_nothing)
+
 if __name__ == '__main__':
 	A=Args()
 	B=Args(1)
 	C=Args(2,"abcd",3,4,5)
 	D=Args((1,2,3,4,5))
+	x=Something()
+	Something.litle_nothing='somthing now'
+	y=Something()
+	
 
 	#main()

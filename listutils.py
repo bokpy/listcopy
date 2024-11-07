@@ -115,6 +115,8 @@ DEBUGPRINT=print
 # 	def peek(S):
 # 		return S[0]
 
+def pathseeker_help():
+	print(help_text)
 
 
 class LocalTimeString:
