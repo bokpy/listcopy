@@ -23,7 +23,7 @@ syntax: <path>       = <filetype>[,<filetype>]:/<tag>[/<name>];
         <join>       = <+{{str}}+>
         <switch>     = (<alternative 1>|<alternative 2>[|...|<alternative n>)]
         <filetype>   = <mime>|<extension>[,<filetype>] lowercase = mime, uppercase = extension
-        <tag>        = <label|subdir|literal>{{string}}
+        <tag>        = <label|subdir|literal>{{string}} label[..] makes a python slice of the value
         <tag>        = <tag>[<join><tag>]
         <tag>        = <tag>/<tag>
         <name>       = name:<tag>

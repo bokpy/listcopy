@@ -90,9 +90,14 @@ class TreeOfKnowledge(dict):
 		S['Exiftool']['special_mime']=mime_special
 		S.Exif=S['Exiftool']
 
-	def exstension(S):
-		DEBUGPRINT(f"exstension {S['Exiftool']['file_type_extension']}")
-		return S['Exiftool']['file_type_extension']
+	def check_exstension(S,path):
+		dot = path.rfind('.')
+		if dot < 0:
+			return '.' + S.Exif['file_type_extension']
+		slash=path.rfind('/')
+		if dot > slash:
+			return ''
+		return '.' + S.Exif['file_type_extension']
 
 	def match_mime(S,file_tok):
 		# if not file_tok.is_file():

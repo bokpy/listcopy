@@ -149,7 +149,7 @@ class PathSeeker:
 		:param source_dir: base directory of the source file
 		:return: a substitute destination path
 		"""
-		DEBUGPRINT('-+'*80)
+		#DEBUGPRINT('-+'*80)
 		#DEBUGPRINT(f'\nPathSeeker.compose_path("{source_file}",\n{source_dir})')
 		tree_of_good_and_evil=TreeOfKnowledge(source_file,source_dir)
 		clean_tagtokens()
@@ -161,8 +161,8 @@ class PathSeeker:
 			nonlocal path
 			split_stack.clear()
 			path_stack.clear()
-			split_stack.append(tokkie)
-			path_stack.append('')
+			# split_stack.append(tokkie)
+			# path_stack.append('')
 
 		def push(tokkie):
 			nonlocal path
@@ -171,59 +171,54 @@ class PathSeeker:
 
 		def pop():
 			nonlocal path
+			if not split_stack:
+				return None
 			tokkie = split_stack.pop()
 			path   = path_stack.pop()
-			if 'diverge' in tokkie:
-				if tokkie['diverge']:
-					split_stack.append(tokkie['diverge'])
-					path_stack.append(path)
 			return tokkie
 
-		#FileType.knowledge=tree_of_good_and_evil
 		def tokkie_bares_fruit(tokkie):
-			nonlocal path
-			while True:
-				apple=tokkie.produce()
-				#DEBUGPRINT(f'good_tokkie_fruit {tokkie.string(True)}')
-				if apple != None:
-					#if not isinstance(apple,str):
-					path+=str(apple)
-					#DEBUGPRINT(path)
-					return True
+			apple=tokkie.produce()
+			if apple == None:
 				apple=tree_of_good_and_evil.consult_the_serpent(tokkie)
 				if apple == None:
-					#DEBUGPRINT(f'No Fruit')
-					return False
+					return None
+			return apple
 
 		def vanguard():
 			nonlocal path
 			file_branche=S.root
-			while file_branche:
+			success=False
+			while file_branche and (not success):
 				if not tree_of_good_and_evil.match_mime(file_branche):
 					file_branche=file_branche['next_mime']
 					continue
+				#file_branche.show_branche()
 				DEBUGPRINT(f'File Hit ({str(file_branche)}')
+				file_branche.show_branche()
 				prepare_stack(file_branche)
-				while split_stack:
-					tracker=pop()['mainline']
-					while tracker:
-						if tracker.is_fork():
-							push(tracker)
-						if tokkie_bares_fruit(tracker):
-							DEBUGPRINT(f'Fruit : {tracker}')
-							if not tracker['mainline']: # reached the end with success
-								if not tracker.is_name():
-									DEBUGPRINT  (f'No Name {tracker.string()}')
-								return True
-							tracker=tracker['mainline']
-							continue
-						DEBUGPRINT(f'Bad Fruit {str(tracker)}')
-						break
-					file_branche=file_branche['next_mime']
+				tracker=file_branche['mainline']
+				while tracker and (not success):
+					if 'diverge' in tracker:
+						push(tracker['diverge'])
+					apple=tokkie_bares_fruit(tracker)
+					if apple == None:
+						tracker=pop()
+						if tracker == None:
+							DEBUGPRINT(f'Failed')
+							return ''
+						continue
+					path+=apple
+					if tracker.is_name():
+						DEBUGPRINT(f'Success {str(tracker)}')
+						success=True
+						return path
+					tracker=tracker['mainline']
+				#print('-'*40)
+				file_branche=file_branche['next_mime']
+
 		vanguard()
-		ext = ext_re.match(path)
-		if ext == None:
-			path+='.'+tree_of_good_and_evil.exstension()
+		path+=tree_of_good_and_evil.check_exstension(path)
 		return path
 
 def upcase_initial(s):return s[:1].upper()+s[1:]
