@@ -70,52 +70,52 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.brainzmusic.executor": "Run",
-    "Python.extensions.executor": "Run",
-    "Python.garlic.executor": "Run",
-    "Python.geolocate.executor": "Run",
-    "Python.gps_data_kd_tree.executor": "Run",
-    "Python.gpstree.executor": "Run",
-    "Python.listcopy -b ~/meta.test.executor": "Run",
-    "Python.listcopy .executor": "Run",
-    "Python.listcopy.executor": "Run",
-    "Python.listfiles.executor": "Run",
-    "Python.listutils.executor": "Run",
-    "Python.metadata.executor": "Run",
-    "Python.musicbrains.executor": "Run",
-    "Python.pathseeker.executor": "Run",
-    "Python.scolding.executor": "Run",
-    "Python.scratch.data.executor": "Run",
-    "Python.slowcopy.executor": "Run",
-    "Python.tagtoken.executor": "Run",
-    "Python.test_Comprehensions.executor": "Run",
-    "Python.test_extensions.executor": "Run",
-    "Python.test_listdir.executor": "Run",
-    "Python.testdict.executor": "Run",
-    "Python.testiter.executor": "Run",
-    "Python.testtime.executor": "Run",
-    "Python.update_extensions.executor": "Run",
-    "Python.wisdomtree.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "b365a14c",
-    "last_opened_file_path": "/home/bob/python/listcopy/syntax.test",
-    "run.code.analysis.last.selected.profile": "aDefault",
-    "settings.editor.selected.configurable": "editor.preferences.completion",
-    "settings.editor.splitter.proportion": "0.27851325"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.brainzmusic.executor&quot;: &quot;Run&quot;,
+    &quot;Python.extensions.executor&quot;: &quot;Run&quot;,
+    &quot;Python.garlic.executor&quot;: &quot;Run&quot;,
+    &quot;Python.geolocate.executor&quot;: &quot;Run&quot;,
+    &quot;Python.gps_data_kd_tree.executor&quot;: &quot;Run&quot;,
+    &quot;Python.gpstree.executor&quot;: &quot;Run&quot;,
+    &quot;Python.listcopy -b ~/meta.test.executor&quot;: &quot;Run&quot;,
+    &quot;Python.listcopy .executor&quot;: &quot;Run&quot;,
+    &quot;Python.listcopy.executor&quot;: &quot;Run&quot;,
+    &quot;Python.listfiles.executor&quot;: &quot;Run&quot;,
+    &quot;Python.listutils.executor&quot;: &quot;Run&quot;,
+    &quot;Python.metadata.executor&quot;: &quot;Run&quot;,
+    &quot;Python.musicbrains.executor&quot;: &quot;Run&quot;,
+    &quot;Python.pathseeker.executor&quot;: &quot;Run&quot;,
+    &quot;Python.scolding.executor&quot;: &quot;Run&quot;,
+    &quot;Python.scratch.data.executor&quot;: &quot;Run&quot;,
+    &quot;Python.slowcopy.executor&quot;: &quot;Run&quot;,
+    &quot;Python.tagtoken.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test_Comprehensions.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test_extensions.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test_listdir.executor&quot;: &quot;Run&quot;,
+    &quot;Python.testdict.executor&quot;: &quot;Run&quot;,
+    &quot;Python.testiter.executor&quot;: &quot;Run&quot;,
+    &quot;Python.testtime.executor&quot;: &quot;Run&quot;,
+    &quot;Python.update_extensions.executor&quot;: &quot;Run&quot;,
+    &quot;Python.wisdomtree.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;4dd8d61a&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/bob/python/listcopy/syntax.test&quot;,
+    &quot;run.code.analysis.last.selected.profile&quot;: &quot;aDefault&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;editor.preferences.completion&quot;,
+    &quot;settings.editor.splitter.proportion&quot;: &quot;0.27851325&quot;
   },
-  "keyToStringList": {
-    "GitStage.ChangesTree.GroupingKeys": [
-      "directory",
-      "module",
-      "repository"
+  &quot;keyToStringList&quot;: {
+    &quot;GitStage.ChangesTree.GroupingKeys&quot;: [
+      &quot;directory&quot;,
+      &quot;module&quot;,
+      &quot;repository&quot;
     ],
-    "com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File": [
-      "GitIgnore"
+    &quot;com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File&quot;: [
+      &quot;GitIgnore&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$" />

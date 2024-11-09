@@ -212,6 +212,8 @@ class PathSeeker:
 						if tokkie_bares_fruit(tracker):
 							DEBUGPRINT(f'Fruit : {tracker}')
 							if not tracker['mainline']: # reached the end with success
+								if not tracker.is_name():
+									DEBUGPRINT  (f'No Name {tracker.string()}')
 								return True
 							tracker=tracker['mainline']
 							continue

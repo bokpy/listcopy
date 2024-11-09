@@ -158,11 +158,13 @@ class TagToken(dict):
 
 	def init_fork(S,value):
 		#ic(value)
-		S['diverge']=None
+		#S['diverge']=None
+		pass
 
 	def init_split(S,value):
 		#ic(value)
-		S['diverge']=None
+		#S['diverge']=None
+		pass
 
 	def clean(S):
 		if 'fixed' in S:
@@ -185,10 +187,22 @@ class TagToken(dict):
 			#S['payload']=None
 			return
 		if type == 'label':
-			S['label']=val
-			#S['payload']=None
+			DEBUGPRINT(f'{val=}')
+			if not ':' in val:
+				S['label']=val
+				return
+			collon = val.find(':')
+			S['label']=val[:collon]
+			S['slice']=val[collon+1:]
+			DEBUGPRINT(f"label {S['label']} slice {S['slice']}")
 			return
 		raise ValueError (f'"{value}" unsupported label type.')
+
+	def set_payload(S,val):
+		if 'slice' in S:
+			S['payload']=eval(f'val{S["slice"]}')
+			return
+		S['payload']=val
 
 	def init_fork(S,value):
 		#ic(value)
@@ -199,19 +213,25 @@ class TagToken(dict):
 		#ic(value)
 		S.init_label(value)
 
-	def chain_in_length(S,shackle):
-		S['mainline']=shackle
-		return shackle
+	def tie_end(S,tokkie):
+		last_tokkie=S
+		while last_tokkie['mainline']:
+			last_tokkie=last_tokkie['mainline']
+		last_tokkie['mainline']=tokkie
 
-	def chain_sideways(S,shackle):
-		S['diverge']=shackle
-		return shackle
+	# def chain_in_length(S,shackle):
+	# 	S['mainline']=shackle
+	# 	return shackle
 
-	def expand_sideways(S,shackle):
-		chain=S
-		while chain['diverge']:
-			chain=chain['diverge']
-		chain['diverge']=shackle
+	# def chain_sideways(S,shackle):
+	# 	S['diverge']=shackle
+	# 	return shackle
+
+	# def expand_sideways(S,shackle):
+	# 	chain=S
+	# 	while chain['diverge']:
+	# 		chain=chain['diverge']
+	# 	chain['diverge']=shackle
 
 	def grow_tail(S,tail_string):
 	#DEBUGPRINT(f'TagToken.grow_tail("{tail_string})"')
@@ -231,20 +251,26 @@ class TagToken(dict):
 			sprout['diverge']=new_bud
 			return new_bud
 
-		def tie_bud(bud,leaf):
-			branche=bud
-			while branche:
-				twig=branche
-				while twig['mainline']:
-					twig=twig['mainline']
-				twig['mainline']=leaf
-			#DEBUGPRINT(f'branche {branche.string()}')
-				branche=branche['diverge']
+		# def tie_bud(bud,leaf):
+		# 	branche=bud
+		# 	while branche:
+		# 		twig=branche
+		# 		while twig['mainline']:
+		# 			twig=twig['mainline']
+		# 		twig['mainline']=leaf
+		# 	#DEBUGPRINT(f'branche {branche.string()}')
+		# 		branche=branche['diverge']
 		tail=S
 		for token in tokens:
-			new_token=TagToken(token)
+			tokkie=TagToken(token)
 		#DEBUGPRINT(f'new_token {new_token.string()}')
-			if new_token.is_split():
+			if tokkie.is_fork():
+				# ( *  prepare to split
+				fork_stack.append(tokkie)
+				tail['mainline']=tokkie
+				continue
+
+			if tokkie.is_split():
 				# split of a new branche
 				try:
 					bud=_peek()
@@ -252,26 +278,23 @@ class TagToken(dict):
 					#print(f'IndexError {e}')
 					print(f'Error no matching parentheses\nIn "{tail_string}"')
 					exit(1)
-
-				tail=sprout(bud,new_token)
+				bud['diverge']=tokkie
+				tail=tokkie
 				continue
 
-			if new_token.is_tie():
+			if tokkie.is_tie():
 				# tie  # alternatives together
-				bud=fork_stack.pop()
-				tie_bud(bud,new_token)
-				tail=tail.chain_in_length(new_token)
+				while True:
+					bud=fork_stack.pop()
+					bud.tie_end(tokkie)
+					if bud.is_fork():
+						break
+				tail['mainline']=tokkie
 				continue
+			tail['mainline']=tokkie
 
-			if new_token.is_fork():
-				# ( prepare to split
-				fork_stack.append(new_token)
-				tail=tail.chain_in_length(new_token)
-				continue
-			tail=tail.chain_in_length(new_token)
-		# if not tail.is_name():
-		# 	file_name
-		# 	tail['mainline']=
+		DEBUGPRINT(f'Grow Tail Last token {tail.string()}')
+		S.show_branche()
 
 	def init_from_dict(S,tokdct):
 		#DEBUGPRINT('\ninit_from_dict :',end='')
@@ -334,35 +357,10 @@ class TagToken(dict):
 			return S['payload']
 		return None
 
-	def portage(S,box):
-		if not box:
-			raise (f'got empty box {box}')
-		S['payload']=box
-
-	# def deliver(S,wisdom_tree):
-	# 	"""
-	# 	try to produce a part of a path
-	# 	:param wisdom_tree: Tree to retrieve values of labels
-	# 	:return: succes True,string
-	# 	"""
-	# 	global TagTokenGist
-	# 	token=S['token']
-	# 	key=TagTokenGist[token][4]
-	# 	if not key:
-	# 		return True,key
-	# 	if key == 'fixed':
-	# 		return True,S['fixed']
-	# 	if 'subdir' in 'S':
-	# 		subdir=wisdom_tree.subdir(S ['subdir'])
-	# 		if subdir:
-	# 			return True
-	# 		return False,''
-	# 	if 'label' in S:
-	# 		apple=wisdom_tree.get_tag(S['label'])
-	# 		if apple:
-	# 			S['payload']=apple
-	# 			return True,apple
-	# 	return False,None
+	# def portage(S,box):
+	# 	if not box:
+	# 		raise (f'got empty box {box}')
+	# 	S['payload']=box
 
 	def walk(S):
 		step=-1
@@ -415,67 +413,67 @@ class TagToken(dict):
 		return key in S
 
 	#Showers Showers Showers Showers Showers Showers Showers Showers
-	def show_tail(S):
-		stack=deque()
-		cur=S
-		PANIC=20
-		while True:
-			PANIC-=1
-			if PANIC<0:
-				raise RuntimeError ('PANIC')
-			while cur:
-				print(f'{cur.string()}',end='')
-				if branche:=cur.diverges():
-					stack.append(branche)
-				cur=cur['mainline']
-			print()
-			if not stack:
-				break
-			print("--"*len(stack),end='>')
-			cur=stack.pop()
-			cur=cur['mainline']
-		print('++-'*30)
-
-	def _columns(self):
-		try:
-			columns,_=os.get_terminal_size()
-			return columns
-		except OSError as e:
-			if e.errno!=25:
-				print(f'{e}')
-				exit(e.errno)
-		return 100
-
-	prev=None       #debug
-	beforeprev=None #debug
-	def show(S):
-		def int_key(key):
-			if not key in S:
-				return ''
-			if not S[key]:
-				return '-1'
-			return str(S[key]['id'])
-
-		shw=''
-		for key in S:
-			if (key == 'mainline') or (key == 'diverge'):
-				shw += ' '+key +':' + int_key(key)
-				continue
-			shw += ' ' + key + ':' + str(S[key])
-
-		print(f"TagToken: {shw}")
-		return
-
-		#debug
-		if S==S.beforeprev:
-			IC('Handbreak',S)
-			exit(1)
-		if S==S.prev:
-			IC('Handbreak',S)
-			exit(1)
-		S.beforeprev=S.prev
-		S.prev=S
-		#debug end
+	# def show_tail(S):
+	# 	stack=deque()
+	# 	cur=S
+	# 	PANIC=20
+	# 	while True:
+	# 		PANIC-=1
+	# 		if PANIC<0:
+	# 			raise RuntimeError ('PANIC')
+	# 		while cur:
+	# 			print(f'{cur.string()}',end='')
+	# 			if branche:=cur.diverges():
+	# 				stack.append(branche)
+	# 			cur=cur['mainline']
+	# 		print()
+	# 		if not stack:
+	# 			break
+	# 		print("--"*len(stack),end='>')
+	# 		cur=stack.pop()
+	# 		cur=cur['mainline']
+	# 	print('++-'*30)
+	#
+	# def _columns(self):
+	# 	try:
+	# 		columns,_=os.get_terminal_size()
+	# 		return columns
+	# 	except OSError as e:
+	# 		if e.errno!=25:
+	# 			print(f'{e}')
+	# 			exit(e.errno)
+	# 	return 100
+	#
+	# prev=None       #debug
+	# beforeprev=None #debug
+	# def show(S):
+	# 	def int_key(key):
+	# 		if not key in S:
+	# 			return ''
+	# 		if not S[key]:
+	# 			return '-1'
+	# 		return str(S[key]['id'])
+	#
+	# 	shw=''
+	# 	for key in S:
+	# 		if (key == 'mainline') or (key == 'diverge'):
+	# 			shw += ' '+key +':' + int_key(key)
+	# 			continue
+	# 		shw += ' ' + key + ':' + str(S[key])
+	#
+	# 	print(f"TagToken: {shw}")
+	# 	return
+	#
+	# 	#debug
+	# 	if S==S.beforeprev:
+	# 		IC('Handbreak',S)
+	# 		exit(1)
+	# 	if S==S.prev:
+	# 		IC('Handbreak',S)
+	# 		exit(1)
+	# 	S.beforeprev=S.prev
+	# 	S.prev=S
+	# 	#debug end
 
 	def show_listed(S,formatter=json.dumps):
 		global TagTokenList
@@ -492,17 +490,17 @@ class TagToken(dict):
 			print(f'{count:3} {str(tokkie)}')
 			count+=1
 
-	def mainline(S):
-		if {S['mainline']}:
-			return f'S["mainline"].id:3)'
-		return 'End'
-
-	def diverge(S):
-		if not 'diverge' in S:
-			return 'Not'
-		if S['diverge']:
-			return f'S["diverge"].id:3)'
-		return 'End'
+	# def mainline(S):
+	# 	if {S['mainline']}:
+	# 		return f'S["mainline"].id:3)'
+	# 	return 'End'
+	#
+	# def diverge(S):
+	# 	if not 'diverge' in S:
+	# 		return 'Not'
+	# 	if S['diverge']:
+	# 		return f'S["diverge"].id:3)'
+	# 	return 'End'
 
 	def str_type(S):
 		global TagTokenGist
@@ -514,71 +512,99 @@ class TagToken(dict):
 			exit(1)
 		return ret
 
-	def str_short(S):
-		ret =''
-		def cut_of(string,pos):
-			ppos=abs(pos)
-			s=string[:ppos]
-			if pos > 0:
-				return f'{s:>{ppos}}'
-			return f'{s:<{ppos}}'
+	def just_token(S):
+		return TagTokenGist[S['token']][0]
 
-		S._link2id('mainline')
-		S._link2id('diverge')
+	def show_branche(S):
+		print('\nTagToken:show_branche')
+		DEBUGPRINT(f'{str(S)} {str(S["mainline"])}')
+		l=len(S.just_token())+1
+		diverse_stack=deque()
+		diverse_stack.append(S)
+		pos_stack=deque()
+		pos_stack.append(0)
 
-		for key in S:
-			val=S[key]
-		#DEBUGPRINT(f'{key=} , {val=}')
-			i = try_int(S[key])
-			ret+=cut_of(key,5)+':'
-			if key =='token':
-				ret+=cut_of(S.str_type(),-2)+', '
-				continue
-			if isinstance(i,int):
-				ret+=f'{i:>4}'+', '
-				continue
-			ret+=cut_of(i,-4)+', '
-		S._int2link('diverge')
-		S._int2link('mainline')
+		#print('\nTagToken:show_branche')
+		while diverse_stack:
+			tokkie=diverse_stack.pop()
+			pos=pos_stack.pop()
+			print('\n' + '-'*pos,end='')
+			while tokkie:
+				print(f'{tokkie.just_token()} ',end='')
+				if 'diverge' in tokkie:
+					DEBUGPRINT(f'Diverge {str(tokkie)}')
+					diverse_stack.append(tokkie['diverge'])
+					pos_stack.append(pos)
+				pos+=l
+				DEBUGPRINT(f"{tokkie['mainline']}")
+				tokkie=tokkie['mainline']
+		print()
 
-		return ret
-
-	def show_structure(S,heading=''):
-		if heading:
-			print(f'show structure "{heading}":')
-		pos=0
-		split_buds=deque()
-		current=S
-
-		def _spaces_to(column):
-			nonlocal pos
-			print(f"\n{'-'*column}",end='')
-			pos=column
-
-		def _print(tag):
-			nonlocal pos
-			# if tag.is_fixed():
-			# 	return
-			txt=tag.str_short()
-			if not pos:
-				print(f'\n{txt}',end='')
-			else:
-				print(f'{txt}',end='')
-			pos+=len(txt)
-		print(f'TagToken.show_structure:')
-		file_tag=S.root()
-		while file_tag:
-			cur=file_tag
-			while cur:
-				if cur.is_filetype():
-					pos=0
-					_print(cur)
-					if cur['diverge']:
-						if cur['diverge']['mainline'] == cur['mainline']: # postpone to last diverge to avoid duplication.
-							cur=cur['diverge']
-							continue
-					cur=cur['mainline']
-					continue
+	# def str_short(S):
+	# 	ret =''
+	# 	def cut_of(string,pos):
+	# 		ppos=abs(pos)
+	# 		s=string[:ppos]
+	# 		if pos > 0:
+	# 			return f'{s:>{ppos}}'
+	# 		return f'{s:<{ppos}}'
+	#
+	# 	S._link2id('mainline')
+	# 	S._link2id('diverge')
+	#
+	# 	for key in S:
+	# 		val=S[key]
+	# 	#DEBUGPRINT(f'{key=} , {val=}')
+	# 		i = try_int(S[key])
+	# 		ret+=cut_of(key,5)+':'
+	# 		if key =='token':
+	# 			ret+=cut_of(S.str_type(),-2)+', '
+	# 			continue
+	# 		if isinstance(i,int):
+	# 			ret+=f'{i:>4}'+', '
+	# 			continue
+	# 		ret+=cut_of(i,-4)+', '
+	# 	S._int2link('diverge')
+	# 	S._int2link('mainline')
+	#
+	# 	return ret
+	#
+	# def show_structure(S,heading=''):
+	# 	if heading:
+	# 		print(f'show structure "{heading}":')
+	# 	pos=0
+	# 	split_buds=deque()
+	# 	current=S
+	#
+	# 	def _spaces_to(column):
+	# 		nonlocal pos
+	# 		print(f"\n{'-'*column}",end='')
+	# 		pos=column
+	#
+	# 	def _print(tag):
+	# 		nonlocal pos
+	# 		# if tag.is_fixed():
+	# 		# 	return
+	# 		txt=tag.str_short()
+	# 		if not pos:
+	# 			print(f'\n{txt}',end='')
+	# 		else:
+	# 			print(f'{txt}',end='')
+	# 		pos+=len(txt)
+	# 	print(f'TagToken.show_structure:')
+	# 	file_tag=S.root()
+	# 	while file_tag:
+	# 		cur=file_tag
+	# 		while cur:
+	# 			if cur.is_filetype():
+	# 				pos=0
+	# 				_print(cur)
+	# 				if cur['diverge']:
+	# 					if cur['diverge']['mainline'] == cur['mainline']: # postpone to last diverge to avoid duplication.
+	# 						cur=cur['diverge']
+	# 						continue
+	# 				cur=cur['mainline']
+	# 				continue
 
 				# if cur.is_fork():
 				# 	fork=Junction(cur['diverge'],pos)
@@ -586,22 +612,22 @@ class TagToken(dict):
 				# 	_print(cur)
 				# 	cur=cur['mainline']
 				# 	continue
-
-				if cur.is_tie():
-					_print(cur)
-					bud,saved_pos=split_buds[0].pop()
-					if saved_pos>0:
-						_spaces_to(saved_pos)
-						#_print(bud)
-						cur=bud
-						continue
-					split_buds.pop()
-					cur=cur['mainline']
-					continue
-				_print(cur)
-				cur=cur['mainline']
-
-			file_tag=file_tag['diverge']
+			#
+			# 	if cur.is_tie():
+			# 		_print(cur)
+			# 		bud,saved_pos=split_buds[0].pop()
+			# 		if saved_pos>0:
+			# 			_spaces_to(saved_pos)
+			# 			#_print(bud)
+			# 			cur=bud
+			# 			continue
+			# 		split_buds.pop()
+			# 		cur=cur['mainline']
+			# 		continue
+			# 	_print(cur)
+			# 	cur=cur['mainline']
+			#
+			# file_tag=file_tag['diverge']
 
 	def __repr__(S):
 		save_mainline=S['mainline']

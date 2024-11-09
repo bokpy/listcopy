@@ -23,10 +23,28 @@ def process(function,value):
 		return eval(f'value{function}')
 	return eval(f'function(value)')
 
-mime_re=re.compile(r'.*: ([^/]+/)([^;]+); charset=(.*)')
+def youngest_date(date1,date2):
+	for ymd1,ymd2 in zip(date1,date2):
+		if ymd1 < ymd2:
+			return date1
+		if ymd2 < ymd1:
+			return date2
+	return date1
 
-def call_exiftool(path):
-	lines=service_call('exiftool',path)
+mime_re=re.compile(r'.*: ([^/]+/)([^;]+); charset=(.*)')
+date_re=re.compile(r'\D*(\d+):(\d+):(\d+) .*')
+def call_exiftool(filepath):
+	"""
+	Get data with "exiftool" for this file "filepath".
+	Look for the youngest date mentioned
+	:param filepath: full path to file to query for data
+	:return: dictionary with lowercase keys spaces and '/' replaced with an underscore '_'
+	         and striped.
+	         {} if failed.
+
+	"""
+	early_date=(3000,12,31)
+	lines=service_call('exiftool',filepath)
 	if not lines:
 		return {}
 	ret={}
@@ -36,7 +54,14 @@ def call_exiftool(path):
 		key=line[:collon].strip().lower()
 		key=key.replace(' ','_')
 		key=key.replace('/','_')
-		ret[key]=line[collon+2:]
+		value=line[collon+2:]
+		if date_match:=date_re.match(value):
+			datum=tuple([int(x) for x in date_match.groups()])
+			early_date=youngest_date(early_date,datum)
+		ret[key]=value
+	ret['year'] =str(early_date[0])
+	ret['month']=str(early_date[1])
+	ret['day']  =str(early_date[2])
 	return ret
 
 class TreeOfKnowledge(dict):
@@ -145,27 +170,10 @@ class TreeOfKnowledge(dict):
 			return tsp[i]
 
 		if 'label' in tokkie:
-			label,func = split_label_from_function(tokkie['label'])
-			DEBUGPRINT(f'{label=} {func=}')
+			label=tokkie['label']
 			if label in S.Exif:
-				tokkie['payload']=S.Exif[label]
-				return S.Exif[label]
-
-			function=None
-			DEBUGPRINT(f'Serpent looks for "{label}"')
-			if collon:=label.find(':') > -1:
-				tag=label[:collon]
-				function=label[collon:]
-			else:
-				tag=label
-			tag=tag.lower()
-			if tag in S.Exif:
-				value=S.Exif[tag]
-				if function:
-
-					return
-				tokkie['payload']=value
-				return value
+				tokkie.set_payload(S.Exif[label])
+				return tokkie['payload']
 
 		if S.Exif['general_mime'] == 'audio':
 			if not 'brainz' in S:
