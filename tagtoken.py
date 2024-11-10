@@ -15,6 +15,11 @@ def try_int(val):
 	except ValueError:
 		return val.strip()
 
+def center_char(mid,length,fill= ' '):
+	fh=length//2
+	sh=fh-1
+	return fill*fh + mid + fill*sh
+
 label_re      =r'((?:label|subdir|literal){[^}]+})'
 bind_re        =r'\+"([^"]+)"\+'
 slash_re       =r'(/)'
@@ -204,6 +209,7 @@ class TagToken(dict):
 		raise ValueError (f'"{value}" unsupported label type.')
 
 	def init_name(S,value):
+		S.pop('mainline',None)
 		S.init_label(value)
 
 	def set_payload(S,val):
@@ -218,54 +224,110 @@ class TagToken(dict):
 			last_tokkie=last_tokkie['mainline']
 		last_tokkie['mainline']=tokkie
 
-	def grow_tail(S,tail_string):
-	#DEBUGPRINT(f'TagToken.grow_tail("{tail_string})"')
-		tokens=re_path.findall(tail_string)
-		fork_stack=deque()
+	def add_caboose(S,tokkie): # same as tie_end
+		last_tokkie=S
+		while last_tokkie['mainline']:
+			last_tokkie=last_tokkie['mainline']
+		last_tokkie['mainline']=tokkie
+		return last_tokkie
 
-		def _peek():
-			val=fork_stack.pop()
-			fork_stack.append(val)
-			return val
+	def do_shunting_loud(S,token_string):
+		tokens=re_path.findall(token_string)
+		fork_stack=[]
+		last_wagon=S
 
-		open_tokkie=S
+		def test_and_couple(lead,follow):
+			if not 'mainline' in lead:
+				raise ValueError ('No coupling to Name Token')
+			if lead['mainline']:
+				raise ValueError (f'{str(lead)} was coupled.')
+			lead['mainline']=follow
+			return follow
+
+		def fork_peek():
+			return fork_stack[len(fork_stack)-1]
+
+		def fork_push(tokkie):
+			if not (tokkie.is_fork() or tokkie.is_split()):
+				raise ValueError (f'Wrong type of tokkie {tokkie.str_id_type()}')
+			fork_stack.append(tokkie)
+
 		for token in tokens:
-			free_tokkie=TagToken(token)
-		#DEBUGPRINT(f'new_token {new_token.string()}')
-			if free_tokkie.is_fork():
-				# ( *  prepare to split
-				fork_stack.append(free_tokkie)
-				open_tokkie['mainline']=free_tokkie
-				open_tokkie=free_tokkie
+			#print(f'{token=}',end=' -> ')
+			lose_wagon=TagToken(token)
+			if lose_wagon.is_name():
+				DEBUGPRINT(f'\nNAME {str(lose_wagon)}')
+			#print(f'{lose_wagon.str_id_type()} <- {token}')
+			print(f'{last_wagon.str_id_type()} next {lose_wagon.str_id_type()}', end='')
+			if lose_wagon.is_fork():
+				print( f' Pushed mainline')
+				fork_push(lose_wagon)
+				#last_wagon['mainline']=lose_wagon
+				last_wagon=test_and_couple(last_wagon,lose_wagon)
 				continue
-
-			if free_tokkie.is_split():
-				# split of a new branche
-				try:
-					bud=_peek()
-				except IndexError as e:
-					#print(f'IndexError {e}')
-					print(f'Error no matching parentheses\nIn "{open_tokkie.string()}"')
-					exit(1)
-				bud['diverge']=free_tokkie
-				fork_stack.append(free_tokkie)
-				open_tokkie=free_tokkie
+			if lose_wagon.is_split():
+				print( f' Peek and Push diverge')
+				split_train=fork_peek()
+				split_train['diverge']=lose_wagon
+				last_wagon=lose_wagon
+				fork_push(lose_wagon)
 				continue
-
-			if free_tokkie.is_tie():
-				# tie  # alternatives together
+			if lose_wagon.is_tie():
 				while True:
-					bud=fork_stack.pop()
-					bud.tie_end(free_tokkie)
-					if bud.is_fork():
+					side_train=fork_stack.pop()
+					end_wagon=side_train.add_caboose(lose_wagon)
+					print( f'{end_wagon.str_id_type()}<-{lose_wagon.str_id_type()} ')
+					if side_train.is_fork():
 						break
-				open_tokkie=free_tokkie
+				print(f'Contnue with {lose_wagon.str_id_type()}')
+				last_wagon=lose_wagon
 				continue
-			open_tokkie['mainline']=free_tokkie
-			open_tokkie=free_tokkie
+			last_wagon=test_and_couple(last_wagon,lose_wagon)
+			if last_wagon.is_name():
+				DEBUGPRINT('\nName got coupled')
 
-		#DEBUGPRINT(f'Grow Tail Last token {open_tokkie.string()}')
-		#S.show_branche()
+			# last_wagon=lose_wagon
+			# if not "mainline" in last_wagon:
+			# 	DEBUGPRINT(f'{str(lose_wagon)} is end file name token')
+		DEBUGPRINT(f'End do_shunting({str(last_wagon)})')
+		#S.show_trains()
+
+	# def do_shunting(S,token_string):
+	# 	tokens=re_path.findall(token_string)
+	# 	fork_stack=[]
+	# 	last_wagon=S
+	#
+	# 	def peek_fork():
+	# 		return fork_stack[len(fork_stack)-1]
+	#
+	# 	def push_fork(tokkie):
+	# 		# if not (tokkie.is_fork() or tokkie.is_split()):
+	# 		# 	raise ValueError (f'Wrong type of tokkie {tokkie.str_id_type()}')
+	# 		fork_stack.append(tokkie)
+	#
+	# 	for token in tokens:
+	# 		lose_wagon=TagToken(token)
+	# 		if lose_wagon.is_fork():
+	# 			push_fork(lose_wagon)
+	# 			last_wagon['mainline']=lose_wagon
+	# 			last_wagon=lose_wagon
+	# 			continue
+	# 		if lose_wagon.is_split():
+	# 			split_train=peek_fork()
+	# 			split_train['diverge']=lose_wagon
+	# 			push_fork(lose_wagon)
+	# 			last_wagon=lose_wagon
+	# 			continue
+	# 		if lose_wagon.is_tie():
+	# 			last_wagon=lose_wagon
+	# 			while True:
+	# 				side_train=fork_stack.pop()
+	# 				side_train.add_caboose(lose_wagon)
+	# 				if side_train.is_fork():
+	# 					break
+	# 			continue
+	# 		last_wagon['mainline']=lose_wagon
+	# 		last_wagon=lose_wagon
 
 	def init_from_dict(S,tokdct):
 		#DEBUGPRINT('\ninit_from_dict :',end='')
@@ -317,6 +379,12 @@ class TagToken(dict):
 		token=S['token']
 		gist=TagTokenGist[token]
 		return f'[{S["id"]:02}]{gist[0]}'
+	#
+	# def produce(S): #debug
+	# 	result=S.produce_d()
+	# 	if S.is_name():
+	# 		print(f'pruduce name {str(S)} {result=}')
+	# 	return result
 
 	def produce(S):
 		"""
@@ -351,23 +419,17 @@ class TagToken(dict):
 				break
 			cur,step=retrackt.pop()
 
-	def is_bind(self):       return self['token']==TT_BIND
-	def is_slash(self):      return self['token']==TT_SLASH
-	def is_label(self):      return self['token']==TT_LABEL
-	def is_fork(self):       return self['token']==TT_FORK
-	def is_split(self):      return self['token']==TT_SPLIT
-	def is_tie(self):        return self['token']==TT_TIE
-	def is_name(self):       return self['token'] == TT_NAME
-	def is_file(self):       return self['token']==TT_FILE
-	def is_fixed(self):      return 'fixed' in self
-	# def diverges(S):
-	# 	if not 'diverge' in S:
-	# 		return None
-	# 	return S['diverge']
-	def is_subdir(S):		return 'subdir' in S
-
-	def has(S,key):
-		return key in S
+	def is_bind(self):  return self['token']==TT_BIND
+	def is_slash(self): return self['token']==TT_SLASH
+	def is_label(self): return self['token']==TT_LABEL
+	def is_fork(self):  return self['token']==TT_FORK
+	def is_split(self): return self['token']==TT_SPLIT
+	def is_tie(self):   return self['token']==TT_TIE
+	def is_name(self):  return self['token'] == TT_NAME
+	def is_file(self):  return self['token']==TT_FILE
+	def is_fixed(self): return 'fixed' in self
+	def is_subdir(S):   return 'subdir' in S
+	def has(S,key):     return key in S
 
 	def show_listed(S,formatter=json.dumps):
 		global TagTokenList
@@ -397,31 +459,54 @@ class TagToken(dict):
 	def just_token(S):
 		return TagTokenGist[S['token']][0]
 
-	# def show_branche(S):
-	# 	print('\nTagToken:show_branche')
-	# 	#DEBUGPRINT(f'{str(S)} {str(S["mainline"])}')
-	# 	l=len(S.just_token())+1
-	# 	diverse_stack=deque()
-	# 	diverse_stack.append(S)
-	# 	pos_stack=deque()
-	# 	pos_stack.append(0)
-	# 	#print('\nTagToken:show_branche')
-	# 	while diverse_stack:
-	# 		tokkie = diverse_stack.pop()
-	# 		pos    = pos_stack.pop()
-	# 		print('\n' + '-'*pos)
-	# 		while tokkie:
-	# 			print(f'{tokkie.just_token()} ',end='')
-	# 			if 'diverge' in tokkie:
-	# 				DEBUGPRINT(f'Diverge {str(tokkie)}')
-	# 				diverse_stack.append(tokkie['diverge'])
-	# 				pos_stack.append(pos)
-	# 			pos+=l
-	# 			#DEBUGPRINT(f"{tokkie['mainline']}")
-	# 			tokkie=tokkie['mainline']
-	# 	print()
+	def show_trains(S):
+		tokkie_length=len(S.str_id_type())+1
+		blank =' '*tokkie_length
+		arrow =center_char('^',tokkie_length)
+		tokkie_stack=deque()
+		blank_stack=[]
+		tokkie=S
 
-	def show_branche(S):
+		def print_blanks():
+			nonlocal blank_stack
+			print('\n',end='')
+			for blank in blank_stack:
+				print(blank,end='')
+
+		if S.is_file():
+			print('-'*80)
+			print(f'\nFile Type: {S["mime"]} {S["extension"]}')
+			tokkie=S['mainline']
+
+		print('\n',end='')
+
+		while tokkie:
+			#print(f'{tokkie.str_id_type()} ',end='')
+			print(f'{str(tokkie)} ', end='')
+			tokkie=tokkie['mainline']
+			tokkie_stack.append(tokkie)
+			# if 'diverge' in tokkie:
+			# 	blank_stack.append(arrow)
+			# else:
+			# 	blank_stack.append(blank)
+			# tokkie=tokkie['mainline']
+			# if tokkie==None:
+			# 	while tokkie_stack:
+			# 		tokkie=tokkie_stack.pop()
+			# 		blank_stack.pop()
+			# 		if 'diverge' in tokkie:
+			# 			print_blanks()
+			# 			tokkie=tokkie['diverge']
+			# 			break
+			# if tokkie==None:
+			# 	break
+			# if tokkie.is_name():
+			# 	DEBUGPRINT(f'\nname tokkie {str(tokkie)}')
+			# tokkie=tokkie['mainline']
+
+		print(f'\nTagToken show_trains done.')
+
+	def show_branche_depricated(S):
 		plus=len(S.str_id_type())+1
 		splits=[]
 		def print_splits(pos,c):
@@ -455,7 +540,6 @@ class TagToken(dict):
 
 		show_recursive(S,0)
 
-
 	def __repr__(S):
 		save_mainline=S['mainline']
 		if save_mainline:
@@ -470,10 +554,6 @@ class TagToken(dict):
 		if S.has('diverge'):
 			S['diverge']=save_diverge
 		return ret
-
-	# end showers end showers end showers end showers end showers end showers
-
-	# save and load  save and load  save and load  save and load  save and load
 
 	def _link2id(S,key):
 		if not key in S:

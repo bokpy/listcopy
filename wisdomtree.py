@@ -32,7 +32,7 @@ def youngest_date(date1,date2):
 	return date1
 
 mime_re=re.compile(r'.*: ([^/]+/)([^;]+); charset=(.*)')
-date_re=re.compile(r'\D*(\d+):(\d+):(\d+) .*')
+date_re=re.compile(r'\D*(\d\d\d\d):(\d\d):(\d\d) .*')
 def call_exiftool(filepath):
 	"""
 	Get data with "exiftool" for this file "filepath".
@@ -49,7 +49,7 @@ def call_exiftool(filepath):
 		return {}
 	ret={}
 	collon=lines[0].find(':')
-	for i in range(3,len(lines)):
+	for i in range(0,len(lines)):
 		line=lines[i]
 		key=line[:collon].strip().lower()
 		key=key.replace(' ','_')
@@ -89,6 +89,10 @@ class TreeOfKnowledge(dict):
 		S['Exiftool']['general_mime']=mime_general
 		S['Exiftool']['special_mime']=mime_special
 		S.Exif=S['Exiftool']
+
+	def show_exif_data(S):
+		for key in S.Exif:
+			print(f'{key:>20}:{ S.Exif[key]}')
 
 	def check_exstension(S,path):
 		dot = path.rfind('.')
@@ -141,7 +145,6 @@ class TreeOfKnowledge(dict):
 	# 	return tailsplit[tail_len+index]
 
 	def consult_the_serpent(S,tokkie:TagToken):
-		#DEBUGPRINT(f'consult_the_serpent({tokkie.string(verbose=True)} ')
 		def split_label_from_function(label):
 			collon=label.find(':')
 			if collon < 0:

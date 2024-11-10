@@ -13,14 +13,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7d47a416-3b1c-466e-a851-3e5a458f6704" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/pathsyntax.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scolding.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/garlic.py" beforeDir="false" afterPath="$PROJECT_DIR$/garlic.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/listutils.py" beforeDir="false" afterPath="$PROJECT_DIR$/listutils.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pathseeker.py" beforeDir="false" afterPath="$PROJECT_DIR$/pathseeker.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tagtoken.py" beforeDir="false" afterPath="$PROJECT_DIR$/tagtoken.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/wisdomtree.py" beforeDir="false" afterPath="$PROJECT_DIR$/wisdomtree.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -99,7 +94,7 @@
     "Python.update_extensions.executor": "Run",
     "Python.wisdomtree.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "fa780215",
+    "git-widget-placeholder": "e6f0719e",
     "last_opened_file_path": "/home/bob/python/listcopy/syntax.test",
     "run.code.analysis.last.selected.profile": "aDefault",
     "settings.editor.selected.configurable": "editor.preferences.completion",

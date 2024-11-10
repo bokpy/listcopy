@@ -74,6 +74,7 @@ class PathSeeker:
 		:param format:
 		:return: list of strings
 		"""
+		format+='\n'
 		#DEBUGPRINT(f'remove_whitespace {format} type({type(format)})')
 		head=-1
 		quote=False
@@ -136,9 +137,10 @@ class PathSeeker:
 			else:
 				last_added_filetoken['next_mime']=filetoken
 				last_added_filetoken=filetoken
-			filetoken.grow_tail(tail)
-		#DEBUGPRINT('-' * 80)
-			#current.show_tail()
+			#filetoken.grow_tail(tail)
+			filetoken.do_shunting_loud(tail)
+			#filetoken.do_shunting(tail)
+			filetoken.show_trains
 
 	def compose_path(S,source_file,source_dir):
 		"""
@@ -179,6 +181,8 @@ class PathSeeker:
 
 		def tokkie_bares_fruit(tokkie):
 			apple=tokkie.produce()
+			# if tokkie.is_name():
+			# 	DEBUGPRINT(f'tokkie_bares_fruit({tokkie.str_id_type()} {apple=}')
 			if apple == None:
 				apple=tree_of_good_and_evil.consult_the_serpent(tokkie)
 				if apple == None:
@@ -196,7 +200,7 @@ class PathSeeker:
 				#file_branche.show_branche()
 				DEBUGPRINT(f'File Hit ({str(file_branche)}')
 				DEBUGPRINT(f'"{file_branche["recipe"]}"')
-				file_branche.show_branche()
+				file_branche.show_trains()
 				prepare_stack(file_branche)
 				tracker=file_branche['mainline']
 				while tracker and (not success):
@@ -221,9 +225,10 @@ class PathSeeker:
 				file_branche=file_branche['next_mime']
 
 		vanguard()
-		for tokkie,good in DEBUG_historie:
-			DEBUGPRINT(f'{tokkie.str_id_type()} {good }')
+		# for tokkie,good in DEBUG_historie:
+		# 	DEBUGPRINT(f'{tokkie.str_id_type()} {good }')
 		path+=tree_of_good_and_evil.check_exstension(path)
+		#tree_of_good_and_evil.show_exif_data()
 		return path
 
 def upcase_initial(s):return s[:1].upper()+s[1:]
