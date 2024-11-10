@@ -5,9 +5,6 @@ import subprocess
 import time
 import re
 from collections import deque
-
-from scipy.constants import value
-
 import metadata as meta
 #import extensions as ext
 from extensionsets import extension_dict
@@ -131,6 +128,7 @@ class PathSeeker:
 			#DEBUGPRINT(f'{mime=}')
 			#DEBUGPRINT(f'{tail=}')
 			filetoken=FileToken(mime)
+			filetoken['recipe']=tail # debug
 			#DEBUGPRINT(f'{str(filetoken)}')
 			if not self.root:
 				self.root=filetoken
@@ -155,12 +153,14 @@ class PathSeeker:
 		clean_tagtokens()
 		split_stack=deque() #AutoList()
 		path_stack =deque()
+		DEBUG_historie=deque()
 		path=''
 
 		def prepare_stack(tokkie):
 			nonlocal path
 			split_stack.clear()
 			path_stack.clear()
+			DEBUG_historie.clear()
 			# split_stack.append(tokkie)
 			# path_stack.append('')
 
@@ -195,6 +195,7 @@ class PathSeeker:
 					continue
 				#file_branche.show_branche()
 				DEBUGPRINT(f'File Hit ({str(file_branche)}')
+				DEBUGPRINT(f'"{file_branche["recipe"]}"')
 				file_branche.show_branche()
 				prepare_stack(file_branche)
 				tracker=file_branche['mainline']
@@ -203,12 +204,14 @@ class PathSeeker:
 						push(tracker['diverge'])
 					apple=tokkie_bares_fruit(tracker)
 					if apple == None:
+						DEBUG_historie.append((tracker,False))
 						tracker=pop()
 						if tracker == None:
 							DEBUGPRINT(f'Failed')
 							return ''
 						continue
 					path+=apple
+					DEBUG_historie.append((tracker,True))
 					if tracker.is_name():
 						DEBUGPRINT(f'Success {str(tracker)}')
 						success=True
@@ -218,6 +221,8 @@ class PathSeeker:
 				file_branche=file_branche['next_mime']
 
 		vanguard()
+		for tokkie,good in DEBUG_historie:
+			DEBUGPRINT(f'{tokkie.str_id_type()} {good }')
 		path+=tree_of_good_and_evil.check_exstension(path)
 		return path
 

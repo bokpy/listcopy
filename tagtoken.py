@@ -312,6 +312,12 @@ class TagToken(dict):
 				keys+=f' {key}:{S[key]}'
 		return 	ret	+ mainline +  diverge + keys
 
+	def str_id_type(S):
+		global TagTokenGist
+		token=S['token']
+		gist=TagTokenGist[token]
+		return f'[{S["id"]:02}]{gist[0]}'
+
 	def produce(S):
 		"""
 		If the token need's data to be looked up is advertises what it needs
@@ -416,7 +422,7 @@ class TagToken(dict):
 	# 	print()
 
 	def show_branche(S):
-		plus=len(S.just_token())+1
+		plus=len(S.str_id_type())+1
 		splits=[]
 		def print_splits(pos,c):
 			indent=''
@@ -431,18 +437,20 @@ class TagToken(dict):
 				indent+=' '*( pos - len(indent))
 			print(f'\n{indent}',end='')
 
+		def print_tokkie(tokkie,pos):
+			print(f'{tokkie.str_id_type()} ',end='')
+			return pos+plus
+
 		def show_recursive(tokkie,pos):
 			print_splits(pos,' ')
 			tailend=tokkie
 			while tailend:
+				pos=print_tokkie(tailend,pos)
 				if 'diverge' in tailend:
-					#pos-=plus
 					splits.append(pos)
-					show_recursive( tailend['diverge'],pos)
+					show_recursive( tailend['diverge'],pos-plus)
 					splits.pop()
 					print_splits(pos,' ')
-				print(f'{tailend.just_token()} ',end='')
-				pos+=plus
 				tailend=tailend['mainline']
 
 		show_recursive(S,0)
