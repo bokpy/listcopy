@@ -137,10 +137,7 @@ class PathSeeker:
 			else:
 				last_added_filetoken['next_mime']=filetoken
 				last_added_filetoken=filetoken
-			#filetoken.grow_tail(tail)
 			filetoken.do_shunting_loud(tail)
-			#filetoken.do_shunting(tail)
-			filetoken.show_trains
 
 	def compose_path(S,source_file,source_dir):
 		"""
@@ -149,87 +146,148 @@ class PathSeeker:
 		:param source_dir: base directory of the source file
 		:return: a substitute destination path
 		"""
-		#DEBUGPRINT('-+'*80)
-		#DEBUGPRINT(f'\nPathSeeker.compose_path("{source_file}",\n{source_dir})')
-		tree_of_good_and_evil=TreeOfKnowledge(source_file,source_dir)
-		clean_tagtokens()
-		split_stack=deque() #AutoList()
-		path_stack =deque()
-		DEBUG_historie=deque()
-		path=''
+		DEBUGPRINT('-+'*80)
+		good_and_evil=TreeOfKnowledge(source_file,source_dir)
+		path_stack=deque()
 
-		def prepare_stack(tokkie):
-			nonlocal path
-			split_stack.clear()
-			path_stack.clear()
-			DEBUG_historie.clear()
-			# split_stack.append(tokkie)
-			# path_stack.append('')
+		def path_push(fruit):
+			path_stack.append(fruit)
 
-		def push(tokkie):
-			nonlocal path
-			split_stack.append(tokkie)
-			path_stack.append(path)
-
-		def pop():
-			nonlocal path
-			if not split_stack:
-				return None
-			tokkie = split_stack.pop()
-			path   = path_stack.pop()
-			return tokkie
-
-		def tokkie_bares_fruit(tokkie):
+		def bares_fruit(tokkie):
 			apple=tokkie.produce()
-			# if tokkie.is_name():
-			# 	DEBUGPRINT(f'tokkie_bares_fruit({tokkie.str_id_type()} {apple=}')
+			if apple:
+				return apple
+			good_and_evil.consult_the_serpent(tokkie)
+			return tokkie.produce()
+
+		def good_try(tokkie):
+			DEBUGPRINT(f'good_try({str(tokkie)} ',end='')
+			if not tokkie:
+				DEBUGPRINT(f'None tokkie')
+				return False
+			apple=bares_fruit(tokkie)
+			DEBUGPRINT(f'{apple=}')
 			if apple == None:
-				apple=tree_of_good_and_evil.consult_the_serpent(tokkie)
-				if apple == None:
-					return None
-			return apple
+				return False
+			path_push(apple)
+			if tokkie.is_name():
+				return True
+			mainline=good_try(tokkie['mainline'])
+			if mainline:
+				return True
+			if 'diverge' in tokkie:
+				DEBUGPRINT(f'Diverge {str(tokkie["diverge"])}')
+				return good_try(tokkie['diverge'])
+			path_stack.pop()
+			return False
 
-		def vanguard():
-			nonlocal path
-			file_branche=S.root
-			success=False
-			while file_branche and (not success):
-				if not tree_of_good_and_evil.match_mime(file_branche):
-					file_branche=file_branche['next_mime']
-					continue
-				#file_branche.show_branche()
-				DEBUGPRINT(f'File Hit ({str(file_branche)}')
-				DEBUGPRINT(f'"{file_branche["recipe"]}"')
-				file_branche.show_trains()
-				prepare_stack(file_branche)
-				tracker=file_branche['mainline']
-				while tracker and (not success):
-					if 'diverge' in tracker:
-						push(tracker['diverge'])
-					apple=tokkie_bares_fruit(tracker)
-					if apple == None:
-						DEBUG_historie.append((tracker,False))
-						tracker=pop()
-						if tracker == None:
-							DEBUGPRINT(f'Failed')
-							return ''
-						continue
-					path+=apple
-					DEBUG_historie.append((tracker,True))
-					if tracker.is_name():
-						DEBUGPRINT(f'Success {str(tracker)}')
-						success=True
-						return path
-					tracker=tracker['mainline']
-				#print('-'*40)
-				file_branche=file_branche['next_mime']
+		file_branche=S.root
+		while file_branche:
+			if good_and_evil.match_mime(file_branche):
+				clean_tagtokens()
+				path_stack.clear()
+				if good_try(file_branche['mainline']):
+					break
+			file_branche=file_branche['next_mime']
 
-		vanguard()
-		# for tokkie,good in DEBUG_historie:
-		# 	DEBUGPRINT(f'{tokkie.str_id_type()} {good }')
-		path+=tree_of_good_and_evil.check_exstension(path)
-		#tree_of_good_and_evil.show_exif_data()
-		return path
+		DEBUGPRINT(f'\nPath: ',end='')
+		while path_stack:
+			fruit=path_stack.popleft()
+			DEBUGPRINT(f'{fruit}',end='')
+		DEBUGPRINT()
+
+	# 	split_stack=deque() #AutoList()
+	# 	path_stack =deque()
+	# 	DEBUG_historie=deque()
+	# 	path=''
+	# def compose_path(S,source_file,source_dir):
+	# 	"""
+	# 	Assemble an substitution path based on from "path_format" compiled tree.
+	# 	:param source_file: full path to the source file
+	# 	:param source_dir: base directory of the source file
+	# 	:return: a substitute destination path
+	# 	"""
+	# 	#DEBUGPRINT('-+'*80)
+	# 	#DEBUGPRINT(f'\nPathSeeker.compose_path("{source_file}",\n{source_dir})')
+	# 	tree_of_good_and_evil=TreeOfKnowledge(source_file,source_dir)
+	# 	clean_tagtokens()
+	# 	split_stack=deque() #AutoList()
+	# 	path_stack =deque()
+	# 	DEBUG_historie=deque()
+	# 	path=''
+	#
+	# 	def prepare_stack(tokkie):
+	# 		nonlocal path
+	# 		split_stack.clear()
+	# 		path_stack.clear()
+	# 		DEBUG_historie.clear()
+	# 		# split_stack.append(tokkie)
+	# 		# path_stack.append('')
+	#
+	# 	def push(tokkie):
+	# 		nonlocal path
+	# 		split_stack.append(tokkie)
+	# 		path_stack.append(path)
+	#
+	# 	def pop():
+	# 		nonlocal path
+	# 		if not split_stack:
+	# 			return None
+	# 		tokkie = split_stack.pop()
+	# 		path   = path_stack.pop()
+	# 		return tokkie
+	#
+	# 	def tokkie_bares_fruit(tokkie):
+	# 		apple=tokkie.produce()
+	# 		# if tokkie.is_name():
+	# 		# 	DEBUGPRINT(f'tokkie_bares_fruit({tokkie.str_id_type()} {apple=}')
+	# 		if apple == None:
+	# 			apple=tree_of_good_and_evil.consult_the_serpent(tokkie)
+	# 			if apple == None:
+	# 				return None
+	# 		return apple
+	#
+	# 	def vanguard():
+	# 		nonlocal path
+	# 		file_branche=S.root
+	# 		success=False
+	# 		while file_branche and (not success):
+	# 			if not tree_of_good_and_evil.match_mime(file_branche):
+	# 				file_branche=file_branche['next_mime']
+	# 				continue
+	# 			#file_branche.show_branche()
+	# 			DEBUGPRINT(f'File Hit ({str(file_branche)}')
+	# 			DEBUGPRINT(f'"{file_branche["recipe"]}"')
+	# 			file_branche.show_trains()
+	# 			prepare_stack(file_branche)
+	# 			tracker=file_branche['mainline']
+	# 			while tracker and (not success):
+	# 				if 'diverge' in tracker:
+	# 					push(tracker['diverge'])
+	# 				apple=tokkie_bares_fruit(tracker)
+	# 				if apple == None:
+	# 					DEBUG_historie.append((tracker,False))
+	# 					tracker=pop()
+	# 					if tracker == None:
+	# 						DEBUGPRINT(f'Failed')
+	# 						return ''
+	# 					continue
+	# 				path+=apple
+	# 				DEBUG_historie.append((tracker,True))
+	# 				if tracker.is_name():
+	# 					DEBUGPRINT(f'Success {str(tracker)}')
+	# 					success=True
+	# 					return path
+	# 				tracker=tracker['mainline']
+	# 			#print('-'*40)
+	# 			file_branche=file_branche['next_mime']
+	#
+	# 	vanguard()
+	# 	# for tokkie,good in DEBUG_historie:
+	# 	# 	DEBUGPRINT(f'{tokkie.str_id_type()} {good }')
+	# 	path+=tree_of_good_and_evil.check_exstension(path)
+	# 	#tree_of_good_and_evil.show_exif_data()
+	# 	return path
 
 def upcase_initial(s):return s[:1].upper()+s[1:]
 
