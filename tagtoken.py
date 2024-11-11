@@ -289,6 +289,7 @@ class TagToken(dict):
 			# last_wagon=lose_wagon
 			# if not "mainline" in last_wagon:
 			# 	DEBUGPRINT(f'{str(lose_wagon)} is end file name token')
+		S.schow_trains_recursing()
 		DEBUGPRINT(f'End do_shunting({str(last_wagon)})')
 		#S.show_trains()
 
@@ -419,14 +420,14 @@ class TagToken(dict):
 				break
 			cur,step=retrackt.pop()
 
-	def is_bind(self):  return self['token']==TT_BIND
-	def is_slash(self): return self['token']==TT_SLASH
-	def is_label(self): return self['token']==TT_LABEL
-	def is_fork(self):  return self['token']==TT_FORK
-	def is_split(self): return self['token']==TT_SPLIT
-	def is_tie(self):   return self['token']==TT_TIE
+	def is_bind(self):  return self['token'] == TT_BIND
+	def is_slash(self): return self['token'] == TT_SLASH
+	def is_label(self): return self['token'] == TT_LABEL
+	def is_fork(self):  return self['token'] == TT_FORK
+	def is_split(self): return self['token'] == TT_SPLIT
+	def is_tie(self):   return self['token'] == TT_TIE
 	def is_name(self):  return self['token'] == TT_NAME
-	def is_file(self):  return self['token']==TT_FILE
+	def is_file(self):  return self['token'] == TT_FILE
 	def is_fixed(self): return 'fixed' in self
 	def is_subdir(S):   return 'subdir' in S
 	def has(S,key):     return key in S
@@ -506,39 +507,31 @@ class TagToken(dict):
 
 		print(f'\nTagToken show_trains done.')
 
-	def show_branche_depricated(S):
-		plus=len(S.str_id_type())+1
-		splits=[]
-		def print_splits(pos,c):
-			indent=''
-			length=0
-			for split in splits:
-				#DEBUGPRINT(f'{pos=} {split=}')
-				if pos > split:
-					fill=split-length+2
-					indent= indent + c*(fill-1) + 'V'
-					length+=fill
-			if len(indent) < pos:
-				indent+=' '*( pos - len(indent))
-			print(f'\n{indent}',end='')
+	def schow_trains_recursing(S):
+		tokkie_length=len(S.str_id_type())+1
+		half=tokkie_length//2
+		blank = ' '*tokkie_length
+		arrow = ' '*half + '|' + ' '*(half-1)
 
-		def print_tokkie(tokkie,pos):
-			print(f'{tokkie.str_id_type()} ',end='')
-			return pos+plus
+		def blank_or_arrow(wagon):
+			if 'diverge' in wagon:
+				return arrow
+			return blank
 
-		def show_recursive(tokkie,pos):
-			print_splits(pos,' ')
-			tailend=tokkie
-			while tailend:
-				pos=print_tokkie(tailend,pos)
-				if 'diverge' in tailend:
-					splits.append(pos)
-					show_recursive( tailend['diverge'],pos-plus)
-					splits.pop()
-					print_splits(pos,' ')
-				tailend=tailend['mainline']
+		def show_shunt(wagon,indent):
+			if not wagon:
+				print(f' wagon={wagon}',end='')
+				return
+			if not 'mainline' in wagon:
+				print(f'{wagon.str_id_type()} ',end='')
+				return
+			print(f'{wagon.str_id_type()} ',end='')
+			show_shunt(wagon['mainline'],indent+blank_or_arrow(wagon))
+			if 'diverge' in wagon:
+				print(f'\n{indent}',end='')
+				show_shunt(wagon['diverge'],indent)
 
-		show_recursive(S,0)
+		show_shunt(S,'')
 
 	def __repr__(S):
 		save_mainline=S['mainline']
