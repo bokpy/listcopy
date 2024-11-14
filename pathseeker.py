@@ -17,25 +17,25 @@ from garlic import *
 #import inspect
 from icecream import ic
 
+#
+# exiftags=meta.ExifTags()
 
-exiftags=meta.ExifTags()
-
-class AutoList(list):
-
-	def __init__(S):
-		list.__init__(S)
-		S.length=0
-
-	def set(S,index,val):
-		while index >= len(S):
-			S.append(0)
-		S[index]=val
-		return val
-
-	def get(S,index):
-		while index >= len(S):
-			S.append(0)
-		return S[index]
+# class AutoList(list):
+#
+# 	def __init__(S):
+# 		list.__init__(S)
+# 		S.length=0
+#
+# 	def set(S,index,val):
+# 		while index >= len(S):
+# 			S.append(0)
+# 		S[index]=val
+# 		return val
+#
+# 	def get(S,index):
+# 		while index >= len(S):
+# 			S.append(0)
+# 		return S[index]
 
 ext_re=re.compile(r'[^.]*\.([^/]+)$')
 class PathSeeker:
@@ -43,6 +43,8 @@ class PathSeeker:
 	def __init__(self, path_format=None, gps_file=None,language='eng') -> None:
 		self.language=language
 		self.root=None
+		self.gps_file=gps_file
+		self.good_and_evil=TreeOfKnowledge(gps_file,language)
 		lines=self.read_format(path_format)
 		#DEBUGPRINT(f'{lines=}')
 		if lines:
@@ -102,8 +104,8 @@ class PathSeeker:
 				line=''
 				continue
 			line+=format[head]
-		for line in lines:
-			DEBUGPRINT(line)
+		# for line in lines:
+		# 	DEBUGPRINT(line)
 		return lines
 
 	def grow_tree(self,lines:list)->list:
@@ -137,7 +139,7 @@ class PathSeeker:
 			else:
 				last_added_filetoken['next_mime']=filetoken
 				last_added_filetoken=filetoken
-			filetoken.do_shunting_loud(tail)
+			filetoken.do_shunting(tail)
 
 	def compose_path(S,source_file,source_dir):
 		"""
@@ -146,8 +148,8 @@ class PathSeeker:
 		:param source_dir: base directory of the source file
 		:return: a substitute destination path
 		"""
-		DEBUGPRINT('-+'*80)
-		good_and_evil=TreeOfKnowledge(source_file,source_dir)
+		#DEBUGPRINT('-+'*80)
+		S.good_and_evil.reset(source_file,source_dir)
 		path_stack=deque()
 
 		def path_push(fruit):
@@ -157,16 +159,18 @@ class PathSeeker:
 			apple=tokkie.produce()
 			if apple:
 				return apple
-			good_and_evil.consult_the_serpent(tokkie)
+			if 'payload' in tokkie:
+				return None
+			S.good_and_evil.consult_the_serpent(tokkie)
 			return tokkie.produce()
 
 		def good_try(tokkie):
-			DEBUGPRINT(f'good_try({str(tokkie)} ',end='')
+			#DEBUGPRINT(f'good_try({str(tokkie)} ',end='')
 			if not tokkie:
-				DEBUGPRINT(f'None tokkie')
+				#DEBUGPRINT(f'None tokkie')
 				return False
 			apple=bares_fruit(tokkie)
-			DEBUGPRINT(f'{apple=}')
+			#DEBUGPRINT(f'{apple=}')
 			if apple == None:
 				return False
 			path_push(apple)
@@ -176,118 +180,29 @@ class PathSeeker:
 			if mainline:
 				return True
 			if 'diverge' in tokkie:
-				DEBUGPRINT(f'Diverge {str(tokkie["diverge"])}')
+				#DEBUGPRINT(f'Diverge {str(tokkie["diverge"])}')
 				return good_try(tokkie['diverge'])
 			path_stack.pop()
 			return False
 
 		file_branche=S.root
+		clean_tagtokens()
 		while file_branche:
-			if good_and_evil.match_mime(file_branche):
-				clean_tagtokens()
+			if S.good_and_evil.match_mime(file_branche):
 				path_stack.clear()
 				if good_try(file_branche['mainline']):
 					break
 			file_branche=file_branche['next_mime']
 
-		DEBUGPRINT(f'\nPath: ',end='')
+		#DEBUGPRINT(f'\nPath: ',end='')
+		path=''
 		while path_stack:
 			fruit=path_stack.popleft()
-			DEBUGPRINT(f'{fruit}',end='')
-		DEBUGPRINT()
-
-	# 	split_stack=deque() #AutoList()
-	# 	path_stack =deque()
-	# 	DEBUG_historie=deque()
-	# 	path=''
-	# def compose_path(S,source_file,source_dir):
-	# 	"""
-	# 	Assemble an substitution path based on from "path_format" compiled tree.
-	# 	:param source_file: full path to the source file
-	# 	:param source_dir: base directory of the source file
-	# 	:return: a substitute destination path
-	# 	"""
-	# 	#DEBUGPRINT('-+'*80)
-	# 	#DEBUGPRINT(f'\nPathSeeker.compose_path("{source_file}",\n{source_dir})')
-	# 	tree_of_good_and_evil=TreeOfKnowledge(source_file,source_dir)
-	# 	clean_tagtokens()
-	# 	split_stack=deque() #AutoList()
-	# 	path_stack =deque()
-	# 	DEBUG_historie=deque()
-	# 	path=''
-	#
-	# 	def prepare_stack(tokkie):
-	# 		nonlocal path
-	# 		split_stack.clear()
-	# 		path_stack.clear()
-	# 		DEBUG_historie.clear()
-	# 		# split_stack.append(tokkie)
-	# 		# path_stack.append('')
-	#
-	# 	def push(tokkie):
-	# 		nonlocal path
-	# 		split_stack.append(tokkie)
-	# 		path_stack.append(path)
-	#
-	# 	def pop():
-	# 		nonlocal path
-	# 		if not split_stack:
-	# 			return None
-	# 		tokkie = split_stack.pop()
-	# 		path   = path_stack.pop()
-	# 		return tokkie
-	#
-	# 	def tokkie_bares_fruit(tokkie):
-	# 		apple=tokkie.produce()
-	# 		# if tokkie.is_name():
-	# 		# 	DEBUGPRINT(f'tokkie_bares_fruit({tokkie.str_id_type()} {apple=}')
-	# 		if apple == None:
-	# 			apple=tree_of_good_and_evil.consult_the_serpent(tokkie)
-	# 			if apple == None:
-	# 				return None
-	# 		return apple
-	#
-	# 	def vanguard():
-	# 		nonlocal path
-	# 		file_branche=S.root
-	# 		success=False
-	# 		while file_branche and (not success):
-	# 			if not tree_of_good_and_evil.match_mime(file_branche):
-	# 				file_branche=file_branche['next_mime']
-	# 				continue
-	# 			#file_branche.show_branche()
-	# 			DEBUGPRINT(f'File Hit ({str(file_branche)}')
-	# 			DEBUGPRINT(f'"{file_branche["recipe"]}"')
-	# 			file_branche.show_trains()
-	# 			prepare_stack(file_branche)
-	# 			tracker=file_branche['mainline']
-	# 			while tracker and (not success):
-	# 				if 'diverge' in tracker:
-	# 					push(tracker['diverge'])
-	# 				apple=tokkie_bares_fruit(tracker)
-	# 				if apple == None:
-	# 					DEBUG_historie.append((tracker,False))
-	# 					tracker=pop()
-	# 					if tracker == None:
-	# 						DEBUGPRINT(f'Failed')
-	# 						return ''
-	# 					continue
-	# 				path+=apple
-	# 				DEBUG_historie.append((tracker,True))
-	# 				if tracker.is_name():
-	# 					DEBUGPRINT(f'Success {str(tracker)}')
-	# 					success=True
-	# 					return path
-	# 				tracker=tracker['mainline']
-	# 			#print('-'*40)
-	# 			file_branche=file_branche['next_mime']
-	#
-	# 	vanguard()
-	# 	# for tokkie,good in DEBUG_historie:
-	# 	# 	DEBUGPRINT(f'{tokkie.str_id_type()} {good }')
-	# 	path+=tree_of_good_and_evil.check_exstension(path)
-	# 	#tree_of_good_and_evil.show_exif_data()
-	# 	return path
+			path+=fruit
+			#DEBUGPRINT(f'{fruit}',end='')
+		#DEBUGPRINT()
+		path+=S.good_and_evil.check_exstension(path)
+		return path
 
 def upcase_initial(s):return s[:1].upper()+s[1:]
 

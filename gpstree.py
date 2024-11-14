@@ -4,7 +4,7 @@ from collections import deque
 import json
 from idlelib.tree import TreeNode
 
-from haversine import haversine, Unit
+from lookup_haversine import haversine, Unit
 from scipy.constants import value
 
 GPSTREENAME="GpsTree"

@@ -2,6 +2,7 @@
 import subprocess
 import re
 from brainzmusic import BrainzMusic, DEBUGPRINT
+from geolocate import OsmTrubo,gps_alpha_to_float
 from icecream import ic
 
 from tagtoken import TagToken
@@ -59,6 +60,16 @@ def call_exiftool(filepath):
 			datum=tuple([int(x) for x in date_match.groups()])
 			early_date=youngest_date(early_date,datum)
 		ret[key]=value
+		#GPS Latitude                    : 52 deg 57' 12.54" N
+        #GPS Longitude                   : 5 deg 54' 50.64" E
+        #GPS Position                    : 52 deg 57' 12.54" N, 5 deg 54' 50.64" E
+		if key == 'gps_latitude':
+			ret['latitude']=gps_alpha_to_float(value)
+		if key == 'gps_longitude':
+			ret['longitude']=gps_alpha_to_float(value)
+		if key == 'gps_position':
+			latitude,longitude=value.split(',')
+			ret['position']=(gps_alpha_to_float(latitude),gps_alpha_to_float(longitude))
 	ret['year'] =str(early_date[0])
 	ret['month']=str(early_date[1])
 	ret['day']  =str(early_date[2])
@@ -66,9 +77,11 @@ def call_exiftool(filepath):
 
 class TreeOfKnowledge(dict):
 	# noinspection PyMethodParameters
-	def __init__(S,source_file,source_path):
+	def __init__(S,gps_file=None,language='eng'):
 		dict.__init__(S)
-		S.reset(source_file,source_path)
+		S.osm=OsmTrubo(gps_file)
+		S.gps_file=gps_file
+		S.language=language
 
 	def reset(S,source_file,source_path):
 		for key in 'Exiftool','Brainz':
@@ -145,13 +158,13 @@ class TreeOfKnowledge(dict):
 	# 	return tailsplit[tail_len+index]
 
 	def consult_the_serpent(S,tokkie:TagToken):
-		def split_label_from_function(label):
-			collon=label.find(':')
-			if collon < 0:
-				return label.lower(),None
-			tag=label[:collon]
-			func=label[collon+1:]
-			return tag.lower(),func
+		# def split_label_from_function(label):
+		# 	collon=label.find(':')
+		# 	if collon < 0:
+		# 		return label.lower(),None
+		# 	tag=label[:collon]
+		# 	func=label[collon+1:]
+		# 	return tag.lower(),func
 
 		if 'subdir' in tokkie:
 			i=int(tokkie['subdir'])
@@ -179,18 +192,35 @@ class TreeOfKnowledge(dict):
 
 		if 'label' in tokkie:
 			label=tokkie['label']
+
 			if label in S.Exif:
 				tokkie.set_payload(S.Exif[label])
 				return tokkie['payload']
 
-		if S.Exif['general_mime'] == 'audio':
-			if not 'brainz' in S:
-				S['brainz']=BrainzMusic(S['Fullpath'])
-			if label in S['brainz']:
-				value = S['brainz'][label]
-				tokkie['payload']=value
-				return value
+			if S.Exif['general_mime'] == 'audio':
+				if not 'brainz' in S:
+					S['brainz']=BrainzMusic(S['Fullpath'])
+				if label in S['brainz']:
+					value = S['brainz'][label]
+					tokkie['payload']=value
+					return value
+
+			if S.Exif['general_mime'] == 'image':
+				latitude,longitude=S.get_coordinates()
+				if latitude != None:
+					geo_data=S.osm.lookup(latitude,longitude)
+					tokkie['payload']=geo_data.string_data_tags((label))
+					DEBUGPRINT(f'Look for {label} at {latitude},{longitude} got {tokkie["payload"]}')
+					return tokkie['payload']
 		return None
+
+	def get_coordinates(S):
+		if  'position' in S.Exif:
+			return S.Exif['position']
+		if ('latitude' in S.Exif) and ('longitude' in S.Exif):
+			return S.Exif['latitude'],S.Exif['longitude']
+		return None,None
+
 
 def main() -> None:
 	pass

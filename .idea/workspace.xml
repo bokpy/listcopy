@@ -14,8 +14,13 @@
   <component name="ChangeListManager">
     <list default="true" id="7d47a416-3b1c-466e-a851-3e5a458f6704" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/geolocate.py" beforeDir="false" afterPath="$PROJECT_DIR$/geolocate.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gpstree.py" beforeDir="false" afterPath="$PROJECT_DIR$/gpstree.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/listutils.py" beforeDir="false" afterPath="$PROJECT_DIR$/listutils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/metadata.py" beforeDir="false" afterPath="$PROJECT_DIR$/metadata.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pathseeker.py" beforeDir="false" afterPath="$PROJECT_DIR$/pathseeker.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tagtoken.py" beforeDir="false" afterPath="$PROJECT_DIR$/tagtoken.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/wisdomtree.py" beforeDir="false" afterPath="$PROJECT_DIR$/wisdomtree.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -73,11 +78,14 @@
     "Python.geolocate.executor": "Run",
     "Python.gps_data_kd_tree.executor": "Run",
     "Python.gpstree.executor": "Run",
+    "Python.haversine.executor": "Run",
+    "Python.kd2d_tree.executor": "Run",
     "Python.listcopy -b ~/meta.test.executor": "Run",
     "Python.listcopy .executor": "Run",
     "Python.listcopy.executor": "Run",
     "Python.listfiles.executor": "Run",
     "Python.listutils.executor": "Run",
+    "Python.lookup_haversine.executor": "Run",
     "Python.metadata.executor": "Run",
     "Python.musicbrains.executor": "Run",
     "Python.pathseeker.executor": "Run",
@@ -94,8 +102,8 @@
     "Python.update_extensions.executor": "Run",
     "Python.wisdomtree.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "d4cc19a8",
-    "last_opened_file_path": "/home/bob/python/listcopy/syntax.test",
+    "git-widget-placeholder": "fe3d54ef",
+    "last_opened_file_path": "/home/bob/geolocate.test.output",
     "run.code.analysis.last.selected.profile": "aDefault",
     "settings.editor.selected.configurable": "reference.settingsdialog.IDE.editor.colors.Python",
     "settings.editor.splitter.proportion": "0.27851325"
@@ -117,8 +125,9 @@
       <recent name="$USER_HOME$/mouse_project" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.pathseeker">
-    <configuration name="garlic" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Python.geolocate">
+    <configuration name="geolocate" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <output_file path="$USER_HOME$/geolocate.test.output" is_save="true" />
       <module name="pythonProject" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -131,7 +140,51 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/garlic.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/geolocate.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="kd2d_tree" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="pythonProject" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/kd2d_tree.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="lookup_haversine" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="pythonProject" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/lookup_haversine.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -162,7 +215,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="scolding" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="test_Comprehensions" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="pythonProject" />
       <option name="ENV_FILES" value="" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -175,7 +228,7 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scolding.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test_Comprehensions.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -184,57 +237,20 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="tagtoken" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="pythonProject" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/tagtoken.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="wisdomtree" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="pythonProject" />
-      <option name="ENV_FILES" value="" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/wisdomtree.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
+    <list>
+      <item itemvalue="Python.test_Comprehensions" />
+      <item itemvalue="Python.geolocate" />
+      <item itemvalue="Python.kd2d_tree" />
+      <item itemvalue="Python.lookup_haversine" />
+      <item itemvalue="Python.pathseeker" />
+    </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.geolocate" />
+        <item itemvalue="Python.test_Comprehensions" />
+        <item itemvalue="Python.kd2d_tree" />
+        <item itemvalue="Python.lookup_haversine" />
         <item itemvalue="Python.pathseeker" />
-        <item itemvalue="Python.tagtoken" />
-        <item itemvalue="Python.scolding" />
-        <item itemvalue="Python.wisdomtree" />
-        <item itemvalue="Python.garlic" />
       </list>
     </recent_temporary>
   </component>
@@ -342,5 +358,16 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="Charning Commit" />
     <option name="LAST_COMMIT_MESSAGE" value="Charning Commit" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/geolocate.py</url>
+          <line>14</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

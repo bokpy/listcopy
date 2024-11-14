@@ -115,9 +115,8 @@ DEBUGPRINT=print
 # 	def peek(S):
 # 		return S[0]
 
-def pathseeker_help():
-	print(help_text)
-
+# def pathseeker_help():
+# 	print(help_text)
 
 class LocalTimeString:
 	
@@ -563,9 +562,26 @@ def local_time(epoch_time,lang):
 	print(day_name, month_name)
 	locale.setlocale(locale.LC_ALL,save_locale)
 	
+look_up_longitude_to_meters_len=19
+look_up_longitude_to_meters_degree_step=5.0
+look_up_longitude_to_meters=[111319.49079327358, 110895.88652253202, 109628.29759458693, 107526.37112657112, 104606.10404808406, 100889.7213548985, 96405.50696332286, 91187.58845251966, 85275.67733302146, 78714.7668181572, 71554.78939853105, 63850.23682561895, 55659.745396636805, 47045.649696913075, 38073.508196055904, 28811.604308413916, 19330.426715062596, 9702.132902378851, 6.816352904134787e-12]
+angle_5_deg_table=[0.0, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0]
 
-
-
+def psuedo_revesed_havesine(latitude):
+	"""
+	makes an estimation of the distance in meters per degree longitude at a given latitude
+	:param latitude: angle in dergees of the latitude
+	:return: estimated meters/per degree at latitude
+	"""
+	lat=abs(latitude)
+	lowindex    = int(lat/look_up_longitude_to_meters_degree_step)
+	high_meters = look_up_longitude_to_meters[lowindex] # table counts down
+	low_angle   = angle_5_deg_table[lowindex]
+	low_meters  = look_up_longitude_to_meters[lowindex+1]
+	#high_angle = low_angle + look_up_longitude_to_meters_degree_step
+	div_high_low_meters = high_meters - low_meters
+	interpolation_correction = div_high_low_meters * (lat-low_angle )/look_up_longitude_to_meters_degree_step
+	return low_meters + interpolation_correction
 
 def main() -> None:
 	print (f'200.123 {kilo_mega("200.123 ")}')

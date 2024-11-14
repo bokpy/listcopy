@@ -1,31 +1,72 @@
 #!/bin/python3
-#https://pygis.io/docs/d_access_osm.html
 # request status_code https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
+from collections import deque
 import json
+import os.path
 import requests
-import overpass
-import math
 import re
-from haversine import haversine,inverse_haversine,Unit,Direction
-from gpstree import GpsTreeNode,GpsTree
+import atexit
+from random import shuffle
+from math import  radians, cos, sin, asin, sqrt
+
+#import overpass
+#import math
+from listutils import psuedo_revesed_havesine
+#from haversine import haversine,inverse_haversine,Unit,Direction
+
+# makes it easy to find debug stuff to remove
 DEBUGEXIT=exit
+DEBUGPRINT=print
+DEBUGEXIT=exit
+def JDUMP(dct,title=''):
+	jd=json.dumps(dct,indent=4)
+	if(title): print(title)
+	print(f'{jd}')
 
-#from gpstree import GpsTreeNode,GpsTree
-# import osmnx
-# from os import eventfd_read
-# import geopandas as gpd
-# from fontTools.misc.cython import returns
-# from geopy.distance import distance
-# from osm2geojson.helpers import OVERPASS
-
-OVERPASS_API = overpass.API()
+#OVERPASS_API = overpass.API()
 OVERPASS_URL = "http://overpass-api.de/api/interpreter"
 R_EARTH=6378137
-LONGI_M_PER_DEG=R_EARTH/90.0
+# meters per degree longitude on the equator 111,321 meter/degree
+PI=3.141592653589793
+LATI_M_PER_DEG=PI*R_EARTH/180.0
+INV_LATI_M_PER_DEG=1.0/LATI_M_PER_DEG
+LATI_HALF_M_PER_DEG=LATI_M_PER_DEG/2.0
 LATI=0
 LNGI=1
 
-DEBUGPRINT=print
+def haversine(lat1, lon1, lat2, lon2):
+    """
+    Calculate the great circle distance in meters between two points
+    on the earth (specified in decimal degrees)
+    """
+    # convert decimal degrees to radians
+    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+    # haversine formula
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+    c = 2 * asin(sqrt(a))
+    # r = 6371 # Radius of earth in kilometers. Use 3956 for miles. Determines return value units.
+    r = 6378137 # Radius of earth in meters.
+    return c * r
+
+# def psuedo_havesine_dist(lat1,lon1,lat2,lon2):
+# 	DEBUGPRINT(f'psuedo_havesine_manhattan({lat1},{lon1},{lat2},{lon2})', end=' -> ')
+# 	d_lat=(lat2-lat1)*LATI_M_PER_DEG
+# 	DEBUGPRINT(f'{d_lat=}',end='^2 +')
+# 	d_lon=(lon2-lon1)*psuedo_revesed_havesine(abs(lat1+lat2)/2.0)
+# 	d2=d_lat*d_lon+d_lon*d_lon
+# 	DEBUGPRINT(f'{d_lon=}^2 = {d2=} {sqrt(d2)=}')
+# 	return sqrt(d2)
+#
+# def psuedo_havesine_manhattan(lat1,lon1,lat2,lon2):
+# 	DEBUGPRINT(f'psuedo_havesine_manhattan({lat1},{lon1},{lat2},{lon2})', end=' -> ')
+# 	d_lat=(lat2-lat1)*LATI_M_PER_DEG
+# 	DEBUGPRINT(f'{d_lat=}',end='+ ')
+# 	d_lon=(lon2-lon1)*psuedo_revesed_havesine((lat1+lat2)/2.0)
+# 	DEBUGPRINT(f'{d_lon=} = {abs(d_lat)+abs(d_lon)}')
+# 	return abs(d_lat)+abs(d_lon)
+
 HTTP_STATUS_CODES = {
     200: "OK",
     201: "Created",
@@ -51,154 +92,66 @@ HTTP_STATUS_CODES = {
     504: "Gateway Timeout"
 }
 
-def meters_per_degree(longitude:float)->float:
-	global R_EARTH
-	l=abs(longitude)
-	r_at_lat=R_EARTH * math.cos(math.radians(longitude))
-	circum_lat=2*math.pi*r_at_lat
-	return circum_lat/360.0
+def distance2(x1,y1,x2,y2):
+	dx=x1-x2
+	dy=y1-y2
+	return dx*dx + dy*dy
 
-class OsmBoundingBox:
-	
-	def __init__(self,latitude:float,longitude:float,size:float):
-		"""
-		create a square overpass bounding box with the point in the middle, using inverse_haversine
-		:param latitude:  what it says
-		:param longitude: what it says
-		:param size: length in meters of the sides of the box
-		:return:  south-west corner , north east corner.
-		"""
-		hs=size/2.0
-		point=(latitude,longitude)
-		south_corner,_=inverse_haversine(point,hs,Direction.SOUTH,  unit='m')
-		_,west_corner =inverse_haversine(point,hs,Direction.WEST ,  unit='m')
-		north_corner,_=inverse_haversine(point,hs,Direction.NORTH,  unit='m')
-		_,east_corner =inverse_haversine(point,hs,Direction.EAST ,  unit='m')
+def make_bbox(latitude,longitude,size):
+	"""
+	Create a square bounding box string like [bbox:-25.38653, 130.99883, -25.31478, 131.08938];
+	with sides of "size" meters with point "latitude,longitude" in the middle.
+	:param latitude:
+	:param longitude:
+	:param size: size in meters
+	:return: string like "[bbox:-25.38653, 130.99883, -25.31478, 131.08938];\n"
+	"""
+	parralel_deg=size/psuedo_revesed_havesine(latitude)
+	meridian_deg=size/LATI_M_PER_DEG
+	parralel_deg/=2.0
+	meridian_deg/=2.0
+	return (f'[bbox:{latitude-parralel_deg},{longitude-meridian_deg},'
+	        f'{latitude+parralel_deg},{longitude+meridian_deg}];\n')
 
-		self.south_corner =south_corner
-		self.west_corner  =west_corner
-		self.north_corner =north_corner
-		self.east_corner  =east_corner
-		self.point=point
-		format='18.14f'
-		self.bbox =f'bbox:{self.south_corner:{format}},{self.west_corner:{format}},{self.north_corner:{format}},{self.east_corner:{format}}'
+def make_tag_nodes(*args):
+	"""
+	Concatenate tags in a string like "
+	(
+	node["name"];
+	node["way"];
+	node["tourism"];
+	);
+	:param args: list of osm tags
+	:return: string to use in osm query
+	"""
+	#DEBUGPRINT(f'{type(args)} ->{args}<- ')
+	ret='(\n'
+	#ret='\n'
+	for tag in args:
+		ret+=f'node["{tag}"];\n'
+	ret += ');\n'
+	#ret += '\n'
+	return ret
 
-	def __str__(self):
-		return self.bbox
-	
-	def str_corners(self):
-		return str(self.box_points())
-	
-	def first_corner(self):
-		return self.south_corner,self.west_corner
-	
-	def second_corner(self):
-		return self.north_corner,self.east_corner
-	
-	def box_points(self):
-		return self.south_corner,self.west_corner,self.north_corner,self.east_corner
-	
-	def box_centre(self):
-		return self.point
-	
-def do_request(url:str,parameters:dict)->str:
-	response = requests.get(url,parameters)
-	status=response.status_code
-	if status == 200:
-		return response.text
-	print(f'do_request err {status}:')
-	for err in requests.status_codes._codes[status]:
-		print(f'\t{err}')
-	return ''
-
-# Overpass out parameters
-# out ids ; - outputs only the id of nodes
-# out tags; - outputs only the id and tags attached to a node
-# out skel; - outputs only the id and geometry
-# out body; - output id, geometry and tags
-# out meta; - output id, geometry, tags plus change history
-
-# query types:
-# "node", "way", "relation", "nwr", "nw", "wr", "nr", or "area".
-
-def ovp_box_query(latitude:float,longitude:float,box_size:float=150.0)->dict:
-	# https://osm-queries.ldodds.com/tutorial/02-node-output.osm.html
-	if not isinstance(latitude,float): # dirty trick to accept iterables
-		box_size = longitude
-		latitude,longitude=latitude
-		
+def osm_query(query:str)->dict:
+	# # https://osm-queries.ldodds.com/tutorial/02-node-output.osm.html
+	# if not isinstance(latitude,float): # dirty trick to accept iterables
+	# 	box_size = longitude
+	# 	latitude,longitude=latitude
+	#
 	global OVERPASS_URL
-	bbox=OsmBoundingBox(latitude,longitude,box_size)
-	#[out: json];
-	query=f'''
-[out:json]
-[{bbox}];
-//[bbox:52.95680635372243,  5.93778854769265, 52.95686031294424,  5.93787811897402];
-nwr;
-(._;>;);
-out body;
-'''
-	#DEBUGPRINT(query)
-	response = do_request(OVERPASS_URL,{'data':query})
+	request='[out:json]\n'
+	request+=query
+	request+='out body;\n'
+	#DEBUGPRINT(request)
+	response =  requests.get(OVERPASS_URL,{'data':request})
 	#DEBUGPRINT(response)
+	#DEBUGPRINT(response.text)
 	#DEBUGEXIT(0) #########################################################################
 	if response:
-		return json.loads(response)
+		return json.loads(response.text)
 	return {}
 
-def ovp_near_query(latitude:float,longitude:float,near)->dict:
-	global OVERPASS_URL
-	query=f'''
-[out:json];
-(
-nwr(around:{near},{latitude}, {longitude});
-);
-out tags;
->;
-'''
-	DEBUGPRINT(query)
-	#response = requests.post(OVERPASS_URL, data={"data": query})
-	response = do_request(OVERPASS_URL,{"data": query})
-	if response:
-		return json.loads(response)
-	return {}
-	
-def ovp_gps_of_ids(ids):
-	global OVERPASS_URL
-	query='[out:json]; (\n'
-	try:
-		for id in ids:
-			query+=f'node({id});\n'
-	except TypeError as e:
-		query+=f'node({ids});\n'
-	query+=');\n(._;>;);\nout;\n'
-	DEBUGPRINT(query)
-	response = do_request(OVERPASS_URL,{"data": query})
-	if response:
-		return json.loads(response)
-	return {}
-	
-def overpass_find_nearby_landmarks(lat, lon):
-	# Using OpenStreetMap's Overpass API to find nearby landmarks
-	overpass_url = "http://overpass-api.de/api/interpreter"
-	overpass_query = f"""
-    [out:json];
-    (node["amenity"](around:500, {lat}, {lon});
-    way["amenity"](around:500, {lat}, {lon});
-    relation["amenity"](around:500, {lat}, {lon}););
-    out body;
-	    """
-	response = requests.get(overpass_url, params={'data': overpass_query})
-	data = response.json()
-	
-	landmarks = []
-	for element in data['elements']:
-		if 'tags' in element and 'name' in element['tags']:
-			landmarks.append(element['tags']['name'])
-	return landmarks
-
-#gps_re=re.compile(r"\d+ deg \d+' \d+\.\d+\" [NESW]")
-#gps_re=re.compile(r'\s*(\d+) deg (\d+)\' (\d+\.\d+)" ([NSEW])') # worked
 gps_re=re.compile(r'\s*(\d+)\D+(\d+)\D+(\d+\.\d+)[^NSEW]+([NSEW])')
 
 def gps_alpha_to_float(gps_string:str)->float:
@@ -221,108 +174,325 @@ def gps_alpha_to_float(gps_string:str)->float:
 		return -ret
 	return ret
 
-class OsmGpsInfo(GpsTree):
+class OsmTrubo:
 	"""
 	Get and store data from OpenStreetMap https://www.openstreetmap.org
 	near gps coordinates query url is defined in OVERPASS_URL
 	"""
 
-	def __init__(self,file_name:str='',near_enough:float=4,query_box_side:float=30):
+	def __init__(S,file_name:str='',near_enough:float=4,box_size:float=30,tags=None):
 		"""
 		:param file_name: json file with a saved GpsTree of GpsTreeNode's
 		:param near_enough: distance to consider coordinates are at the same location
 		:param query_box_side: the box size to ask OpenStreetMap data.
 		                       If nothing near enough in the tree is found.
 		"""
-		global OVERPASS_URL
-		self.url = OVERPASS_URL
-		GpsTree.__init__(self)
-		self.file_name=file_name
-		self.near_enough=near_enough
-		self.query_box_side=query_box_side
-		self.id2lalo={}
-		if file_name != '':
-			self.load_json(file_name)
+		S.set_tags(tags)
+		# Make  yourself centre of the world like a famous American politician tries but doesn't say.
+		S.osm_root = OsmNode(2741022795, 52.9536054, 05.9345688, tags={"addr:city": "Heerenveen", "addr:housenumber": "56", "addr:postcode": "8442JK", "addr:street": "President Kennedylaan", "source": "BAG", "source:date": "2014-03-24"})
+		S.near_enough=near_enough*near_enough
+		S.box_size=box_size
+		S.file_name=file_name
+		S.osmnodes=[S.osm_root]
+		S.loadsaved()
+		S.graft_tree()
+		atexit.register(S.savenodes)
 
-	# def distance_to_id(self,latitude:float,longitude,id):
-	# 	la,lo=self.id2lalo(id)
-	# 	return haversine(la,lo,latitude,longitude, unit = 'm')
-	#
-	# 	#DEBUGPRINT(f'{json.dumps(self.id2lalo,indent=2)}')
-	#
-	# def store_nearest_waypoint(self,latitude:float,longitude:float,node):
-	# 	#DEBUGPRINT(f'store_nearest_waypoint({latitude},{longitude},{node["tags"]}')
-	# 	#DEBUGPRINT(f'{json.dumps(node["tags"],indent=2)}')
-	# 	near=1e6
-	# 	near_la=-1
-	# 	near_lo=-1
-	# 	for id in node['nodes']:
-	# 		dist = haversine(self.id2lalo[id],(latitude,longitude), unit='m')
-	# 		if dist < near:
-	# 			near = dist
-	# 			near_la,near_lo=self.id2lalo[id]
-	# 	new_way_point=GpsTreeNode(near_la,near_lo,node['tags'])
-	# 	#DEBUGPRINT(f' store_nearest_waypoint {new_way_point}')
-	# 	self.add(new_way_point)
-	#
-	def lookup(self,latitude:float,longitude:float=360.0)->GpsTreeNode:
-		"""
-		lookup a point first in the GpsTree and if nothing found request OSM data store it in the the while looking
-		 for the closest point to return.
-		:param latitude: latitude of point to collect data for
-		:param longitude: longitude or if > 359.0 latitude should bee unpackable to latitude,longitude
-		:return: nearest GpsTreeNode to the given point at latitude,longitude that has tags
-		"""
-		if longitude > 359.0: # coordinates should bee unpacked
-			latitude,longitude=latitude
-		search_node=GpsTreeNode(latitude,longitude,{'empty':'lookup'})
-		near_node,near_dist=self.nearest(search_node)
-		if near_dist > 0 and near_dist < self.near_enough:
-			#DEBUGPRINT(f'A return {near_dist=} {near_node=}')
-			# found a node in the tree that's close enough
-			return near_node
-		
-		ovp_data=self.ovp_box_query(latitude,longitude)
-		new_node=GpsTreeNode(latitude,longitude,ovp_data,True)
-		self.add(new_node)
-		return new_node
-	
-	def ovp_box_query(self,la,lo=400.0):
-		if lo > 360.0:
-			la,lo = la
-		box=OsmBoundingBox(la,lo,self.query_box_side)
-		# https://osm-queries.ldodds.com/tutorial/02-node-output.osm.html
-		#// [bbox: 52.95680635372243, 5.93778854769265, 52.95686031294424, 5.93787811897402];
-		query=f'''
-[out:json]
-[{box}];
-nwr;
-(._;>;);
-out body;
-'''
-		#DEBUGPRINT(query)
-		response = do_request(OVERPASS_URL,{'data':query})
-		#DEBUGPRINT(response)
-		#DEBUGPRINT('^'*49)
-		#DEBUGPRINT(query)
-		if response:
-			dct=json.loads(response)
-			return dct["elements"]
-		return {}
-	
-	def collect_tag_info(self):
-		if self.osm_info=={}:
+	def set_tags(S,tags):
+		if tags:
+			if isinstance(tags,str):
+				S.tags=[tags]
+				return
+			S.tags=tags
 			return
-		for node in self.osm_info:
-			if not 'tags' in node:
+		S.tags=['addr:street','addr:housenumber','addr:city','name','amenity']
+		# amenity = facility
+
+	def savenodes(S):
+		print (f'Saving OsmTurbo data to "{S.file_name}"')
+		with open(S.file_name,'w') as f:
+			for node in S.osmnodes:
+				f.write(repr(node)+'\n')
+
+	def loadsaved(S):
+		#DEBUGPRINT(f'loadtree("{S.file_name}")')
+		if S.file_name == '':
+			S.file_name=os.path.expanduser('~/.listcopy_geodata')
+		print(f'Geo data will bee stored in "{S.file_name}"')
+		if not os.path.exists(S.file_name):
+			print(f'No file "{S.file_name}" found.')
+			return
+		with open(S.file_name,'r') as f:
+			lines = f.readlines()
+		for line in lines:
+			S.osmnodes.append(eval(line))
+
+	def graft_tree(S):
+		shuffle(S.osmnodes)
+		root=S.osm_root
+		for node in S.osmnodes:
+			root.graft(node)
+
+	def find_nearest_tag_in_list(S,lat,lon,tag):
+		nearest_node=S.nodelist[0]
+		smalest_dist=haversine(nearest_node.lat,nearest_node.lon,lat,lon)
+		for node in S.osmnodes:
+			# if not tag in current:
+			# 	continue
+			distance=haversine(node.lat,node.lon,lat,lon)
+			if distance < smalest_dist:
+				smalest_dist=distance
+				nearest_node=node
+		return nearest_node,smalest_dist
+
+	def lookup(S,latitude:float,longitude:float,label:str):
+		"""
+		search for the label nearest to the point "latitude,longitude"
+		first in the stored tree.
+		If the requested label not is found within a distance "S.near_enough"
+		do an "osm_query" store the recieved data and search the tree again.
+		:param latitude : parallel of point
+		:param longitude: meridian of point
+		:return: dict containing the looked up label near the point
+		"""
+		for _ in 1,2:
+			#node,dist=S.osm_root.find_nearest_tag(latitude,longitude,label)
+			node, dist = S.find_nearest_tag_in_list(latitude, longitude, label)
+			DEBUGPRINT(f'{_} {dist} {S.near_enough}')
+			if dist < S.near_enough:
+				DEBUGPRINT(f'Near enough {str(node)}')
+				return node[label],node
+			S.request_data(latitude,longitude,label)
+		#DEBUGPRINT('OsmTurbo.lookup return ??? ,None')
+		return node[label],node
+
+	def request_data(S,latitude,longitude,label=None):
+		bbox=make_bbox(latitude,longitude,S.box_size)
+		#DEBUGPRINT(f'{S.tags=}')
+		tags=S.tags
+		if label and ( not label in tags):
+			tags.append(label)
+		tag_nodes=make_tag_nodes(*tags )
+		#DEBUGPRINT(tag_nodes)
+		data=osm_query(bbox+tag_nodes)
+		DEBUGPRINT(data)
+		S.graft_tree(data)
+
+	def graft_tree(S,data):
+		if not "elements" in data:
+			return
+		for node in data["elements"]:
+			if not "tags" in node:
 				continue
-			DEBUGPRINT(node['tags'])
+			new_osmnode=OsmNode(**node)
+			S.nodelist.append(new_osmnode)
+			if not S.osm_root:
+				S.osm_root=new_osmnode
+				continue
+			S.osm_root.insert(new_osmnode)
+
+class OsmNode(dict):
+	def __init__(S,id:int,lat:float,lon:float,tags:dict,type=None):
+		dict.__init__(S)
+		S.id=id
+		S.lat=lat
+		S.lon=lon
+		S.update(tags)
+		S.DEBUG_compare_latitude=None
+		S.next_less=None
+		S.next_more=None
+
+	def __repr__(S):
+		comma=''
+		tags=''
+		for key in S.keys():
+			tags+=f'{comma}"{key}":"{S[key]}"'
+			comma=', '
+		tags='tags={'+tags+'}'
+		return f'OsmNode({S.id:12}, {S.lat:011.7f}, {S.lon:011.7f}, {tags})'
+
+	def __str__(S):
+		more_or_less=''
+		if S.next_less:
+			more_or_less='<- '
+		if S.next_more:
+			more_or_less+='->'
+		return f'OsmNode(..{S.id % 10000:04}[{S.lat:010.6f}, {S.lon:010.6f}] {more_or_less})'
+
+	def pos(S):
+		return f'({S.lat:06.3f}, {S.lon:06.3f})'
+
+	def is_more_then_point(S,lat,lon,latitude):
+		#DEBUGPRINT(f'S lat({S.DEBUG_compare_latitude}) {latitude}')
+		if S.DEBUG_compare_latitude and (S.DEBUG_compare_latitude != latitude):
+			raise RuntimeError('is_more_then out off sink')
+		if latitude:
+			return S.lat > lat
+		return S.lon > lon
+
+	def is_more_then(S,other,latitude):
+		return S.is_more_then_point(other.lat,other.lon,latitude)
+
+	# def insert(S,other,compare_latitude=False):
+	# 	compare_latitude = not compare_latitude
+	# 	if S.is_more_then(other,compare_latitude):
+	# 		if S.next_less:
+	# 			S.next_less.insert(other,compare_latitude)
+	# 			return
+	# 		S.next_less=other
+	# 		other.DEBUG_compare_latitude=not compare_latitude
+	# 		#DEBUGPRINT(f'Insert less {repr(other)}')
+	# 		return
+	# 	if S.next_more:
+	# 		S.next_more.insert(other,compare_latitude)
+	# 		return
+	# 	S.next_more=other
+	# 	other.DEBUG_compare_latitude=not compare_latitude
+	# 	#DEBUGPRINT(f'Insert more {repr(other)}')
+
+	def graft(S,other):
+		compare_latitude=False
+		lat_or_lon=['Lon|','Lat-']
+		current=S
+		while current:
+			compare_latitude = not compare_latitude
+			print(f'{lat_or_lon[compare_latitude]} current: {str(current)}')
+			current_biggest=current.is_more_then(other,compare_latitude)
+			if current_biggest:
+				if current.next_less == None:
+					current.next_less = other
+					return
+				current=current.next_less
+				continue
+			if current.next_more == None:
+				current.next_more = other
+				return
+			current=current.next_more
+
+	def find_nigh_tag(S,lat,lon,tag):
+		compare_latitude=False
+		# LAT_OR_LON=['Lon|','Lat-']
+		current=S
+		nigh_node=current
+		nigh_dist=haversine(S.lat,S.lon,lat,lon)
+		while current:
+			# DEBUG_DIST=haversine(current.lat,current.lon,lat,lon)
+			# DEBUGPRINT(f'{DEBUG_DIST=:8.6f}')
+			compare_latitude = not compare_latitude
+			# DEBUGPRINT(f'{LAT_OR_LON[compare_latitude]} current: {str(current)}')
+			if tag in current:
+				distance=haversine(current.lat,current.lon,lat,lon)
+				if distance < nigh_dist:
+					nigh_dist=distance
+					nigh_node=current
+			current_biggest=current.is_more_then_point(lat,lon,compare_latitude)
+			if current_biggest:
+				current=current.next_less
+				continue
+			current=current.next_more
+		return nigh_node,nigh_dist
+
+	def find_nigh_node(S,lat,lon):
+		compare_latitude=False
+		#lat_or_lon=['Lon|','Lat-']
+		current=S
+		nigh_node=current
+		nigh_dist=haversine(S.lat,S.lon,lat,lon)
+		while current:
+			#DEBUG_DIST=haversine(current.lat,current.lon,lat,lon)
+			#DEBUGPRINT(f'{DEBUG_DIST=:8.6f}')
+			compare_latitude = not compare_latitude
+			distance=haversine(current.lat,current.lon,lat,lon)
+			if distance < nigh_dist:
+				nigh_dist=distance
+				nigh_node=current
+			current_biggest=current.is_more_then_point(lat,lon,compare_latitude)
+			if current_biggest:
+				current=current.next_less
+				continue
+			current=current.next_more
+		return nigh_node
+
+	def walk(S,direction=False):
+		stack=deque()
+		stack.append(S)
+		while stack:
+			node=stack.pop()
+			dir='-->'
+			while node:
+				if node.next_more:
+					stack.append(node.next_more)
+				if direction:
+					yield node,dir
+					dir='<--'
+				else:
+					yield node
+				node=node.next_less
+
+def test_osmnode():
+	root = OsmNode(2741022795, 52.9536054, 05.9345688, tags={"addr:city": "Heerenveen", "addr:housenumber": "56", "addr:postcode": "8442JK", "addr:street": "President Kennedylaan", "source": "BAG", "source:date": "2014-03-24"})
+	from testdict import test_data
+	node_list=test_data["elements"]
+	nodes=[OsmNode(**node) for node in node_list]
+	for node in nodes:
+		root.graft(node)
+	for node,dir in root.walk(True):
+		print(f'{dir} {repr(node)}')
+	#2741025290, 052.9530243, 005.9349597, tags={"addr:city":"Heerenveen", "addr:housenumber":"62A", "addr:street":"Vermeerstraat",
+	node,dist=root.find_nigh_tag( 052.9530243, 005.9349597, "addr:housenumber")
+	print(f'{dist} {repr(node)}')
 
 if __name__ == '__main__':
+	test_osmnode()
+	exit(0)
 	joure_coords=(52.963041973818754, 5.8111289020720855)
 	hveen_coords=(52.95841726530616, 5.958291851243422 )
 	gron_coords=(53.23738, 6.560770)
+	parimaribo=(5.8143557933722425, -55.284453547375264)
 	suri_coords=(5.822541730620219, -55.25871342154263)
+	home_coords=(52.95373454619843, 5.934525881528275)
+	home_coords=(52.9536054       , 5.9345688)
+	from testdict import test_data
+	node_list=test_data["elements"]
+	nodes=[OsmNode(**node) for node in node_list]
+	best_node=None
+	best_dist=R_EARTH*10
+	for node in nodes:
+		dist=haversine(node.lat,node.lon,home_coords[0],home_coords[1])
+		#dist=psuedo_havesine_manhattan(node.lat,node.lon,52.95373454619843,5.934525881528275)
+		if dist < best_dist:
+			best_dist=dist
+			best_node=node
+		print(f'{dist:6.2f} {repr(node)}')
+	print(f'BEST is {best_dist:6.2f} {repr(best_node)}')
+
+	#JDUMP(test_data)
+
+
+	#[bbox:52.95812490565678,5.958112188186599,52.95870962495554,5.958471514300246];
+	# bbox=make_bbox(53.23738, 6.560770,1200)
+	# tags=make_tag_nodes('name','animety','addr:city','addr:postcode','addr:street')
+	# ret=osm_query(bbox+tags)
+	# osm_turbo=OsmTrubo('turbotest.dat',box_size=120)
+	# for coords in joure_coords,hveen_coords,gron_coords,suri_coords:
+	# 	lat,lon=coords
+	# 	stad,tags = osm_turbo.lookup(lat,lon,"addr:housenumber")
+	# 	if tags:
+	# 		print(f'\n{tags["addr:street"]} {tags["addr:housenumber"]} {tags["addr:postcode"]} {tags["addr:city"]}')
+	# 	stad=None
+	# 	tags=None
+	# print(f'{make_bbox(*hveen_coords,size=40)} // hveen_coords')
+	# print(f'{make_bbox(*suri_coords,size=40)} // suri_coords')
+	# print(f'parimaribo {make_bbox(*parimaribo,size=40)}')
+	# print(f'kaapstad { make_bbox(-34.04915407362119, 18.45565635174736,80)}')
+	# home_bbox=make_bbox(home_coords[0],home_coords[1],130)
+	# print(f'thuis box{home_bbox}')
+	# labels=make_tag_nodes('name','addr:postcode',"addr:city")
+	# data=osm_query(home_bbox + labels)
+	# JDUMP(data)
+	#home_osm_node=OsmNode()
+	exit(0)
+
 	if False:
 		data = ovp_box_query(hveen_coords,200)
 		print (f'{json.dumps(data,indent=4)}')

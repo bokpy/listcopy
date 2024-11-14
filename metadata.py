@@ -5,13 +5,7 @@ import subprocess
 import json
 import time
 from icecream import ic
-from numpy.distutils.system_info import language_map
-
-#from codecs import namereplace_errors
-#from datetime import datetime
 #from collections import deque
-#import pandas as pd
-
 from listutils import InputFileIterator,timestamp2epouch,end_slash,LocalTimeString
 from geolocate import gps_alpha_to_float, ovp_near_query, ovp_box_query
 from gpstree import GpsTree,GpsTreeNode

@@ -223,6 +223,7 @@ class TagToken(dict):
 		S.init_label(value)
 
 	def set_payload(S, val):
+		val=str(val)
 		if 'slice' in S:
 			S['payload'] = eval(f'val{S["slice"]}')
 			return
@@ -240,6 +241,50 @@ class TagToken(dict):
 			last_tokkie = last_tokkie['mainline']
 		last_tokkie['mainline'] = tokkie
 		return last_tokkie
+
+	def do_shunting(S, token_string):
+		tokens = re_path.findall(token_string)
+		fork_stack = []
+		last_wagon = S
+
+		def test_and_couple(lead, follow):
+			if not 'mainline' in lead:
+				raise ValueError('No coupling to Name Token')
+			if lead['mainline']:
+				raise ValueError(f'{str(lead)} was coupled.')
+			lead['mainline'] = follow
+			return follow
+
+		def fork_peek():
+			return fork_stack[len(fork_stack) - 1]
+
+		def fork_push(tokkie):
+			if not (tokkie.is_fork() or tokkie.is_split()):
+				raise ValueError(f'Wrong type of tokkie {tokkie.str_id_type()}')
+			fork_stack.append(tokkie)
+
+		for token in tokens:
+			# print(f'{token=}',end=' -> ')
+			lose_wagon = TagToken(token)
+			if lose_wagon.is_fork():
+				fork_push(lose_wagon)
+				last_wagon = test_and_couple(last_wagon, lose_wagon)
+				continue
+			if lose_wagon.is_split():
+				split_train = fork_peek()
+				split_train['diverge'] = lose_wagon
+				last_wagon = lose_wagon
+				fork_push(lose_wagon)
+				continue
+			if lose_wagon.is_tie():
+				while True:
+					side_train = fork_stack.pop()
+					end_wagon = side_train.add_caboose(lose_wagon)
+					if side_train.is_fork():
+						break
+				last_wagon = lose_wagon
+				continue
+			last_wagon = test_and_couple(last_wagon, lose_wagon)
 
 	def do_shunting_loud(S, token_string):
 		tokens = re_path.findall(token_string)
