@@ -566,8 +566,15 @@ look_up_longitude_to_meters_len=19
 look_up_longitude_to_meters_degree_step=5.0
 look_up_longitude_to_meters=[111319.49079327358, 110895.88652253202, 109628.29759458693, 107526.37112657112, 104606.10404808406, 100889.7213548985, 96405.50696332286, 91187.58845251966, 85275.67733302146, 78714.7668181572, 71554.78939853105, 63850.23682561895, 55659.745396636805, 47045.649696913075, 38073.508196055904, 28811.604308413916, 19330.426715062596, 9702.132902378851, 6.816352904134787e-12]
 angle_5_deg_table=[0.0, 5.0, 10.0, 15.0, 20.0, 25.0, 30.0, 35.0, 40.0, 45.0, 50.0, 55.0, 60.0, 65.0, 70.0, 75.0, 80.0, 85.0, 90.0]
+R_EARTH=6378137
+# meters per degree longitude on the equator 111,321 meter/degree
 
-def psuedo_revesed_havesine(latitude):
+CIRCUMFERENCE_EARTH_METERS=40075000.0
+
+PI=3.141592653589793
+LATI_M_PER_DEG=CIRCUMFERENCE_EARTH_METERS/360.0
+
+def meters_per_degree(latitude):
 	"""
 	makes an estimation of the distance in meters per degree longitude at a given latitude
 	:param latitude: angle in dergees of the latitude
@@ -581,9 +588,16 @@ def psuedo_revesed_havesine(latitude):
 	#high_angle = low_angle + look_up_longitude_to_meters_degree_step
 	div_high_low_meters = high_meters - low_meters
 	interpolation_correction = div_high_low_meters * (lat-low_angle )/look_up_longitude_to_meters_degree_step
-	return low_meters + interpolation_correction
+	return LATI_M_PER_DEG , (low_meters + interpolation_correction)
 
-def main() -> None:
+def test_meters_per_degree():
+	for i in range (0,15):
+		deg=17.0*i
+		if deg > 90.0:
+			break
+		print(f'{deg:6.3f} {meters_per_degree(deg)}')
+
+def test_kilo_mega() -> None:
 	print (f'200.123 {kilo_mega("200.123 ")}')
 	print (f'200.123 M {kilo_mega(" 200.123 M ")}')
 	print (f'200.123 K {kilo_mega(" 200.123 K")}')
@@ -635,32 +649,8 @@ def get_cursor_position():
 	
 	return row, col
 
+def main():
+	test_meters_per_degree()
+
 if __name__ == '__main__':
-	#
-	# dqs=DequeStack()
-	# for x in range(1,11):
-	# 	dqs.push(x)
-	#
-	# while dqs:
-	# 	a=dqs,pop()
-	# 	print(a)
-	#
-	# exit(0)
-	print(f'->{center_string("Centered",40)}<-'
-			f'->{center_string("20 Centered",20)}<-'
-			f'->{center_string("to big123456 Centered",10)}<-'
-			)
-	#rand_test_list()
-	timestr = "2024:09:03 10:51:43+02:00"
-	print(f'{timestamp2epouch(timestr)}')
-	exit(0)
-	lct=LocalTimeString('fy')
-	print(lct.get_weekday())
-	exit(0)
-	tumble=Tumbler('ABCDEFGH')
-	for i in tumble:
-		sleep(0.2)
-		print(f'\b{i}',end='')
-		sys.stdout.flush()
-		
-	
+	main()
