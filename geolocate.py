@@ -32,6 +32,7 @@ LANGUAGE_RE=re.compile(r'(^[^:]*$)|(.*:(simple|en|nl|fy)$)')
 LATI=0
 LNGI=1
 SMALLDISTANCE=0.25
+BOXSIDE=20 # default bbox size in meters
 
 def pc(coord:float)->str:
 	return f'{coord:011.7f}'
@@ -155,6 +156,15 @@ def osm_query(query:str)->dict:
 	request+=query
 	request+='out body;\n'
 	#DEBUGPRINT(f'osm_query: \n{request}')
+	response =  requests.get(OVERPASS_URL,{'data':request})
+	if response:
+		return json.loads(response.text)
+	return {}
+
+def request_nwr(latitude,longitude,size):
+	global OVERPASS_URL
+	bbox=make_bbox(latitude,longitude,size)
+	request=f'''[out:json]\n{bbox}\nnwr;\nout body;\n'''
 	response =  requests.get(OVERPASS_URL,{'data':request})
 	if response:
 		return json.loads(response.text)
@@ -350,7 +360,7 @@ class OsmTurbo(list):
 				S.append(OsmNode(**element))
 		S.rearrange()
 
-	def get_admin_node(S,latitude,longitude):
+	def request_admin(S,latitude,longitude):
 		level_str={'2':'country:','3':'region:','4':'sector:','5':'community:'}
 		admin_data = request_admin_levels(latitude,longitude)
 		if not  "elements" in admin_data:
@@ -401,7 +411,7 @@ class OsmTurbo(list):
 	# 			S.append(OsmNode(**element))
 	# 	S.rearrange()
 
-	def nigh_tags_and_distance(S,latitude,longitude,box_side=20):
+	def nigh_tags_and_distance(S,latitude,longitude,box_side=BOXSIDE):
 		nodes=S.find_near_tags(latitude,longitude,box_side)
 		#DEBUGPRINT(f'nigh_tags_and_distance({nodes=})')
 		tags = OsmNearTags(latitude,longitude)
@@ -409,11 +419,56 @@ class OsmTurbo(list):
 			tags.try_to_graft(node)
 		return tags
 
-	def tags(S,latitude,longitude,box_side=20):
+	def tags(S,latitude,longitude,box_side=BOXSIDE):
 		osmneartags=S.nigh_tags_and_distance(latitude,longitude,box_side)
 		return osmneartags.simplify()
 
-	def find_near_tags(S,latitude,longitude,box_side=20):
+	def bboxed_nodes(S,latitude,longitude,box_side=BOXSIDE):
+		lat_min,lon_min,lat_max,lon_max=geo_box(latitude,longitude,box_side)
+		index=S.find_latitude(lat_min)
+		i=index
+		while S[i].lat < lat_max:
+			lon=S[i].lon
+			if (lon > lon_min) and (lon < lon_max):
+				yield S[i]
+			i+=1
+
+	def _bboxed_tags(S,latitude,longitude,box_side=BOXSIDE):
+		tags={}
+		node_distance=0.0
+		def evaluate(node):
+			DEBUGPRINT(f' evaluate({repr(node)})')
+			nonlocal tags,node_distance
+			for tag,value in node.items():
+				if (tag not in tags) or (tags[tag]['distance'] > node_distance):
+					tags[tag]={'value':value,'distance':node_distance}
+		for node in S.bboxed_nodes(latitude,longitude,box_side):
+			node_distance=haversine(node.lat,node.lon,latitude,longitude)
+			evaluate(node)
+		if tags == {}:
+			return {}
+		ret={}
+		for tag,value in tags.items():
+			ret[tag]=value['value']
+		return ret
+
+	def bboxed_tags(S,latitude,longitude,box_side=BOXSIDE):
+		tags=S._bboxed_tags(latitude,longitude,box_side)
+		if not tags:
+			S.request_admin(latitude,longitude)
+			S.request_nwr(latitude,longitude,box_side)
+			return S._bboxed_tags(latitude,longitude,box_side)
+		if not 'admin_node_count' in tags:
+			S.request_admin(latitude,longitude)
+			return S._bboxed_tags(latitude,longitude,box_side)
+		return tags
+
+	def request_nwr(S,latitude,longitude,box_side=BOXSIDE):
+		data=request_nwr(latitude,longitude,box_side)
+		if data:
+			S.absorb_data(data,latitude,longitude)
+
+	def find_near_tags(S,latitude,longitude,box_side=BOXSIDE):
 		"""
 		Find a list of OsmNodes in the "bbox"
 		:param latitude: latitude of the centre of the square box
@@ -499,11 +554,11 @@ def adopt_osm_element_for_osmnode(osm_element,lat,lon):
 	return True
 
 class OsmNode(dict):
-	def __init__(S,id:int,lat:float,lon:float,tags:dict,type=None):
+	def __init__(S,id:int,lat:float,lon:float,tags:dict,type='unknown'):
 		dict.__init__(S)
 		S.update(tags)
 		S.id=id
-		#S.type=type
+		S.type=type
 		S.lat=lat
 		S.lon=lon
 
@@ -514,7 +569,7 @@ class OsmNode(dict):
 			tags+=f'{comma}"{key}":"{S[key]}"'
 			comma=', '
 		tags='tags={'+tags+'}'
-		return f'OsmNode({S.id:12}, {S.lat:011.7f}, {S.lon:011.7f}, {tags})'
+		return f'OsmNode({S.id:12}, {S.lat:011.7f}, {S.lon:011.7f}, {tags} , {S.type})'
 
 	def __str__(S):
 		naw=False
@@ -567,48 +622,21 @@ pantheon_paris=(48.846924385565686, 2.3463562237874873)
 The_Shepherd_Gate=(gps_alpha_to_float('51°28\′41″N'),gps_alpha_to_float(' 0°00\′05″W'))
 
 def test_osmturbo():
-	osmlist=OsmTurbo('turbotest.dat')
-	# lat=osmlist.find_latitude(5.814355793)
-	# osml=osmlist.find_near_tags(*gron_coords)
-	# print(f'{lat= }')
-	# print(f'{osml}')
-	# my_nigh=osmlist.nigh_tags_and_distance(*home_coords)
-	# print(f'home_coords: {my_nigh.place_indication()}')
-	# #JDUMP(nigh)
-	# nigh=osmlist.nigh_tags_and_distance(*suri_coords,300)
-	# print(f'suri_coords: {nigh.place_indication()}')
-	# #JDUMP(nigh)
-	# nigh=osmlist.nigh_tags_and_distance(*kaapstad,300)
-	# JDUMP(nigh)
-	# print(f'kaapstad: {nigh.place_indication()}')
-	# nigh=osmlist.nigh_tags_and_distance(*parimaribo,300)
-	# nigh.show()
-	# # print(f'parimaribo: {nigh.place_indication()}')
-	# # JDUMP(request_admin_levels(*parimaribo))
-	# # JDUMP(request_admin_levels(*kaapstad))
-	# kyiv_admin=osmlist.get_admin_node(*kyiv)
-	# bymij=osmlist.find_near_tags(*home_coords)
-	# JDUMP(bymij,'bymij')
-	# JDUMP(my_nigh,"my_nigh")
-	# kyiv_nigh=osmlist.nigh_tags_and_distance(*kyiv)
-	# JDUMP(kyiv_nigh,'kyiv_nigh')
-	# JDUMP(kyiv_nigh.simplify(),'kyiv_nigh simplified')
-	# #JDUMP(request_admin_levels(*home_coords))
-	# JDUMP(my_nigh.simplify(),"my_nigh simplified")
-	# pantheon_paris_nigh=osmlist.nigh_tags_and_distance(*pantheon_paris)
-	# JDUMP(pantheon_paris_nigh,'pantheon_paris_nigh')
-	# JDUMP(pantheon_paris_nigh.simplify(),'pantheon_paris_nigh simplified')
-	# # JDUMP(kyiv_admin,'get_admin_node kyiv:')
-	# # JDUMP(request_admin_levels(*parimaribo))
-	JDUMP(osmlist.tags(*joure_coords))
+	osmturbo=OsmTurbo('turbotest.dat')
+	# for node in osmturbo.bboxed_nodes(*gron_coords):
+	# 	print(repr(node))
 
+	gron_tags=osmturbo.bboxed_tags(*gron_coords)
+	JDUMP(gron_tags,'osmturbo.bboxed_tages(*gron_coords)')
 
 def test_geo_box():
 	print(f'geo_box(*suri_coords,17) {geo_box(*suri_coords,17)}')
 
 if __name__ == '__main__':
-	test_geo_box()
+	#test_geo_box()
 	test_osmturbo()
+	# pant=request_nwr(*pantheon_paris,400)
+	# JDUMP(pant)
 
 
 
