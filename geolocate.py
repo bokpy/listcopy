@@ -11,7 +11,7 @@ import re
 import atexit
 from math import  radians, cos, sin, asin, sqrt
 #import overpass
-from listutils import meters_per_degree, LANGUAGES
+from listutils import meters_per_degree, LANGUAGES, R_EARTH
 
 #from haversine import haversine,inverse_haversine,Unit,Direction
 
@@ -29,6 +29,7 @@ OVERPASS_URL = "http://overpass-api.de/api/interpreter"
 
 #LANGUAGE_RE=re.compile(r'([^:]*)|.*:(eng|nl|eu|fy)$')
 LANGUAGE_RE=re.compile(r'(^[^:]*$)|(.*:(simple|en|nl|fy)$)')
+WANTED_LAGUAGES=['fy','nl','en']
 LATI=0
 LNGI=1
 SMALLDISTANCE=0.25
@@ -185,6 +186,18 @@ def request_admin_levels(latitude,longitude):
 		return {}
 	return json.loads(response.text)
 
+def request_around_tags(latitude,longitude,*args,radius=500.0):
+	global OVERPASS_URL
+	query='\n[out:json];\n(\n'
+	for tag in args:
+		query+=f'node["{tag}"](around:{radius},{latitude},{longitude});\n'
+	query+=f');\nout body;\n'
+	DEBUGPRINT(query)
+	response =  requests.get(OVERPASS_URL,{'data':query})
+	if not response:
+		return {}
+	return json.loads(response.text)
+
 gps_re=re.compile(r'\s*(\d+)\D+(\d+)\D+(\d+\.\d+)[^NSEW]+([NSEW])')
 
 def gps_alpha_to_float(gps_string:str)->float:
@@ -207,49 +220,49 @@ def gps_alpha_to_float(gps_string:str)->float:
 		return -ret
 	return ret
 
-class OsmNearTags(dict):
-	def __init__(S,latitude,longitude):
-		dict.__init__(S)
-		S.lat=latitude
-		S.lon=longitude
-
-	def show(S,title=''):
-		print(f'OsmTags:{title} {pc(S.lat)},{pc(S.lon)}')
-		print(json.dumps(S,indent=4))
-
-	def try_to_graft(S,node):
-		def proccess_tag(tag,value,distance):
-			if (not tag in S) or (S[tag]['distance'] > distance):
-				S[tag]={'value':value,'distance':distance}
-		distance=haversine(node.lat,node.lon,S.lat,S.lon)
-		#DEBUGPRINT(f'{distance=}')
-		for tag in node:
-			proccess_tag(tag,node[tag],distance)
-
-	def simplify(S):
-		ret={}
-		for key,data in S.items():
-			ret[key]=data['value']
-		return ret
-
-	def place_indication(S):
-		#"addr:province""name"
-		want=['addr:street','addr:housenumber','addr:city','addr:country']
-		have=[key for key in want if key in S]
-		def best_alternative(best,second_best):
-			if best in have:
-				return 1
-			if second_best in S:
-				have.append(second_best)
-				return 2
-			return 0
-		if ('addr:street' in have) and  ('addr:city' in have):
-			best_alternative('addr:country',"addr:province")
-			place=''
-			for key in have:
-				place=place + S[key]['value'] + ' '
-			return place
-		return 'Don know yet'
+# class OsmNearTags(dict):
+# 	def __init__(S,latitude,longitude):
+# 		dict.__init__(S)
+# 		S.lat=latitude
+# 		S.lon=longitude
+#
+# 	def show(S,title=''):
+# 		print(f'OsmTags:{title} {pc(S.lat)},{pc(S.lon)}')
+# 		print(json.dumps(S,indent=4))
+#
+# 	def try_to_graft(S,node):
+# 		def proccess_tag(tag,value,distance):
+# 			if (not tag in S) or (S[tag]['distance'] > distance):
+# 				S[tag]={'value':value,'distance':distance}
+# 		distance=haversine(node.lat,node.lon,S.lat,S.lon)
+# 		#DEBUGPRINT(f'{distance=}')
+# 		for tag in node:
+# 			proccess_tag(tag,node[tag],distance)
+#
+# 	def simplify(S):
+# 		ret={}
+# 		for key,data in S.items():
+# 			ret[key]=data['value']
+# 		return ret
+#
+# 	def place_indication(S):
+# 		#"addr:province""name"
+# 		want=['addr:street','addr:housenumber','addr:city','addr:country']
+# 		have=[key for key in want if key in S]
+# 		def best_alternative(best,second_best):
+# 			if best in have:
+# 				return 1
+# 			if second_best in S:
+# 				have.append(second_best)
+# 				return 2
+# 			return 0
+# 		if ('addr:street' in have) and  ('addr:city' in have):
+# 			best_alternative('addr:country',"addr:province")
+# 			place=''
+# 			for key in have:
+# 				place=place + S[key]['value'] + ' '
+# 			return place
+# 		return 'Don know yet'
 
 SMALL_ID=0
 BIG_ID=9999999999
@@ -264,8 +277,8 @@ class OsmTurbo(list):
 		S.file_name=file_name
 		S.load_file()
 		#starter=OsmNode(2741022795, 52.9536054, 05.9345688, tags={"addr:city": "Heerenveen", "addr:housenumber": "56", "addr:postcode": "8442JK", "addr:street": "President Kennedylaan", "source": "BAG", "source:date": "2014-03-24"})
-		sentinel_low =OsmNode(SMALL_ID, -100.0, 0.0, tags={"addr:city": "Agarttha","animety":"Hell"})
-		sentinel_high=OsmNode(BIG_ID,400,360.0, tags={"addr:city": "Ayodhya","animety":"Heaven"})
+		sentinel_low =OsmNode(SMALL_ID, -100.0, 0.0, tags={"addr:city": "Agarttha","animety":"Hell"},type='sentinel')
+		sentinel_high=OsmNode(BIG_ID,400,360.0, tags={"addr:city": "Ayodhya","animety":"Heaven"},type='sentinel')
 		if (len(S) == 0) or ( S[0].id != sentinel_low.id):
 			S.append(sentinel_low)
 			S.append(sentinel_high)
@@ -302,26 +315,34 @@ class OsmTurbo(list):
 				return m
 		return m
 
-	def eval_line_to_osmnode(S,line):
-		split_item_re=re.compile(r'[^"]*"([^"]+)":"([^"]+)".*')
-		items=line.split(',')
-		osmnode,id=items[0].split('(')
-		if osmnode != 'OsmNode':
-			raise ValueError (f'Not a OsmNode repr "{line}"')
-		id=int(id)
-		latitude=float(items[1])
-		longitude=float(items[2])
-		tags={}
-		for i in range(3,len(items)):
-			match=split_item_re.match(items[i])
-			if not match:
-				#print(f'eval_line_to_osmnode rejected line:\n"{items[i]}')
-				continue
-				#raise RuntimeError (f'eval_line_to_osmnode bad "{items[i]}')
-			tag,value=match.group(1),match.group(2)
-			tags[tag]=value
-		#JDUMP(tags)
-		return OsmNode(id,latitude,longitude,tags)
+	# def eval_line_to_osmnode(S,line):
+	# 	"""
+	# 	simple eval(line) somtimes failed. So this for now.
+	# 	construct an OsmNode from the saved repr line like:
+	# 	OsmNode(   598085784, 053.2373800, 006.5607700, tags={"footway":"sidewalk", "highway":"footway"} , way)
+	# 	:param line: saved repr line
+	# 	:return:OsmNode object
+	# 	"""
+	# 	split_item_re=re.compile(r'[^"]*"([^"]+)":"([^"]+)".*')
+	# 	items=line.split(',')
+	# 	osmnode,id=items[0].split('(')
+	# 	if osmnode != 'OsmNode':
+	# 		raise ValueError (f'Not a OsmNode repr "{line}"')
+	# 	id=int(id)
+	# 	latitude=float(items[1])
+	# 	longitude=float(items[2])
+	# 	type=items[]
+	# 	tags={}
+	# 	for i in range(3,len(items)):
+	# 		match=split_item_re.match(items[i])
+	# 		if not match:
+	# 			#print(f'eval_line_to_osmnode rejected line:\n"{items[i]}')
+	# 			continue
+	# 			#raise RuntimeError (f'eval_line_to_osmnode bad "{items[i]}')
+	# 		tag,value=match.group(1),match.group(2)
+	# 		tags[tag]=value
+	# 	#JDUMP(tags)
+	# 	return OsmNode(id,latitude,longitude,tags)
 
 	def load_file(S):
 		if S.file_name == '':
@@ -333,7 +354,7 @@ class OsmTurbo(list):
 		with open(S.file_name,'r') as f:
 			lines = f.readlines()
 		for line in lines:
-			node=S.eval_line_to_osmnode(line)
+			node=eval_line_to_osmnode(line)
 			# try:
 			# 	node=eval(line)
 			# except SyntaxError as e:
@@ -362,16 +383,27 @@ class OsmTurbo(list):
 
 	def request_admin(S,latitude,longitude):
 		level_str={'2':'country:','3':'region:','4':'sector:','5':'community:'}
+		def prefered_language(tag):
+			collon=tag.rfind(':')
+			if collon < 0:
+				return True
+			l=len(tag)-collon
+			meybee_lang=tag[-l+1:]
+			if (l > 4) and ( '-' in meybee_lang):
+				if '-Latn' == meybee_lang[-5:]: # eg "name:ja-Latn": "Kura-zushi",
+					return True
+				return False
+			if tag[-l+1:] in WANTED_LAGUAGES:
+				return True
+			return False
+
 		admin_data = request_admin_levels(latitude,longitude)
-		if not  "elements" in admin_data:
-			return
-		#JDUMP(admin_data)
 		if not "elements" in admin_data:
 			return
-
+		elements=admin_data["elements"]
 		tags={}
 		count=0
-		for element in admin_data["elements"]:
+		for element in elements:
 			if (not "tags" in element) or (not "admin_level" in element["tags"]):
 				continue
 			admin_tags      =element["tags"]
@@ -379,13 +411,13 @@ class OsmTurbo(list):
 			admin_level_str =level_str[admin_level]
 			id=element["id"]
 			for tag,value in admin_tags.items():
-				if ('name:' in tag) and (not LANGUAGE_RE.match(tag)):
+				if not prefered_language(tag):
 					continue
 				tags[admin_level_str+tag]=value
 				count+=1
 				#DEBUGPRINT(f'{admin_level_str+key}:{value}')
 		tags['admin_node_count']=count
-		osmnode=OsmNode(id=id,lat=latitude,lon=longitude,tags=tags)
+		osmnode=OsmNode(id=id,lat=latitude,lon=longitude,tags=tags,type='admin')
 		S.append(osmnode)
 		S.rearrange()
 		return tags
@@ -411,19 +443,26 @@ class OsmTurbo(list):
 	# 			S.append(OsmNode(**element))
 	# 	S.rearrange()
 
-	def nigh_tags_and_distance(S,latitude,longitude,box_side=BOXSIDE):
-		nodes=S.find_near_tags(latitude,longitude,box_side)
-		#DEBUGPRINT(f'nigh_tags_and_distance({nodes=})')
-		tags = OsmNearTags(latitude,longitude)
-		for node in nodes:
-			tags.try_to_graft(node)
-		return tags
+	# def nigh_tags_and_distance(S,latitude,longitude,box_side=BOXSIDE):
+	# 	nodes=S.find_near_tags(latitude,longitude,box_side)
+	# 	#DEBUGPRINT(f'nigh_tags_and_distance({nodes=})')
+	# 	tags = OsmNearTags(latitude,longitude)
+	# 	for node in nodes:
+	# 		tags.try_to_graft(node)
+	# 	return tags
 
 	def tags(S,latitude,longitude,box_side=BOXSIDE):
 		osmneartags=S.nigh_tags_and_distance(latitude,longitude,box_side)
 		return osmneartags.simplify()
 
 	def bboxed_nodes(S,latitude,longitude,box_side=BOXSIDE):
+		"""
+		Find all nodes in the database in a box and yield them.
+		:param latitude: latitude of box centre
+		:param longitude: longitude of box centre
+		:param box_side: sides of box in meters
+		:return: yielded OsmNode's
+		"""
 		lat_min,lon_min,lat_max,lon_max=geo_box(latitude,longitude,box_side)
 		index=S.find_latitude(lat_min)
 		i=index
@@ -434,8 +473,16 @@ class OsmTurbo(list):
 			i+=1
 
 	def _bboxed_tags(S,latitude,longitude,box_side=BOXSIDE):
+		"""
+		Select the the tags from the data base in the box nearest to the point latitude,longitude
+		:param latitude: latitude of box centre
+		:param longitude: longitude of box centre
+		:param box_side: sides of box in meters
+		:return: dictionary of tags, the distance to a nearest node
+		"""
 		tags={}
 		node_distance=0.0
+		nigh=R_EARTH*10
 		def evaluate(node):
 			DEBUGPRINT(f' evaluate({repr(node)})')
 			nonlocal tags,node_distance
@@ -444,23 +491,40 @@ class OsmTurbo(list):
 					tags[tag]={'value':value,'distance':node_distance}
 		for node in S.bboxed_nodes(latitude,longitude,box_side):
 			node_distance=haversine(node.lat,node.lon,latitude,longitude)
+			if node_distance < nigh:
+				nigh=node_distance
 			evaluate(node)
 		if tags == {}:
-			return {}
+			return {},nigh
 		ret={}
 		for tag,value in tags.items():
 			ret[tag]=value['value']
-		return ret
+		return ret,nigh
 
 	def bboxed_tags(S,latitude,longitude,box_side=BOXSIDE):
-		tags=S._bboxed_tags(latitude,longitude,box_side)
+		"""
+		Select the the tags from the data base in the box nearest to the point latitude,longitude
+		If nothing is found or nothing was close request more data from OpenStreetMap in the
+		bbox(latitude,longitude,box_side) and if needed admin data at latitude,longitude
+		:param latitude: latitude of box centre
+		:param longitude: longitude of box centre
+		:param box_side: sides of box in meters
+		:return: dictionary of tags in the bbox close to or at latitude,longitude
+		"""
+		tags,dist=S._bboxed_tags(latitude,longitude,box_side)
 		if not tags:
 			S.request_admin(latitude,longitude)
 			S.request_nwr(latitude,longitude,box_side)
-			return S._bboxed_tags(latitude,longitude,box_side)
+			tags,_=S._bboxed_tags(latitude,longitude,box_side)
+			return tags
+
+		if (dist < SMALLDISTANCE) and ('admin_node_count' in tags):
+			return tags
 		if not 'admin_node_count' in tags:
 			S.request_admin(latitude,longitude)
-			return S._bboxed_tags(latitude,longitude,box_side)
+		if dist > SMALLDISTANCE:
+			S.request_nwr(latitude,longitude,box_side)
+		tags,_= S._bboxed_tags(latitude,longitude,box_side)
 		return tags
 
 	def request_nwr(S,latitude,longitude,box_side=BOXSIDE):
@@ -553,6 +617,24 @@ def adopt_osm_element_for_osmnode(osm_element,lat,lon):
 		return False
 	return True
 
+osmnode_re=re.compile(r'.*OsmNode\(\D*(\d+),\D*([.\d]+),\D*([.\d]+), tags=({[^}]+}) *, *(.*)$')
+def eval_line_to_osmnode(line):
+	#DEBUGPRINT(f'{line}')
+	match=osmnode_re.match(line)
+	if not match:
+		raise RuntimeError (f'eval_line_to_osmnode("{line}" Failed)')
+	id,lat,lon,tags,type=match.groups()
+	#DEBUGPRINT(f'{match.groups()}')
+	# tags_dump=json.dumps(tags)
+	# JDUMP(tags_dump,'json.dumps(tags)')
+	try:
+		tags=eval(tags)
+	except Exception as e:
+		print(f'eval_line_to_osmnode("{line}")')
+		print(f'Exception {e}')
+		exit(1)
+	return OsmNode(int(id),float(lat),float(lon),tags,type)
+
 class OsmNode(dict):
 	def __init__(S,id:int,lat:float,lon:float,tags:dict,type='unknown'):
 		dict.__init__(S)
@@ -618,7 +700,9 @@ home_coords=(52.9536054       , 5.9345688)
 kaapstad=(-34.04915407362119, 18.45565635174736)
 kyiv=(50.408361819839115, 30.397870448077636)
 pantheon_paris=(48.846924385565686, 2.3463562237874873)
-
+new_york=(40.78453956571517, -75.43166772045792)
+Wenzhou=(22.62384783928668, 114.10325206384475)
+Japan=(34.49284645577351, 135.5710672655183)
 The_Shepherd_Gate=(gps_alpha_to_float('51°28\′41″N'),gps_alpha_to_float(' 0°00\′05″W'))
 
 def test_osmturbo():
@@ -629,14 +713,27 @@ def test_osmturbo():
 	gron_tags=osmturbo.bboxed_tags(*gron_coords)
 	JDUMP(gron_tags,'osmturbo.bboxed_tages(*gron_coords)')
 
+	new_york_tags=osmturbo.bboxed_tags(*new_york)
+	JDUMP(new_york_tags,'osmturbo.bboxed_tages(*new_york)')
+
+	Wenzhou_tags=osmturbo.bboxed_tags(*Wenzhou)
+	JDUMP(Wenzhou_tags,'osmturbo.bboxed_tages(*Wenzhou)')
+
+	print(f'geo_box(*Wenzhou,17) {make_bbox(*Wenzhou,17)}')
+	print(f'geo_box(in china 300) {make_bbox(2.619815468215485, 114.1057837750644,300)}')
+	#22.619815468215485, 114.1057837750644
+	print(f'geo_box(in Japan) {make_bbox(34.49284645577351, 135.5710672655183,100)}')
+	
+	
 def test_geo_box():
-	print(f'geo_box(*suri_coords,17) {geo_box(*suri_coords,17)}')
+	print(f'geo_box(*suri_coords,17) {make_bbox(*suri_coords,17)}')
+
+
 
 if __name__ == '__main__':
 	#test_geo_box()
-	test_osmturbo()
+	#test_osmturbo()
 	# pant=request_nwr(*pantheon_paris,400)
 	# JDUMP(pant)
-
-
-
+	dat=request_around_tags(Japan[0],Japan[1],'addr:country','addr:postcode',radius=1000)
+	JDUMP(dat,'Around Japan')

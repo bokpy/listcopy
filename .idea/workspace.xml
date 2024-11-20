@@ -12,10 +12,7 @@
     <option name="rewriteBookmarkType" value="true" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7d47a416-3b1c-466e-a851-3e5a458f6704" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/geolocate.py" beforeDir="false" afterPath="$PROJECT_DIR$/geolocate.py" afterDir="false" />
-    </list>
+    <list default="true" id="7d47a416-3b1c-466e-a851-3e5a458f6704" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -64,55 +61,55 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.brainzmusic.executor": "Run",
-    "Python.extensions.executor": "Run",
-    "Python.garlic.executor": "Run",
-    "Python.geolocate.executor": "Run",
-    "Python.gps_data_kd_tree.executor": "Run",
-    "Python.gpstree.executor": "Run",
-    "Python.haversine.executor": "Run",
-    "Python.kd2d_tree.executor": "Run",
-    "Python.listcopy -b ~/meta.test.executor": "Run",
-    "Python.listcopy .executor": "Run",
-    "Python.listcopy.executor": "Run",
-    "Python.listfiles.executor": "Run",
-    "Python.listutils.executor": "Run",
-    "Python.lookup_haversine.executor": "Run",
-    "Python.metadata.executor": "Run",
-    "Python.musicbrains.executor": "Run",
-    "Python.pathseeker.executor": "Run",
-    "Python.scolding.executor": "Run",
-    "Python.scratch.data.executor": "Run",
-    "Python.slowcopy.executor": "Run",
-    "Python.tagtoken.executor": "Run",
-    "Python.test_Comprehensions.executor": "Run",
-    "Python.test_extensions.executor": "Run",
-    "Python.test_listdir.executor": "Run",
-    "Python.testdict.executor": "Run",
-    "Python.testiter.executor": "Run",
-    "Python.testtime.executor": "Run",
-    "Python.update_extensions.executor": "Run",
-    "Python.wisdomtree.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "72f677b0",
-    "last_opened_file_path": "/home/bob/geolocate.test.json",
-    "run.code.analysis.last.selected.profile": "aDefault",
-    "settings.editor.selected.configurable": "reference.settingsdialog.IDE.editor.colors.Python",
-    "settings.editor.splitter.proportion": "0.27851325"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.brainzmusic.executor&quot;: &quot;Run&quot;,
+    &quot;Python.extensions.executor&quot;: &quot;Run&quot;,
+    &quot;Python.garlic.executor&quot;: &quot;Run&quot;,
+    &quot;Python.geolocate.executor&quot;: &quot;Run&quot;,
+    &quot;Python.gps_data_kd_tree.executor&quot;: &quot;Run&quot;,
+    &quot;Python.gpstree.executor&quot;: &quot;Run&quot;,
+    &quot;Python.haversine.executor&quot;: &quot;Run&quot;,
+    &quot;Python.kd2d_tree.executor&quot;: &quot;Run&quot;,
+    &quot;Python.listcopy -b ~/meta.test.executor&quot;: &quot;Run&quot;,
+    &quot;Python.listcopy .executor&quot;: &quot;Run&quot;,
+    &quot;Python.listcopy.executor&quot;: &quot;Run&quot;,
+    &quot;Python.listfiles.executor&quot;: &quot;Run&quot;,
+    &quot;Python.listutils.executor&quot;: &quot;Run&quot;,
+    &quot;Python.lookup_haversine.executor&quot;: &quot;Run&quot;,
+    &quot;Python.metadata.executor&quot;: &quot;Run&quot;,
+    &quot;Python.musicbrains.executor&quot;: &quot;Run&quot;,
+    &quot;Python.pathseeker.executor&quot;: &quot;Run&quot;,
+    &quot;Python.scolding.executor&quot;: &quot;Run&quot;,
+    &quot;Python.scratch.data.executor&quot;: &quot;Run&quot;,
+    &quot;Python.slowcopy.executor&quot;: &quot;Run&quot;,
+    &quot;Python.tagtoken.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test_Comprehensions.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test_extensions.executor&quot;: &quot;Run&quot;,
+    &quot;Python.test_listdir.executor&quot;: &quot;Run&quot;,
+    &quot;Python.testdict.executor&quot;: &quot;Run&quot;,
+    &quot;Python.testiter.executor&quot;: &quot;Run&quot;,
+    &quot;Python.testtime.executor&quot;: &quot;Run&quot;,
+    &quot;Python.update_extensions.executor&quot;: &quot;Run&quot;,
+    &quot;Python.wisdomtree.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;f1baa42d&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/bob/geolocate.test.json&quot;,
+    &quot;run.code.analysis.last.selected.profile&quot;: &quot;aDefault&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settingsdialog.IDE.editor.colors.Python&quot;,
+    &quot;settings.editor.splitter.proportion&quot;: &quot;0.27851325&quot;
   },
-  "keyToStringList": {
-    "GitStage.ChangesTree.GroupingKeys": [
-      "directory",
-      "module",
-      "repository"
+  &quot;keyToStringList&quot;: {
+    &quot;GitStage.ChangesTree.GroupingKeys&quot;: [
+      &quot;directory&quot;,
+      &quot;module&quot;,
+      &quot;repository&quot;
     ],
-    "com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File": [
-      "GitIgnore"
+    &quot;com.intellij.ide.scratch.ScratchImplUtil$2/New Scratch File&quot;: [
+      &quot;GitIgnore&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$" />
@@ -232,11 +229,11 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Python.listutils" />
-      <item itemvalue="Python.test_Comprehensions" />
       <item itemvalue="Python.geolocate" />
       <item itemvalue="Python.kd2d_tree" />
+      <item itemvalue="Python.listutils" />
       <item itemvalue="Python.lookup_haversine" />
+      <item itemvalue="Python.test_Comprehensions" />
     </list>
     <recent_temporary>
       <list>
