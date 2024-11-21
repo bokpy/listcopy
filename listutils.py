@@ -4,6 +4,7 @@ import datetime as dt # datetime.datetime gives problems
 import random
 from collections import deque
 import os
+from icecream import ic
 import sys
 import re
 import traceback
@@ -302,7 +303,8 @@ def directory_walker(directory,rename_unicode=False):
 					yield (cur_dir,entry)
 
 class InputFileIterator:
-	def __init__(self,input_file,progress_file):
+	def __init__(self,input_file,progress_file,dest_dir):
+		self.dest_dir=dest_dir
 		try:
 			with open(input_file,'r') as f:
 				self.filelist=f.readlines()
@@ -332,7 +334,8 @@ class InputFileIterator:
 		#DEBUGPRINT(f'{self.root_path=}')
 		if self.root_path:
 			#DEBUGPRINT(f'{self.root_path}')
-			return self.current(),self.current()[self.root_path_length:]
+			#return self.current(),self.current()[self.root_path_length:]
+			return self.current(),self.root_path_length
 		
 	def __str__(self):
 		return self.current()[self.root_path_length:]
@@ -436,7 +439,7 @@ class InputFileIterator:
 	def save_progress(self,destination_root_path):
 		try:
 			with open(self.ok_file,'w') as f:
-				f.write(self.index,destination_root_path,self.current())
+				f.write(f'{self.index}\n{destination_root_path}\n{self.current()}\n')
 		except OSError as e:
 			print(f'Writing "{self.ok_file}" Failed.')
 			print(f'{e.errno} {e.strerror}')
@@ -447,6 +450,10 @@ class InputFileIterator:
 			return 0
 		with open(self.ok_file,'r') as f:
 			data=f.read()
+		if not data:
+			ic(data)
+			print(f'"{self.ok_file}" was empty')
+			return 0
 		data=data.split('\n')
 		self.skip=int(data[0])
 		if (self.skip<0):
@@ -527,8 +534,6 @@ def bytes_to_utf8(string):
 	if isinstance(string,str):
 		return string
 	return string.decode('utf8',errors='ignore')
-
-
 
 class Tumbler:
 	def __init__(self,tumblers="|/-\\"):

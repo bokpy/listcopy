@@ -315,37 +315,8 @@ class OsmTurbo(list):
 				return m
 		return m
 
-	# def eval_line_to_osmnode(S,line):
-	# 	"""
-	# 	simple eval(line) somtimes failed. So this for now.
-	# 	construct an OsmNode from the saved repr line like:
-	# 	OsmNode(   598085784, 053.2373800, 006.5607700, tags={"footway":"sidewalk", "highway":"footway"} , way)
-	# 	:param line: saved repr line
-	# 	:return:OsmNode object
-	# 	"""
-	# 	split_item_re=re.compile(r'[^"]*"([^"]+)":"([^"]+)".*')
-	# 	items=line.split(',')
-	# 	osmnode,id=items[0].split('(')
-	# 	if osmnode != 'OsmNode':
-	# 		raise ValueError (f'Not a OsmNode repr "{line}"')
-	# 	id=int(id)
-	# 	latitude=float(items[1])
-	# 	longitude=float(items[2])
-	# 	type=items[]
-	# 	tags={}
-	# 	for i in range(3,len(items)):
-	# 		match=split_item_re.match(items[i])
-	# 		if not match:
-	# 			#print(f'eval_line_to_osmnode rejected line:\n"{items[i]}')
-	# 			continue
-	# 			#raise RuntimeError (f'eval_line_to_osmnode bad "{items[i]}')
-	# 		tag,value=match.group(1),match.group(2)
-	# 		tags[tag]=value
-	# 	#JDUMP(tags)
-	# 	return OsmNode(id,latitude,longitude,tags)
-
 	def load_file(S):
-		if S.file_name == '':
+		if not S.file_name:
 			S.file_name=os.path.expanduser('~/.listcopy_geodata')
 			print(f'Geo data will bee stored in "{S.file_name}"')
 		if not os.path.exists(S.file_name):
@@ -484,7 +455,7 @@ class OsmTurbo(list):
 		node_distance=0.0
 		nigh=R_EARTH*10
 		def evaluate(node):
-			DEBUGPRINT(f' evaluate({repr(node)})')
+			#sssssssssDEBUGPRINT(f' evaluate({repr(node)})')
 			nonlocal tags,node_distance
 			for tag,value in node.items():
 				if (tag not in tags) or (tags[tag]['distance'] > node_distance):
@@ -617,7 +588,7 @@ def adopt_osm_element_for_osmnode(osm_element,lat,lon):
 		return False
 	return True
 
-osmnode_re=re.compile(r'.*OsmNode\(\D*(\d+),\D*([.\d]+),\D*([.\d]+), tags=({[^}]+}) *, *(.*)$')
+osmnode_re=re.compile(r'.*OsmNode\(\D*(\d+),\D*([.\d]+),\D*([.\d]+), tags=({[^}]+}) *, *([^)]*).*$')
 def eval_line_to_osmnode(line):
 	#DEBUGPRINT(f'{line}')
 	match=osmnode_re.match(line)
@@ -650,8 +621,8 @@ class OsmNode(dict):
 		for key in S.keys():
 			tags+=f'{comma}"{key}":"{S[key]}"'
 			comma=', '
-		tags='tags={'+tags+'}'
-		return f'OsmNode({S.id:12}, {S.lat:011.7f}, {S.lon:011.7f}, {tags} , {S.type})'
+		tag_str='tags={'+tags+'}'
+		return f'OsmNode({S.id:12}, {S.lat:011.7f}, {S.lon:011.7f}, {tag_str} , {S.type})'
 
 	def __str__(S):
 		naw=False

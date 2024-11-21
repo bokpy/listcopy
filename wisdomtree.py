@@ -1,11 +1,84 @@
 #!/usr/bin/python3
 import subprocess
 import re
+import json
+from sys import stdout
+
 from brainzmusic import BrainzMusic, DEBUGPRINT
-from geolocate import OsmTrubo,gps_alpha_to_float
+from geolocate import OsmTurbo, gps_alpha_to_float, JDUMP
 from icecream import ic
 
 from tagtoken import TagToken
+
+def exiftool_tags_write(filepath,tags_dict):
+	"""
+	Does not work needs tweaking of exiftool configuration
+	:param filepath:
+	:param tags_dict:
+	:return:
+	"""
+
+	tags=[f'-{key}+={value}' for key,value in tags_dict.items()]
+	DEBUGPRINT(f'{tags=}')
+
+	# tags={}
+	# tags.update(tags_dict)
+	# tags["SourceFile"]=filepath
+	# JDUMP(tags,'exiftool_tags_write')
+	# tags_json = json.dumps(tags)
+	# import subprocess
+	#
+	# # Define the command and input data
+	# command = ["your_command", "arg1", "arg2"]
+	# input_data = "Your input data\n"
+	#
+	# # Run the subprocess with input
+	# result = subprocess.run(command, input=input_data, text=True, capture_output=True)
+	#
+	# # Output results
+	# print("Return Code:", result.returncode)
+	# print("Standard Output:", result.stdout)
+	# print("Standard Error:", result.stderr)
+
+	try:
+		result = subprocess.run(
+			["exiftool", *tags , "-overwrite_original",filepath],
+			#input=tags_json ,   # Pass JSON data as stdin
+			text=True,         # Ensure input is treated as text
+			capture_output=True,
+			check=True         # Raise exception if exiftool fails
+		)
+
+		# Print the output from exiftool
+		print("ExifTool Output:", result.stdout)
+	except subprocess.CalledProcessError as e:
+		print("exiftool_tags_write Error:", e.stderr)
+
+
+	# exiftool -MyCustomTag="MyValue" image.jpg
+	# exiftool -Comment="MyCustomTag=MyValue" image.png
+	# exiftool -MyCustomTag="MyValue" image.tiff
+	# convert image.gif -set comment "MyCustomTag=MyValue" output.gif
+	#exiftool -XMP:MyCustomTag="MyValue" image.webp
+	# exiftool -json=tags.json image.jpg
+	# {
+#   "SourceFile": "image.jpg",
+#   "Title": "A beautiful sunset",
+#   "Author": "John Doe",
+#   "Keywords": ["sunset", "nature", "vacation"]
+# }
+	#
+	# cat tags.json | exiftool -json=- image.jpg
+	#
+    # cat tags.json: Outputs the JSON content.
+    # -json=-: Tells exiftool to read the JSON from standard input (-).
+    # image.jpg: Specifies the target JPG file to apply the tags.
+#
+# cat tags.json | exiftool -json=-
+
+#This applies metadata to all the files specified in the SourceFile field of the JSON.
+
+	pass
 
 def service_call(*args,splitlines=True):
 	try:
@@ -79,7 +152,7 @@ class TreeOfKnowledge(dict):
 	# noinspection PyMethodParameters
 	def __init__(S,gps_file=None,language='eng'):
 		dict.__init__(S)
-		S.osm=OsmTrubo(gps_file)
+		S.osm=OsmTurbo(gps_file)
 		S.gps_file=gps_file
 		S.language=language
 
@@ -97,10 +170,18 @@ class TreeOfKnowledge(dict):
 		S['Tailsplit'] =S['Tailpath'].split('/')
 		S['Extension'] =get_extension(source_file)
 		S['Exiftool']  =call_exiftool(source_file)
-		mime=S['Exiftool']['mime_type']
-		mime_general,mime_special = mime.split('/')
+		if 'mime_type'in S['Exiftool'] :
+			mime=S['Exiftool']['mime_type']
+			mime_general,mime_special = mime.split('/')
+		else:
+			S['Exiftool']['mime_type']="Unkown/UnLoved"
+			mime_general = "Unkown"
+			mime_special = "UnLoved"
 		S['Exiftool']['general_mime']=mime_general
 		S['Exiftool']['special_mime']=mime_special
+		if not 'file_type' in S['Exiftool']:
+			S['Exiftool']['file_type']=S['Extension']
+			S['Exiftool']['file_type_extension']=S['Extension']
 		S.Exif=S['Exiftool']
 
 	def show_exif_data(S):
@@ -158,35 +239,26 @@ class TreeOfKnowledge(dict):
 	# 	return tailsplit[tail_len+index]
 
 	def consult_the_serpent(S,tokkie:TagToken):
-		# def split_label_from_function(label):
-		# 	collon=label.find(':')
-		# 	if collon < 0:
-		# 		return label.lower(),None
-		# 	tag=label[:collon]
-		# 	func=label[collon+1:]
-		# 	return tag.lower(),func
-
+		"""
+		Determine the kind of token and try to the find the data to the label.
+		token{label} -> tokkie['payload']
+		:param tokkie: TagToken for witch to get matching data.
+		:return: the data if found else None
+		"""
 		if 'subdir' in tokkie:
 			i=int(tokkie['subdir'])
-			if i == 0:
+			if i == 0: # full original path above the source path
 				tokkie['payload'] = S["Tailpath"]
 				return tokkie['payload']
-			# tsp=S['Tailsplit']
-			# tspl=len(tsp)
 
 			tsp=S['Tailsplit']
-			tspl=len(tsp)
-			if abs(i) > tspl:
+			tail_len=len(tsp)
+			if abs(i) > tail_len: # no subdir is in reach
 				return None
-			if i < 0:
-				i=tspl+i
-			else:
+			if i < 0: # count below filename
+				i=tail_len+i
+			else: # count from start
 				i-=1
-			# tokkie['payload'] = S["Tailpath"]
-			# for i in range (1,tspl+1):
-			# 	print(f'{i:2}->"{tsp[i-1]:12}" {-i:3}->"{tsp[tspl-i]:12}" ')
-			# print(f'0->{S["Tailpath"]}')
-			#DEBUGPRINT(f'return "{tsp[i]}"')
 			tokkie['payload']=tsp[i]
 			return tsp[i]
 
@@ -198,6 +270,7 @@ class TreeOfKnowledge(dict):
 				return tokkie['payload']
 
 			if S.Exif['general_mime'] == 'audio':
+				# for audio "MusicBrainz" could possibly supply the wanted data
 				if not 'brainz' in S:
 					S['brainz']=BrainzMusic(S['Fullpath'])
 				if label in S['brainz']:
@@ -206,12 +279,18 @@ class TreeOfKnowledge(dict):
 					return value
 
 			if S.Exif['general_mime'] == 'image':
+				# for a image with coordinates "OpenStreetMap" could possibly supply the wanted data
 				latitude,longitude=S.get_coordinates()
-				if latitude != None:
-					geo_data=S.osm.lookup(latitude,longitude)
-					tokkie['payload']=geo_data.string_data_tags((label))
-					DEBUGPRINT(f'Look for {label} at {latitude},{longitude} got {tokkie["payload"]}')
-					return tokkie['payload']
+				if latitude != None: # coordinates no luck
+					if not 'OsmData' in S:
+						S['OsmData']=S.osm.bboxed_tags(latitude,longitude,100)
+					#JDUMP(S['OsmData'])
+					if label in S['OsmData']:
+						value=S['OsmData'][label]
+						tokkie['payload']=value
+						return value
+					#DEBUGPRINT(f'Look for {label} at {latitude},{longitude} got {tokkie["payload"]}')
+
 		return None
 
 	def get_coordinates(S):
@@ -223,6 +302,8 @@ class TreeOfKnowledge(dict):
 
 
 def main() -> None:
+	test={'Test':'test data','BOB':' van der BURG'}
+	exiftool_tags_write('/home/bob/temp/RoosFoto/46981.jpg',test)
 	pass
 
 

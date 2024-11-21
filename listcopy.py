@@ -460,11 +460,15 @@ def process_filelisting(args):
 	destination_path = os.path.expanduser(args.destination)
 	destination_path = lu.end_slash(destination_path)
 	input = os.path.expanduser(args.input)
+
 	if args.post_it: # deside in which place and files to keep track of the copying progress
-		tracker= os.path.join(os.path.expanduser('~'),args.post_it)
+		tracker= os.path.expanduser(args.post_it)
 	else:
-		tracker= os.path.join(os.path.expanduser('~'),'listcopy')
-	listing = lu.InputFileIterator(input,tracker)
+		homedir= os.path.expanduser('~')
+		tracker= os.path.join(homedir,'listcopy')
+	DEBUGPRINT(f'tracker = "{tracker}"')
+	#DEBUGEXIT(1)
+	listing = lu.InputFileIterator(input,tracker,destination_path)
 	# path_seeker=PathSeeker(args.substitute,args.gps_info,language=args.language)
 	# DEBUGEXIT(0)
 	
@@ -472,22 +476,24 @@ def process_filelisting(args):
 	chunk_size = FsBlockSize
 	
 	count=0
-	for src_full,src_tail in listing:
+	for src_full,source_path_length in listing:
 		print('<'*35+'-'*40+'>'*35)
-		dest = pathseeker.compose_path(src_full)
+		source_dir=src_full[:source_path_length]
+		dest = pathseeker.compose_path(src_full,source_dir)
+		dest=destination_path+dest
 		#processed_file=dst
 		if args.dry_run:
 			#print('<'*35+'-'*40+'>'*35)
-			print(f'from: "{src_tail}"')
+			print(f'from: "{source_dir}"')
 			print(f'from: "{src_full}"')
-			print(f'to  : "{destination_path}{dest}"')
+			print(f'to  : "{dest}"')
 			print()
 			continue
 		
-		# lu.assure_dir(os.path.dirname(dst))
-		# #write_chunks_to_file(src,dst)
-		# #time.sleep(1)
-		# listing.save_progress()
+		lu.assure_dir(os.path.dirname(dest))
+		write_chunks_to_file(src_full,dest)
+		#time.sleep(1)
+		listing.save_progress(destination_path)
 		count+=1
 	if args.gps_info:
 		listing.dump_info(args.gps_info)
@@ -535,7 +541,6 @@ def main() -> None:
 	
 	global pathseeker
 	pathseeker=PathSeeker(args.substitute,args.gps_info,args.language)
-	pathseeker.root.save_to_file('test.dump')
 	process_filelisting(args)
 	
 if __name__ == '__main__':

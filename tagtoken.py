@@ -24,7 +24,7 @@ def center_char(mid, length, fill=' '):
 
 label_re = r'((?:label|subdir|literal){[^}]+})'
 bind_re = r'\+"([^"]+)"\+'
-slash_re = r'(/)'
+slash_re = r'([_/])'
 fork_re = r'(\()'
 split_re = r'(\|)'
 tie_re = r'(\))'
@@ -95,8 +95,6 @@ def clean_tagtokens():
 
 
 slice_re = re.compile(r'([^\[]*)(\[[^\]]+\]).*')
-
-
 class TagToken(dict):
 	"""
 	keys:
@@ -171,7 +169,9 @@ class TagToken(dict):
 		S['fixed'] = value
 
 	def init_slash(S, value):
-		S['fixed'] = '/'
+		if value == '_':
+			value = ' '
+		S['fixed'] = value
 
 	def init_fork(S, value):
 		# ic(value)
@@ -237,7 +237,8 @@ class TagToken(dict):
 
 	def add_caboose(S, tokkie):  # same as tie_end
 		last_tokkie = S
-		while last_tokkie['mainline']:
+		# Not sure about this
+		while ('mainline' in last_tokkie)  and (last_tokkie['mainline']):
 			last_tokkie = last_tokkie['mainline']
 		last_tokkie['mainline'] = tokkie
 		return last_tokkie
@@ -256,7 +257,12 @@ class TagToken(dict):
 			return follow
 
 		def fork_peek():
-			return fork_stack[len(fork_stack) - 1]
+			try:
+				return fork_stack[len(fork_stack) - 1]
+			except IndexError as e:
+				print(f'"{token_string}"')
+				print(f'TagToken.do_shunting Error: {e}')
+				exit(1)
 
 		def fork_push(tokkie):
 			if not (tokkie.is_fork() or tokkie.is_split()):

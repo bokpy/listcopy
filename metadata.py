@@ -7,10 +7,10 @@ import time
 from icecream import ic
 #from collections import deque
 from listutils import InputFileIterator,timestamp2epouch,end_slash,LocalTimeString
-from geolocate import gps_alpha_to_float, ovp_near_query, ovp_box_query
-from gpstree import GpsTree,GpsTreeNode
+from geolocate import gps_alpha_to_float
 
-OvpInf=GpsTree() # Save GPS overpass info a lot of pictures will be from places very close to each other
+
+
 OPS_SAVE_COUNT=10 # number of additions to OvpInf to trigger a dump
 OVERPASS_NEAR=6
 OVERPASS_FARE=OVERPASS_NEAR + 5
@@ -430,29 +430,29 @@ class ExifTags:
 				tag,action=TAG_PROCESSOR[meta_key]
 				action(self,tag,meta_key,self.json_tags[meta_key])
 	
-	def extract_gps(self):
-		global OvpInf
-		# /home/bob/temp/Users/Sander/Desktop/Foto's/2013/12 december/
-		if not 'gps' in self.tags:
-			return 'gps ' + UNKNOWN
-		#DEBUGPRINT(f"{self.tags['gps']=}")
-		la =self.tags['gps']['GPSLatitude']
-		lo =self.tags['gps']['GPSLongitude']
-		gpsnode=GpsTreeNode(la,lo,None)
-		nearnode,distance = OvpInf.nearest(gpsnode)
-		if distance < 0:
-			gpsnode.data=ovp_box_query(la,lo,OVERPASS_NEAR)
-			OvpInf.add(gpsnode)
-			return str(gpsnode)
-		if distance < OVERPASS_FARE:
-			#DEBUGPRINT(f'{gpsnode} NEAR {nearnode} {distance=}')
-			gpsnode.data=nearnode.data
-			return str(gpsnode)
-		
-		gpsnode.data=ovp_box_query(la,lo,OVERPASS_NEAR)
-		self.add_gps_point(gpsnode)
-		return str(gpsnode)
-	
+	# def extract_gps(self):
+	# 	global OvpInf
+	# 	# /home/bob/temp/Users/Sander/Desktop/Foto's/2013/12 december/
+	# 	if not 'gps' in self.tags:
+	# 		return 'gps ' + UNKNOWN
+	# 	#DEBUGPRINT(f"{self.tags['gps']=}")
+	# 	la =self.tags['gps']['GPSLatitude']
+	# 	lo =self.tags['gps']['GPSLongitude']
+	# 	gpsnode=GpsTreeNode(la,lo,None)
+	# 	nearnode,distance = OvpInf.nearest(gpsnode)
+	# 	if distance < 0:
+	# 		gpsnode.data=ovp_box_query(la,lo,OVERPASS_NEAR)
+	# 		OvpInf.add(gpsnode)
+	# 		return str(gpsnode)
+	# 	if distance < OVERPASS_FARE:
+	# 		#DEBUGPRINT(f'{gpsnode} NEAR {nearnode} {distance=}')
+	# 		gpsnode.data=nearnode.data
+	# 		return str(gpsnode)
+	#
+	# 	gpsnode.data=ovp_box_query(la,lo,OVERPASS_NEAR)
+	# 	self.add_gps_point(gpsnode)
+	# 	return str(gpsnode)
+	#
 	def extract_camera_long(self):
 		if not 'camera' in self.tags:
 			return UNKNOWN

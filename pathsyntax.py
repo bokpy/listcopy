@@ -19,6 +19,10 @@ Positive numbers indicate a subdirectory above the source directory.
 Negative numbers indicate a subdirectory below the filename (-1 is the filename).
 Zero full path above the source directory.
 
+# starts a comment on a line
+/ stands for itself '/'
+_ stands for a space ' '
+
 syntax: <path>       = <filetype>[,<filetype>]:/<tag>[/<name>];
         <join>       = <+{{str}}+>
         <switch>     = (<alternative 1>|<alternative 2>[|...|<alternative n>)]
