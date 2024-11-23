@@ -303,8 +303,10 @@ def directory_walker(directory,rename_unicode=False):
 					yield (cur_dir,entry)
 
 class InputFileIterator:
-	def __init__(self,input_file,progress_file,dest_dir):
-		self.dest_dir=dest_dir
+	def __init__(self,consigment):
+		input_file   = consigment['input']
+		self.dest_dir= consigment['dest_path']
+		self.ok_file = consigment['ok_file']
 		try:
 			with open(input_file,'r') as f:
 				self.filelist=f.readlines()
@@ -314,7 +316,6 @@ class InputFileIterator:
 			exit(e.errno)
 		self.filelist_len = len(self.filelist)
 		self.strip_newline()
-		self.ok_file = progress_file
 		skip=self.read_progress()
 		self.index=-1
 		self._go_to_start(skip)
@@ -435,7 +436,6 @@ class InputFileIterator:
 	def source_path_length(self):
 		return self.root_path_length
 	
-
 	def save_progress(self,destination_root_path):
 		try:
 			with open(self.ok_file,'w') as f:
@@ -477,8 +477,7 @@ rm "{self.ok_file}" to do it again.
 		fl=self.filelist
 		for i in range(len(fl)):
 			fl[i]=fl[i][:-1]
-	
-	
+
 def kilo_mega(strval)->int:
 	"""
 	Translate a string to Kilo, Mega or Giga if it ends with [kKmMgG]
@@ -501,7 +500,6 @@ def kilo_mega(strval)->int:
 	if C=='G': return int(val*1024*1024*1024)
 	if C=='T': return int(val*1024*1024*1024*1024)
 	raise ValueError (f'"{strval}" {C} not valid' )
-
 
 def time_delta_str(start, end) -> str:
 	"""
@@ -614,11 +612,9 @@ def rand_test_list():
 	ip=InputFileIterator("/home/bob/python/listcopy/sander_audio.list","test_dat")
 	ip.random_pic(30)
 
-
 import sys
 import termios
 import tty
-
 
 def get_cursor_position():
 	# Save current terminal settings
@@ -654,8 +650,20 @@ def get_cursor_position():
 	
 	return row, col
 
+def upcase_initial(string):
+	if string[0].isupper():
+		return string
+	return string[0].upper() + string[1:]
+
 def main():
 	test_meters_per_degree()
 
 if __name__ == '__main__':
 	main()
+# maandag	moandei
+# dinsdag	tiisdei
+# woensdag	woansdei
+# donderdag	tongersdei
+# vrijdag	freed
+# zaterdag	sneon
+# zondag	snein

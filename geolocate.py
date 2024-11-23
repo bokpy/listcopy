@@ -267,14 +267,14 @@ def gps_alpha_to_float(gps_string:str)->float:
 SMALL_ID=0
 BIG_ID=9999999999
 class OsmTurbo(list):
-	def __init__(S,file_name=None):
+	def __init__(S,consigment):
 		"""
 		List of OsmNodes sorted on latitude
 		:param S:
 		:return:
 		"""
 		list.__init__(S)
-		S.file_name=file_name
+		S.file_name=consigment['gps_info']
 		S.load_file()
 		#starter=OsmNode(2741022795, 52.9536054, 05.9345688, tags={"addr:city": "Heerenveen", "addr:housenumber": "56", "addr:postcode": "8442JK", "addr:street": "President Kennedylaan", "source": "BAG", "source:date": "2014-03-24"})
 		sentinel_low =OsmNode(SMALL_ID, -100.0, 0.0, tags={"addr:city": "Agarttha","animety":"Hell"},type='sentinel')

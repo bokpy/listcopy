@@ -8,6 +8,7 @@ from brainzmusic import BrainzMusic, DEBUGPRINT
 from geolocate import OsmTurbo, gps_alpha_to_float, JDUMP
 from icecream import ic
 
+from metadata import get_mime_etc
 from tagtoken import TagToken
 
 def exiftool_tags_write(filepath,tags_dict):
@@ -150,43 +151,41 @@ def call_exiftool(filepath):
 
 class TreeOfKnowledge(dict):
 	# noinspection PyMethodParameters
-	def __init__(S,gps_file=None,language='eng'):
+	def __init__(S,consignment:dict):
 		dict.__init__(S)
-		S.osm=OsmTurbo(gps_file)
-		S.gps_file=gps_file
-		S.language=language
+		S.osm=OsmTurbo(consignment)
+		# S.gps_file=gps_file
+		# S.language=language
 
-	def reset(S,source_file,source_path):
+	def reset(S,mission:dict):
 		for key in 'Exiftool','Brainz':
 			S.pop(key,None)
+
 		def get_extension(filename):
 			point = filename.rfind('.')
 			if point < 0: return ''
 			ext = filename[point + 1:].upper()
 			return ext
-		S['Fullpath']=source_file
-		cut=len(source_path)
-		S['Tailpath']  =source_file[cut:]
-		S['Tailsplit'] =S['Tailpath'].split('/')
-		S['Extension'] =get_extension(source_file)
-		S['Exiftool']  =call_exiftool(source_file)
-		if 'mime_type'in S['Exiftool'] :
-			mime=S['Exiftool']['mime_type']
-			mime_general,mime_special = mime.split('/')
-		else:
-			S['Exiftool']['mime_type']="Unkown/UnLoved"
-			mime_general = "Unkown"
-			mime_special = "UnLoved"
-		S['Exiftool']['general_mime']=mime_general
-		S['Exiftool']['special_mime']=mime_special
-		if not 'file_type' in S['Exiftool']:
-			S['Exiftool']['file_type']=S['Extension']
-			S['Exiftool']['file_type_extension']=S['Extension']
+		sf = mission['source_file']
+		S['Fullpath'] = sf
+		cut=len(mission['source_root_path'])
+		S['Tailpath']  = sf[cut:]
+		S['Tailsplit'] = S['Tailpath'].split('/')
+		S['Extension'] = get_extension(sf)
+		S['Exiftool']  = {}
+		get_mime_etc(sf,S['Exiftool'])
 		S.Exif=S['Exiftool']
+		for key,value in S.Exif.items():
+			S.Exif[key.lower()]=value
 
 	def show_exif_data(S):
 		for key in S.Exif:
 			print(f'{key:>20}:{ S.Exif[key]}')
+
+	def check_on_key(S,key):
+		if not key in S:
+			return None
+		return S[key]
 
 	def check_exstension(S,path):
 		dot = path.rfind('.')
@@ -197,46 +196,8 @@ class TreeOfKnowledge(dict):
 			return ''
 		return '.' + S.Exif['file_type_extension']
 
-	def match_mime(S,file_tok):
-		# if not file_tok.is_file():
-		# 	DEBUGPRINT(f'match_mime{file_tok.string(True)}')
-		# 	raise ValueError ("wrong token tipe in match_mime.")
-		if 'default' in file_tok['mime']:
-			return True
-		for ext in file_tok['extension']:
-			if ext == S.Exif['file_type'].upper():
-				return True
-			if ext == S.Exif['file_type_extension'].upper():
-				return True
-
-		General=S.Exif['general_mime']
-		Special=S.Exif['special_mime']
-		for mime in file_tok['mime']:
-			if '/' in mime:
-				general,special=mime.split('/')
-				if general != General:
-					continue
-				if not special in Special:
-					continue
-				return True
-			if mime == General:
-				return True
-		return False
-
-	# def subdir(S,tokkie:TagToken):
-	# 	index=tokkie['subdir']
-	# 	if index == 0:
-	# 		tokkie['payload']=S['Tailpath']
-	# 		return tokkie['payload']
-	# 	tailsplit=S['Tailsplit']
-	# 	tail_len=len(tailsplit)
-	# 	if abs(index) > tail_len:
-	# 		return None
-	# 	if index > 0:
-	# 		#DEBUGPRINT(f'subdir {index=} {tailsplit[index-1]}')
-	# 		tokkie['payload']=tailsplit[index-1]
-	# 		return tokkie['payload']
-	# 	return tailsplit[tail_len+index]
+	def pick_me(S,file_tok):
+		return file_tok.am_I_the_one(S.Exif)
 
 	def consult_the_serpent(S,tokkie:TagToken):
 		"""

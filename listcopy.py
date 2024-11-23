@@ -4,13 +4,13 @@ import shutil
 import psutil
 import argparse
 import sys
-import pathlib
+import json
 import time
 import signal
 import listutils as lu
 from pathseeker import PathSeeker
 from pathsyntax import syntax_text
-from metadata import ExifTags
+from metadata import JDUMP
 import metadata as meta
 DEBUGPRINT=print
 
@@ -25,13 +25,11 @@ MIN_SECS=60
 HOUR_SECS=3600
 MEGA=1024**2
 KILO=1024
-WorkPath='' # path for reading source listing or copy the files to
+#WorkPath='' # path for reading source listing or copy the files to
 INCLUDE_RE=EXCLUDE_RE=None
 DIFFER_PERCENTAGE=5 # percentage of speed difference when the chunk size is
 # recalculated
-MAXCHUNK=16*1024*1024
-FsMaxFileSize=1024*1024
-FsBlockSize=1024
+
 
 def handler(signum, frame):
 	global processed_file
@@ -258,23 +256,23 @@ chunk_got_bigger=True
 copy_speed=1.0
 prev_copy_speed=copy_speed
 
-def double_chunk(chunk)->int:
-	global MAXCHUNK,chunk_got_bigger
+def double_chunk(consigment,chunk)->int:
+	consigment['chunk_growing']=True
 	chunk+=chunk
-	chunk_got_bigger=True
-	if chunk >= MAXCHUNK:
-		return MAXCHUNK
+	maxchunk=consigment['maxchunk']
+	if chunk >= maxchunk:
+		return maxchunk
 	return chunk
 
-def decrease_chunk(chunk,fraction=4)->int:
+def decrease_chunk(consigment,chunk,fraction=4)->int:
 	"""Make the chunks a fraction smaller so 2 halves 4 substracs 1/4."""
-	global chunk_got_bigger
-	chunk_got_bigger=False
+	fsblocksize=consigment['fsblocksize']
+	consigment['chunk_growing']=False
 	cut_size=chunk // fraction
 	chunk-=cut_size
-	chunk-= chunk % FsBlockSize
-	if chunk <= FsBlockSize:
-		return FsBlockSize
+	chunk-= chunk % fsblocksize
+	if chunk <= fsblocksize:
+		return fsblocksize
 	return chunk
 
 AverageChunk=0
@@ -357,19 +355,20 @@ def write_chunks_to_file(input_file_path, output_file_path ):
 	if args.verbose:print()
 	return None
 
-def BadFile(nasty,nasty_dest,error):
-	global SourcePath
-	print (f'/nError:{error.errno} "{error.strerror}"')
-	if os.path.exists(nasty_dest):
-		# remove the failed copy
-		os.remove(nasty_dest)
-		print (f'Removed "{nasty_dest}"')
+def BadFile(consignment,nasty,error):
+	source_path=consignment['source_path']
+	bad_file=consignment['bad_file']
+	# print (f'/nError:{error.errno} "{error.strerror}"')
+	# if os.path.exists(nasty_dest):
+	# 	# remove the failed copy
+	# 	os.remove(nasty_dest)
+	# 	print (f'Removed "{nasty_dest}"')
 	
 	if not os.path.exists(bad_file): # if no bad_file write a header to it
 	# so can bee used as an copy.list later
 		with open(bad_file,'w') as bad:
 			bad.write(DATA_BEGIN_MARKER + '\n')
-			bad.write(SourcePath + '\n')
+			bad.write(source_path + '\n')
 
 	with open(bad_file,'a') as bad:
 		bad.write(nasty + '\n')
@@ -377,12 +376,11 @@ def BadFile(nasty,nasty_dest,error):
 		return
 	exit_error(error)
 
-def target_fs_properties(destination_path):
+def target_fs_properties(consigment):
 	"""Determine the maximum file size and the block size for the
 	filesystem "path" is on.
 	returns the global FsMaxFileSize,FsBlockSize,
 	FsBlockSize"""
-	global FsMaxFileSize,FsBlockSize,chunk_size
 	fs_max_file = {
 	'fat16': 2 * 1024**3,    # 2 GB in bytes
 	'vfat': 4 * 1024**3,    # 4 GB in bytes
@@ -407,28 +405,28 @@ def target_fs_properties(destination_path):
 	                           reverse=True)
 	
 	for part in sorted_partitions:
-		if  part.mountpoint in destination_path:
-			FsMaxFileSize=fs_max_file[part.fstype]
+		if  part.mountpoint in consigment['dest_path']:
+			consigment['fsmaxfilesize']=fs_max_file[part.fstype]
 			st = os.statvfs(part.mountpoint)
-			FsBlockSize=st.f_bsize
+			consigment['fsblocksize']=st.f_bsize
 			break
 	#DEBUGPRINT( f'type {part.fstype} {FsMaxFileSize=} {FsBlockSize=}')
-	return FsMaxFileSize,FsBlockSize
+	return consigment['fsmaxfilesize'],consigment['fsblocksize']
 
-def coping_done(count):
-	global bad_file,DATA_END_MARKER
-	if not os.path.exists(bad_file):
-		#DEBUGPRINT (f'All {count} files are copied Bye.')
-		exit(0)
-	
-	print(f'{count} files with success copied .')
-	print(f'The files in "{bad_file}" failed.')
-	print('These files could not be copied,')
-	print('because of errors or filesystem limitations.')
-	print(f'You can retry this list on an other medium or filesystem.')
-	with open(bad_file,'a') as bad:
-		bad.write(DATA_END_MARKER+'\n')
-	exit(0)
+# def copying_done(count):
+# 	global bad_file,DATA_END_MARKER
+# 	if not os.path.exists(bad_file):
+# 		#DEBUGPRINT (f'All {count} files are copied Bye.')
+# 		exit(0)
+#
+# 	print(f'{count} files with success copied .')
+# 	print(f'The files in "{bad_file}" failed.')
+# 	print('These files could not be copied,')
+# 	print('because of errors or filesystem limitations.')
+# 	print(f'You can retry this list on an other medium or filesystem.')
+# 	with open(bad_file,'a') as bad:
+# 		bad.write(DATA_END_MARKER+'\n')
+# 	exit(0)
 
 def file_check_ok(source,target,l)->bool:
 	# if the destination of src exists and the
@@ -451,49 +449,44 @@ def file_check_ok(source,target,l)->bool:
 	os.remove(target)
 	return False
 	
-def process_filelisting(args):
-	global destination_path
-	global processed_file
-	global chunk_size
-	global pathseeker
-	
-	destination_path = os.path.expanduser(args.destination)
-	destination_path = lu.end_slash(destination_path)
-	input = os.path.expanduser(args.input)
+def process_filelisting(consignment):
+	# consignment['dest_path'] = args.destination
+	# consignment['language']     = args.language
+	# consignment['input']        = args.input
+	# if args.postit:
+	# 	consignment['ok_file']  = args.postit+'.ok'
+	# 	consignment['bad_file'] = args.postit+'.bad'
+	# else:
+	# 	consignment['ok_file']  = os.path.expanduser('~/.listcopy.ok')
+	# 	consignment['bad_file'] = os.path.expanduser('~/.listcopy.bad')
+	# if args.gps_info:
+	# 	consignment['gps_info'] = args.gps_info
+	# else:
+	# 	consignment['gps_info'] = os.path.expanduser('~/.osm.data')
+	# consignment['current_file'] = Noneglobal destination_path
 
-	if args.post_it: # deside in which place and files to keep track of the copying progress
-		tracker= os.path.expanduser(args.post_it)
-	else:
-		homedir= os.path.expanduser('~')
-		tracker= os.path.join(homedir,'listcopy')
-	DEBUGPRINT(f'tracker = "{tracker}"')
-	#DEBUGEXIT(1)
-	listing = lu.InputFileIterator(input,tracker,destination_path)
-	# path_seeker=PathSeeker(args.substitute,args.gps_info,language=args.language)
+	listing = lu.InputFileIterator(consignment)
+	pathseeker = PathSeeker(consignment)
 	# DEBUGEXIT(0)
-	
-	target_fs_properties(destination_path) # test and store the capabilities of the device where the destination directory lives
-	chunk_size = FsBlockSize
-	
+	target_fs_properties(consignment) # test and store the capabilities of the device where the destination directory lives
+
 	count=0
 	for src_full,source_path_length in listing:
+		mission={}
 		print('<'*35+'-'*40+'>'*35)
-		source_dir=src_full[:source_path_length]
-		dest = pathseeker.compose_path(src_full,source_dir)
-		dest=destination_path+dest
-		#processed_file=dst
-		if args.dry_run:
-			#print('<'*35+'-'*40+'>'*35)
-			print(f'from: "{source_dir}"')
-			print(f'from: "{src_full}"')
-			print(f'to  : "{dest}"')
-			print()
+		mission['source_file']=src_full
+		mission['dest_root-path']=consignment['dest_path']
+		mission['source_root_path']=src_full[:source_path_length]
+		pathseeker.compose_path(mission)
+		JDUMP(mission,'pathseeker.compose_path(mission)')
+		if 'dry_run' in consignment:
+			print(json.dumps(mission,indent=4))
 			continue
 		
-		lu.assure_dir(os.path.dirname(dest))
-		write_chunks_to_file(src_full,dest)
+		#lu.assure_dir(os.path.dirname(dest))
+		write_chunks_to_file(mission)
 		#time.sleep(1)
-		listing.save_progress(destination_path)
+		listing.save_progress(mission)
 		count+=1
 	if args.gps_info:
 		listing.dump_info(args.gps_info)
@@ -508,7 +501,7 @@ def track_and_trace():
 
 
 def main() -> None:
-	global destination_path,ok_file,bad_file
+	consignment={}
 	print(f'{args.input=} {args.destination=}')
 	
 	if args.usage:
@@ -529,6 +522,9 @@ def main() -> None:
 		if args.substitute.upper() == 'HELP':
 			print(syntax_text)
 			exit(0)
+		consignment['substitution']=args.substitute
+	else:
+		consignment['substitution']=None
 	
 	if args.todo:
 		list_to_do()
@@ -538,10 +534,30 @@ def main() -> None:
 		parser.print_help()
 		print(f'Need at least an input file and a destination!')
 		exit(0)
-	
-	global pathseeker
-	pathseeker=PathSeeker(args.substitute,args.gps_info,args.language)
-	process_filelisting(args)
+
+	consignment['dest_path'] = lu.end_slash(args.destination)
+	consignment['language'] = args.language
+	consignment['input'] = args.input
+	if args.post_it:
+		consignment['ok_file'] = args.post_it + '.ok'
+		consignment['bad_file'] = args.post_it + '.bad'
+	else:
+		consignment['ok_file'] = os.path.expanduser('~/.listcopy.ok')
+		consignment['bad_file'] = os.path.expanduser('~/.listcopy.bad')
+	if args.gps_info:
+		consignment['gps_info'] = args.gps_info
+	else:
+		consignment['gps_info'] = os.path.expanduser('~/.osm.data')
+	consignment['current_file'] = None
+	if args.dry_run:
+		consignment['dry_run'] = True
+	# start values for file system parameters
+	consignment['maxchunk']      =1024*1024*16
+	consignment['fsmaxfilesize'] =1024*1024
+	consignment['fsblocksize']   =1024
+	consignment['chunk_growing']=False
+	# pathseeker=PathSeeker(args.substitute,args.gps_info,args.language)
+	process_filelisting(consignment)
 	
 if __name__ == '__main__':
 	print('_'*80)

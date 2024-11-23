@@ -40,11 +40,12 @@ from icecream import ic
 ext_re=re.compile(r'[^.]*\.([^/]+)$')
 class PathSeeker:
 
-	def __init__(self, path_format=None, gps_file=None,language='eng') -> None:
-		self.language=language
+	def __init__(self,consignment):
+		#path_format=None, gps_file=None,language='eng') -> None:
+		self.consignment=consignment
 		self.root=None
-		self.gps_file=gps_file
-		self.good_and_evil=TreeOfKnowledge(gps_file,language)
+		self.good_and_evil=TreeOfKnowledge(consignment)
+		path_format=consignment['substitution']
 		lines=self.read_format(path_format)
 		#DEBUGPRINT(f'{lines=}')
 		if lines:
@@ -141,7 +142,7 @@ class PathSeeker:
 				last_added_filetoken=filetoken
 			filetoken.do_shunting(tail)
 
-	def compose_path(S,source_file,source_dir):
+	def compose_path(S,mission:dict):
 		"""
 		Assemble an substitution path based on from "path_format" compiled tree.
 		:param source_file: full path to the source file
@@ -149,7 +150,7 @@ class PathSeeker:
 		:return: a substitute destination path
 		"""
 		#DEBUGPRINT('-+'*80)
-		S.good_and_evil.reset(source_file,source_dir)
+		S.good_and_evil.reset(mission)
 		path_stack=deque()
 
 		def path_push(fruit):
@@ -188,7 +189,7 @@ class PathSeeker:
 		file_branche=S.root
 		clean_tagtokens()
 		while file_branche:
-			if S.good_and_evil.match_mime(file_branche):
+			if S.good_and_evil.pick_me(file_branche):
 				path_stack.clear()
 				if good_try(file_branche['mainline']):
 					break

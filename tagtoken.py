@@ -600,12 +600,36 @@ class FileToken(TagToken):
 		# DEBUGPRINT(f'FileToken {category_string}')
 		S['mime'] = []
 		S['extension'] = []
-		S['next_mime'] = None
+		S['next_mime'] = None # Misnomer should bee next_filetoken
 		for item in category_string.split(','):
 			if item.isupper():
-				S['extension'].append(item)
+				S['extension'].append(item.lower())
 			else:
 				S['mime'].append(item.lower())
+
+	def am_I_the_one(S,filedata:dict)->bool:
+		"""
+		Check if filedata["FileTypeExtension"] is in S['extension']
+		or
+		if filedata["general"] is in S['mime']
+		or
+		if filedata["mime"] fits leftside in a S['mime'] item
+		:param filedata: data from metadata "get_mime_etc" (exiftool or file)
+		:return: matches True else False
+		"""
+		if 'default' in S["mime"]:
+			return True
+		if ("FileTypeExtension" in filedata) and (filedata["FileTypeExtension"] in S['extension']):
+			return True
+		if S['mime']:
+			if filedata["general"] in S['mime']:
+				return True
+			find_mime='^'+filedata["mime"]+'.*$'
+			for mime in S['mime']:
+				its_me=re.match(f'^{mime}.*',filedata["mime"])
+				if its_me:
+					return True
+		return False
 
 	def __str__(S):
 		mime_str = ''
