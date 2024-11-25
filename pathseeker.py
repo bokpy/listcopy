@@ -17,26 +17,6 @@ from garlic import *
 #import inspect
 from icecream import ic
 
-#
-# exiftags=meta.ExifTags()
-
-# class AutoList(list):
-#
-# 	def __init__(S):
-# 		list.__init__(S)
-# 		S.length=0
-#
-# 	def set(S,index,val):
-# 		while index >= len(S):
-# 			S.append(0)
-# 		S[index]=val
-# 		return val
-#
-# 	def get(S,index):
-# 		while index >= len(S):
-# 			S.append(0)
-# 		return S[index]
-
 ext_re=re.compile(r'[^.]*\.([^/]+)$')
 class PathSeeker:
 
@@ -51,6 +31,12 @@ class PathSeeker:
 		if lines:
 			self.grow_tree(lines)
 		# 	self.tree.show_broad_tree()
+
+	def knowledege(S):
+		ret={}
+		ret.update(S.good_and_evil.osm_knowledge())
+		ret.update(S.good_and_evil.exif_knowledge())
+		return ret
 
 	def show(S):
 		for branche in S.root.traverse():
@@ -194,7 +180,7 @@ class PathSeeker:
 				if good_try(file_branche['mainline']):
 					break
 			file_branche=file_branche['next_mime']
-
+		mission['mime_stuff']=file_branche['mime']
 		#DEBUGPRINT(f'\nPath: ',end='')
 		path=''
 		while path_stack:
@@ -203,6 +189,7 @@ class PathSeeker:
 			#DEBUGPRINT(f'{fruit}',end='')
 		#DEBUGPRINT()
 		path+=S.good_and_evil.check_exstension(path)
+		mission['dest_file']=path
 		return path
 
 def upcase_initial(s):return s[:1].upper()+s[1:]

@@ -326,6 +326,8 @@ class BrainzMusic(dict):
 		S['duration']=dur
 
 '''
+eg conversion aac to wav  ffmpeg -i *.aac *.wav
+
 Yes, there are several alternative libraries available for audio fingerprinting in Python:
 
 1. pyacoustid:

@@ -153,9 +153,7 @@ class TreeOfKnowledge(dict):
 	# noinspection PyMethodParameters
 	def __init__(S,consignment:dict):
 		dict.__init__(S)
-		S.osm=OsmTurbo(consignment)
-		# S.gps_file=gps_file
-		# S.language=language
+		S.osm=consignment['OsmTurbo']
 
 	def reset(S,mission:dict):
 		for key in 'Exiftool','Brainz':
@@ -170,13 +168,16 @@ class TreeOfKnowledge(dict):
 		S['Fullpath'] = sf
 		cut=len(mission['source_root_path'])
 		S['Tailpath']  = sf[cut:]
+		#DEBUGPRINT(f'TreeOfKnowledge {S["Tailpath"]=} ')
 		S['Tailsplit'] = S['Tailpath'].split('/')
 		S['Extension'] = get_extension(sf)
 		S['Exiftool']  = {}
 		get_mime_etc(sf,S['Exiftool'])
 		S.Exif=S['Exiftool']
+		low_exif={}
 		for key,value in S.Exif.items():
-			S.Exif[key.lower()]=value
+			low_exif[key.lower()]=value
+		S.Exif.update(low_exif)
 
 	def show_exif_data(S):
 		for key in S.Exif:
@@ -188,13 +189,19 @@ class TreeOfKnowledge(dict):
 		return S[key]
 
 	def check_exstension(S,path):
+		if not "FileTypeExtension" in S.Exif:
+			return ''
 		dot = path.rfind('.')
+		ext=S.Exif["FileTypeExtension" ]
 		if dot < 0:
-			return '.' + S.Exif['file_type_extension']
+			if ext:
+				return '.' + ext
+			return ''
 		slash=path.rfind('/')
 		if dot > slash:
+			# means dot is at the end of the path so there is an exstension
 			return ''
-		return '.' + S.Exif['file_type_extension']
+		return '.' +  ext
 
 	def pick_me(S,file_tok):
 		return file_tok.am_I_the_one(S.Exif)
@@ -230,7 +237,7 @@ class TreeOfKnowledge(dict):
 				tokkie.set_payload(S.Exif[label])
 				return tokkie['payload']
 
-			if S.Exif['general_mime'] == 'audio':
+			if S.Exif['general'] == 'audio':
 				# for audio "MusicBrainz" could possibly supply the wanted data
 				if not 'brainz' in S:
 					S['brainz']=BrainzMusic(S['Fullpath'])
@@ -239,13 +246,14 @@ class TreeOfKnowledge(dict):
 					tokkie['payload']=value
 					return value
 
-			if S.Exif['general_mime'] == 'image':
+			if S.Exif['general'] == 'image':
 				# for a image with coordinates "OpenStreetMap" could possibly supply the wanted data
 				latitude,longitude=S.get_coordinates()
-				if latitude != None: # coordinates no luck
+				if latitude != None: # no coordinates no luck
 					if not 'OsmData' in S:
-						S['OsmData']=S.osm.bboxed_tags(latitude,longitude,100)
-					#JDUMP(S['OsmData'])
+						S['OsmData']=S.osm.tags(latitude,longitude,100)
+						JDUMP(S['OsmData'],"S['OsmData']")
+					#JDUMP(S.Exif,'S.Exif')
 					if label in S['OsmData']:
 						value=S['OsmData'][label]
 						tokkie['payload']=value
@@ -254,13 +262,27 @@ class TreeOfKnowledge(dict):
 
 		return None
 
-	def get_coordinates(S):
-		if  'position' in S.Exif:
-			return S.Exif['position']
-		if ('latitude' in S.Exif) and ('longitude' in S.Exif):
-			return S.Exif['latitude'],S.Exif['longitude']
-		return None,None
+	def osm_knowledge(S):
+		if not 'OsmData' in S:
+			return {}
+		return S['OsmData']
 
+	def exif_knowledge(S):
+		return S.Exif
+
+	def get_coordinates(S):
+		if 'lat' in S.Exif:
+			return S.Exif['lat'],S.Exif['lon']
+		S.Exif['lat']=S.Exif['lon']=None
+		if  "GPSLatitude" in S.Exif:
+			S.Exif['lat'] = gps_alpha_to_float( S.Exif["GPSLatitude"] )
+			S.Exif['lon'] = gps_alpha_to_float( S.Exif["GPSLongitude"])
+		elif "GPSPosition" in S.Exif:
+			lat_asc,lon_asc = S.Exif["GPSPosition"].split(',')
+			S.Exif['lat'] = gps_alpha_to_float(lat_asc)
+			S.Exif['lon'] = gps_alpha_to_float(lon_asc)
+		DEBUGPRINT(f"get_coordinates calculated {S.Exif['lat']},{S.Exif['lon']}")
+		return S.Exif['lat'],S.Exif['lon']
 
 def main() -> None:
 	test={'Test':'test data','BOB':' van der BURG'}

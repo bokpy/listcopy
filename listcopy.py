@@ -7,7 +7,10 @@ import sys
 import json
 import time
 import signal
+
+from geolocate import OsmNode, OsmTurbo
 import listutils as lu
+from filelistiter import InputFileIterator
 from pathseeker import PathSeeker
 from pathsyntax import syntax_text
 from metadata import JDUMP
@@ -130,6 +133,11 @@ parser.add_argument('-g', '--gps-info',
 #d d d d d d d d d d d d d d d d d d
 parser.add_argument('-d', '--dry-run',
                     help='Just print the source and destination files.',
+                    action='store_true'
+                    )
+#labels labels labels labels labels labels labels labels
+parser.add_argument('--labels',
+                    help='Show the labels that are usable for the files in the listing at the end.',
                     action='store_true'
                     )
 args = parser.parse_args()
@@ -464,23 +472,32 @@ def process_filelisting(consignment):
 	# else:
 	# 	consignment['gps_info'] = os.path.expanduser('~/.osm.data')
 	# consignment['current_file'] = Noneglobal destination_path
-
-	listing = lu.InputFileIterator(consignment)
-	pathseeker = PathSeeker(consignment)
+	mission={}
+	listing = InputFileIterator(consignment,mission)
 	# DEBUGEXIT(0)
 	target_fs_properties(consignment) # test and store the capabilities of the device where the destination directory lives
-
+	osmturbo=OsmTurbo(consignment)
 	count=0
-	for src_full,source_path_length in listing:
-		mission={}
+	#for src_full,source_path_length in listing:
+	for src_full in listing.file_reaper():
 		print('<'*35+'-'*40+'>'*35)
-		mission['source_file']=src_full
-		mission['dest_root-path']=consignment['dest_path']
-		mission['source_root_path']=src_full[:source_path_length]
+		DEBUGPRINT(f'"{src_full}"')
+		#mission['source_file']=src_full
+		#mission['dest_root_path']=consignment['dest_path']
+		#mission['source_root_path']=src_full[:source_path_length]
+		#DEBUGPRINT(f'{mission=}')
+		#DEBUGEXIT(483)
+		pathseeker = PathSeeker(consignment)
 		pathseeker.compose_path(mission)
-		JDUMP(mission,'pathseeker.compose_path(mission)')
+		JDUMP(mission,'mission')
 		if 'dry_run' in consignment:
+			if 'store_labels' in consignment:
+				keys=[k for k in pathseeker.knowledege().keys()]
+				#DEBUGPRINT(f'{keys=}')
+				consignment['store_labels']=consignment['store_labels'].union(keys)
+
 			print(json.dumps(mission,indent=4))
+			mission.clear()
 			continue
 		
 		#lu.assure_dir(os.path.dirname(dest))
@@ -488,8 +505,15 @@ def process_filelisting(consignment):
 		#time.sleep(1)
 		listing.save_progress(mission)
 		count+=1
+		mission.clear()
+	if 'store_labels' in consignment:
+		for label in consignment['store_labels']:
+			print(f'{label}')
+
 	if args.gps_info:
 		listing.dump_info(args.gps_info)
+
+
 		
 	def destination(self):
 		return self.destination_file
@@ -552,10 +576,12 @@ def main() -> None:
 	if args.dry_run:
 		consignment['dry_run'] = True
 	# start values for file system parameters
-	consignment['maxchunk']      =1024*1024*16
-	consignment['fsmaxfilesize'] =1024*1024
-	consignment['fsblocksize']   =1024
-	consignment['chunk_growing']=False
+	consignment['maxchunk']      = 1024*1024*16
+	consignment['fsmaxfilesize'] = 1024*1024
+	consignment['fsblocksize']   = 1024
+	consignment['chunk_growing'] = False
+	if args.labels:
+		consignment['store_labels']  = set()
 	# pathseeker=PathSeeker(args.substitute,args.gps_info,args.language)
 	process_filelisting(consignment)
 	

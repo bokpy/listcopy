@@ -303,7 +303,9 @@ def directory_walker(directory,rename_unicode=False):
 					yield (cur_dir,entry)
 
 class InputFileIterator:
-	def __init__(self,consigment):
+	def __init__(self,consigment,mission):
+		self.mission=mission
+		mission['source_root_path']=''
 		input_file   = consigment['input']
 		self.dest_dir= consigment['dest_path']
 		self.ok_file = consigment['ok_file']
@@ -326,14 +328,15 @@ class InputFileIterator:
 	def __next__(self):
 		if not self._kick_index():
 			self.index-=1
-			#DEBUGPRINT(f'Should not happen!!!')
+			DEBUGPRINT(f'__next__ Should not happen!!!')
 			return
 		
 		if self.current()==DATA_END_MARKER:
-			self.root_path=''
+			self.mission['source_root_path']=''
 			self._kick_index()
 		#DEBUGPRINT(f'{self.root_path=}')
-		if self.root_path:
+		if self.mission['source_root_path']:
+			self.root_path_length=len(self.mission['source_root_path'])
 			#DEBUGPRINT(f'{self.root_path}')
 			#return self.current(),self.current()[self.root_path_length:]
 			return self.current(),self.root_path_length
@@ -388,8 +391,9 @@ class InputFileIterator:
 		:return:
 		"""
 		self._kick_index()
-		self.root_path = self.current()
-		self.root_path_length=len(self.root_path )
+		root_path = self.current()
+		self.mission['source_root_path'] = root_path
+		self.root_path_length=len(root_path )
 		
 	def _go_to_start(self,skip:int)->None:
 		"""
@@ -402,10 +406,10 @@ class InputFileIterator:
 			if self.current() == DATA_BEGIN_MARKER: # read self.root_path
 				self._data_begin_marker_found()
 			if self.current() == DATA_END_MARKER: # root_path no longer valid
-				self.root_path=''
+				self.mission['source_root_path']=''
 				self.root_path_length=0
 			self._kick_index()
-		while not self.root_path:
+		while not self.mission['source_root_path']:
 			# if we didn't get a valid path where we are now
 			# read until we find it or till end of the list
 			if self.current() == DATA_BEGIN_MARKER:

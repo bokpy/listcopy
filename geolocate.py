@@ -220,50 +220,6 @@ def gps_alpha_to_float(gps_string:str)->float:
 		return -ret
 	return ret
 
-# class OsmNearTags(dict):
-# 	def __init__(S,latitude,longitude):
-# 		dict.__init__(S)
-# 		S.lat=latitude
-# 		S.lon=longitude
-#
-# 	def show(S,title=''):
-# 		print(f'OsmTags:{title} {pc(S.lat)},{pc(S.lon)}')
-# 		print(json.dumps(S,indent=4))
-#
-# 	def try_to_graft(S,node):
-# 		def proccess_tag(tag,value,distance):
-# 			if (not tag in S) or (S[tag]['distance'] > distance):
-# 				S[tag]={'value':value,'distance':distance}
-# 		distance=haversine(node.lat,node.lon,S.lat,S.lon)
-# 		#DEBUGPRINT(f'{distance=}')
-# 		for tag in node:
-# 			proccess_tag(tag,node[tag],distance)
-#
-# 	def simplify(S):
-# 		ret={}
-# 		for key,data in S.items():
-# 			ret[key]=data['value']
-# 		return ret
-#
-# 	def place_indication(S):
-# 		#"addr:province""name"
-# 		want=['addr:street','addr:housenumber','addr:city','addr:country']
-# 		have=[key for key in want if key in S]
-# 		def best_alternative(best,second_best):
-# 			if best in have:
-# 				return 1
-# 			if second_best in S:
-# 				have.append(second_best)
-# 				return 2
-# 			return 0
-# 		if ('addr:street' in have) and  ('addr:city' in have):
-# 			best_alternative('addr:country',"addr:province")
-# 			place=''
-# 			for key in have:
-# 				place=place + S[key]['value'] + ' '
-# 			return place
-# 		return 'Don know yet'
-
 SMALL_ID=0
 BIG_ID=9999999999
 class OsmTurbo(list):
@@ -275,6 +231,7 @@ class OsmTurbo(list):
 		"""
 		list.__init__(S)
 		S.file_name=consigment['gps_info']
+
 		S.load_file()
 		#starter=OsmNode(2741022795, 52.9536054, 05.9345688, tags={"addr:city": "Heerenveen", "addr:housenumber": "56", "addr:postcode": "8442JK", "addr:street": "President Kennedylaan", "source": "BAG", "source:date": "2014-03-24"})
 		sentinel_low =OsmNode(SMALL_ID, -100.0, 0.0, tags={"addr:city": "Agarttha","animety":"Hell"},type='sentinel')
@@ -283,7 +240,13 @@ class OsmTurbo(list):
 			S.append(sentinel_low)
 			S.append(sentinel_high)
 		S.rearrange()
+		S.DEBUG_show_data()
+		consigment['OsmTurbo']=S
 		atexit.register(S.savenodes)
+
+	def DEBUG_show_data(S):
+		for node in S:
+			DEBUGPRINT(f'{repr(node)}')
 
 	def rearrange(S):
 		S.sort(key = lambda x:x.lat)
@@ -299,11 +262,11 @@ class OsmTurbo(list):
 	def find_latitude(S,lat):
 		h=len(S)
 		l=0
-		STOPPER=100
+		# STOPPER=100
 		while l < h:
-			STOPPER-=1
-			if STOPPER<0:
-				raise RuntimeError ('STOPPER Stop')
+			# STOPPER-=1
+			# if STOPPER<0:
+			# 	raise RuntimeError ('STOPPER Stop')
 			m=(l+h)//2
 			m_val=S[m].lat
 			#print (f'{l:2} {m:2} {h:2}')
@@ -392,41 +355,67 @@ class OsmTurbo(list):
 		S.append(osmnode)
 		S.rearrange()
 		return tags
-	#
-	# result={}
-	# elements=ret["elements"]
-	# for element in elements:
-	# 	if (not "type" in element) or ( element["type"] != "area") or (not "tags" in element) :
-	# 		continue
-	# 	tags=element["tags"]
-	# 	admin=ADMIN_LEVEL[tags["admin_level"]]
-	# 	for tag in tags:
-	# 		match=name_re.match(tag)
-	# 		if match and (not match.group(1) in LANGUAGES_TO_KEEP):
-	# 			continue
-	# 		result[f'{admin}:{tag}']=tags[tag]
-	# return result
-	# 	if not "elements" in osm_data:
-	# 		return
-	# 	elements=osm_data["elements"]
-	# 	for element in elements:
-	# 		if adopt_osm_element_for_osmnode(element,lat,lon):
-	# 			S.append(OsmNode(**element))
-	# 	S.rearrange()
-
-	# def nigh_tags_and_distance(S,latitude,longitude,box_side=BOXSIDE):
-	# 	nodes=S.find_near_tags(latitude,longitude,box_side)
-	# 	#DEBUGPRINT(f'nigh_tags_and_distance({nodes=})')
-	# 	tags = OsmNearTags(latitude,longitude)
-	# 	for node in nodes:
-	# 		tags.try_to_graft(node)
-	# 	return tags
 
 	def tags(S,latitude,longitude,box_side=BOXSIDE):
-		osmneartags=S.nigh_tags_and_distance(latitude,longitude,box_side)
-		return osmneartags.simplify()
+		DIST=0
+		TAG=1
+		nigh={}
+		for node in S.iterate_nodes_in_bbox(latitude,longitude,box_side):
+			distance=haversine(node.lat,node.lon,latitude,longitude)
+			for key,value in node.items():
+				if key in nigh:
+					if distance < nigh[key][DIST]:
+						if 'addr:housenumber' in key:
+							DEBUGPRINT(f'{nigh[key][DIST]} > {distance}  {value}->{nigh[key][TAG]}')
+						nigh[key]=(distance,value)
+				else:
+					nigh[key]=(distance,value)
+		JDUMP(nigh,'nigh tags')
+		ret={}
+		for key,value in nigh.items():
+			ret[key]=value[1]
+		return ret
+		# DEBUGPRINT(f'{neartags=}')
+		# ret={}
+		# for key,data in neartags.items(): # strip "distance"
+		# 	ret[key]=data['value']
+		# return ret
 
-	def bboxed_nodes(S,latitude,longitude,box_side=BOXSIDE):
+	def no_tags(S,latitude,longitude,box_side=BOXSIDE):
+		def dist(lat1,lon1,lat2,lon2):
+			dlat=lat1-lat2
+			dlon=lon1-lon2
+			return dlat*dlat + dlon*dlon
+		DIST=0
+		TAG=1
+		raw={}
+		repeat=0
+		while True:
+			for i in range(1,len(S)-2):
+				node=S[i]
+				#distance=haversine(node.lat,node.lon,latitude,longitude)
+				distance=dist(node.lat,node.lon,latitude,longitude)
+				for key,value in node.items():
+					if key in raw:
+						if distance < raw[key][DIST]:
+							if 'addr:housenumber' in key:
+								DEBUGPRINT(f'{raw[key][DIST]} > {distance}  {value}->{raw[key][TAG]}')
+							raw[key]=(distance,value)
+					else:
+						raw[key]=(distance,value)
+			repeat+=1
+			if raw or repeat > 1:
+				break
+			S.request_admin(latitude,longitude)
+			S.request_nwr(latitude,longitude,box_side)
+
+		JDUMP(raw,'nigh tags')
+		ret={}
+		for key,value in raw.items():
+			ret[key]=value[TAG]
+		return ret
+
+	def iterate_nodes_in_bbox(S,latitude,longitude,box_side=BOXSIDE):
 		"""
 		Find all nodes in the database in a box and yield them.
 		:param latitude: latitude of box centre
@@ -435,15 +424,32 @@ class OsmTurbo(list):
 		:return: yielded OsmNode's
 		"""
 		lat_min,lon_min,lat_max,lon_max=geo_box(latitude,longitude,box_side)
-		index=S.find_latitude(lat_min)
-		i=index
-		while S[i].lat < lat_max:
-			lon=S[i].lon
-			if (lon > lon_min) and (lon < lon_max):
-				yield S[i]
-			i+=1
+		DEBUGPRINT(f'{(lat_min,latitude,lat_max,lon_min,longitude,lon_max)}')
+		index_min=S.find_latitude(lat_min)
+		index_max=S.find_latitude(lat_max)
+		DEBUGPRINT(f'lat_min {repr(S[index_min])}')
+		DEBUGPRINT(f'lat_max {repr(S[index_max])}')
+		if S[index_min].lat>latitude:
+			raise RuntimeError (f'{S[index_max].lat} > {latitude}')
+		if latitude > S[index_max].lat:
+			raise RuntimeError (f'{latitude} > {S[index_max].lat}')
+		pop=2
+		while pop > 0:
+			for i in range(index_min,index_max):
+			#while S[i].lat < 100.0:
+				lon=S[i].lon
+				if (lon > lon_min) and (lon < lon_max):
+					DEBUGPRINT(f'lat {S[i].lat - latitude:6.4f} {S[i].lat:6.4f} ')
+					DEBUGPRINT(f'lon {S[i].lon - longitude:6.4f} {S[i].lon:6.4f} ')
+					pop=0
+					yield S[i]
+				i+=1
+			pop-=1
+			if pop > 0:
+				S.request_nwr(latitude,longitude,box_side)
+				S.request_admin(latitude,longitude)
 
-	def _bboxed_tags(S,latitude,longitude,box_side=BOXSIDE):
+	def _nigh_tags(S,latitude,longitude,box_side=BOXSIDE):
 		"""
 		Select the the tags from the data base in the box nearest to the point latitude,longitude
 		:param latitude: latitude of box centre
@@ -460,7 +466,7 @@ class OsmTurbo(list):
 			for tag,value in node.items():
 				if (tag not in tags) or (tags[tag]['distance'] > node_distance):
 					tags[tag]={'value':value,'distance':node_distance}
-		for node in S.bboxed_nodes(latitude,longitude,box_side):
+		for node in S.iterate_nodes_in_bbox(latitude,longitude,box_side):
 			node_distance=haversine(node.lat,node.lon,latitude,longitude)
 			if node_distance < nigh:
 				nigh=node_distance
@@ -472,7 +478,7 @@ class OsmTurbo(list):
 			ret[tag]=value['value']
 		return ret,nigh
 
-	def bboxed_tags(S,latitude,longitude,box_side=BOXSIDE):
+	def nigh_tags(S,latitude,longitude,box_side=BOXSIDE):
 		"""
 		Select the the tags from the data base in the box nearest to the point latitude,longitude
 		If nothing is found or nothing was close request more data from OpenStreetMap in the
@@ -482,11 +488,11 @@ class OsmTurbo(list):
 		:param box_side: sides of box in meters
 		:return: dictionary of tags in the bbox close to or at latitude,longitude
 		"""
-		tags,dist=S._bboxed_tags(latitude,longitude,box_side)
+		tags,dist=S._nigh_tags(latitude,longitude,box_side)
 		if not tags:
 			S.request_admin(latitude,longitude)
 			S.request_nwr(latitude,longitude,box_side)
-			tags,_=S._bboxed_tags(latitude,longitude,box_side)
+			tags,_=S._nigh_tags(latitude,longitude,box_side)
 			return tags
 
 		if (dist < SMALLDISTANCE) and ('admin_node_count' in tags):
@@ -495,7 +501,7 @@ class OsmTurbo(list):
 			S.request_admin(latitude,longitude)
 		if dist > SMALLDISTANCE:
 			S.request_nwr(latitude,longitude,box_side)
-		tags,_= S._bboxed_tags(latitude,longitude,box_side)
+		tags,_= S._nigh_tags(latitude,longitude,box_side)
 		return tags
 
 	def request_nwr(S,latitude,longitude,box_side=BOXSIDE):
@@ -503,20 +509,20 @@ class OsmTurbo(list):
 		if data:
 			S.absorb_data(data,latitude,longitude)
 
-	def find_near_tags(S,latitude,longitude,box_side=BOXSIDE):
+	def find_tags_in_bbox(S,latitude,longitude,box_side=BOXSIDE):
 		"""
 		Find a list of OsmNodes in the "bbox"
-		:param latitude: latitude of the centre of the square box
+		:param latitude:  latitude  of the centre of the square box
 		:param longitude: longitude of the centre of the square box
-		:param box_side: length in meters of the sides
-		:return: an OsmNearTags object =
+		:param box_side:  length in meters of the sides
+		:return:
 		dict={key:
 				{'value':value,
 				 'distance',distance of tag to latitude,longitude
 				 }
 			}
 		"""
-		#DEBUGPRINT(f'find_near_tags({latitude},{longitude},{box_side})')
+		#DEBUGPRINT(f'find_tags_in_bbox({latitude},{longitude},{box_side})')
 		def ISBIG(a,b):
 			if a>b : return ' 3XL'
 			if a<b : return ' 3XS'
@@ -563,7 +569,7 @@ class OsmTurbo(list):
 			if not harvest:
 				data=osm_request()
 				S.absorb_data(data,latitude,longitude)
-			S.get_admin_node(latitude,longitude)
+			S.request_admin(latitude,longitude)
 			data_requested=True
 		return harvest
 
@@ -588,7 +594,8 @@ def adopt_osm_element_for_osmnode(osm_element,lat,lon):
 		return False
 	return True
 
-osmnode_re=re.compile(r'.*OsmNode\(\D*(\d+),\D*([.\d]+),\D*([.\d]+), tags=({[^}]+}) *, *([^)]*).*$')
+osmnode_re=re.compile(r'.*OsmNode\(\D*(\d+), *([+-.\d]+),\D*([.\d]+), tags=({[^}]+}) *, *([^)]*).*$')
+
 def eval_line_to_osmnode(line):
 	#DEBUGPRINT(f'{line}')
 	match=osmnode_re.match(line)
@@ -610,6 +617,8 @@ class OsmNode(dict):
 	def __init__(S,id:int,lat:float,lon:float,tags:dict,type='unknown'):
 		dict.__init__(S)
 		S.update(tags)
+		# S['Latitude'] =lat
+		# S['Longitude']=lon
 		S.id=id
 		S.type=type
 		S.lat=lat
@@ -622,7 +631,7 @@ class OsmNode(dict):
 			tags+=f'{comma}"{key}":"{S[key]}"'
 			comma=', '
 		tag_str='tags={'+tags+'}'
-		return f'OsmNode({S.id:12}, {S.lat:011.7f}, {S.lon:011.7f}, {tag_str} , {S.type})'
+		return f'OsmNode({S.id:12}, {S.lat:014.10f}, {S.lon:014.10f}, {tag_str} , {S.type})'
 
 	def __str__(S):
 		naw=False
@@ -660,7 +669,6 @@ class OsmNode(dict):
 	def is_more_then(S,other,latitude):
 		return S.is_more_then_point(other.lat,other.lon,latitude)
 
-
 joure_coords=(52.963041973818754, 5.8111289020720855)
 hveen_coords=(52.95841726530616, 5.958291851243422 )
 gron_coords=(53.23738, 6.560770)
@@ -677,34 +685,43 @@ Japan=(34.49284645577351, 135.5710672655183)
 The_Shepherd_Gate=(gps_alpha_to_float('51°28\′41″N'),gps_alpha_to_float(' 0°00\′05″W'))
 
 def test_osmturbo():
-	osmturbo=OsmTurbo('turbotest.dat')
-	# for node in osmturbo.bboxed_nodes(*gron_coords):
+	consignment={'gps_info':os.path.expanduser('~/.listcopy_geodata')}
+	osmturbo=OsmTurbo(consignment)
+	# for node in osmturbo.iterate_nodes_in_bbox(*gron_coords):
 	# 	print(repr(node))
 
-	gron_tags=osmturbo.bboxed_tags(*gron_coords)
-	JDUMP(gron_tags,'osmturbo.bboxed_tages(*gron_coords)')
+	# gron_tags=osmturbo.nigh_tags(*gron_coords)
+	# JDUMP(gron_tags,'osmturbo.bboxed_tages(*gron_coords)')
+	#
+	# new_york_tags=osmturbo.nigh_tags(*new_york)
+	# JDUMP(new_york_tags,'osmturbo.bboxed_tages(*new_york)')
+	#
+	# Wenzhou_tags=osmturbo.nigh_tags(*Wenzhou)
+	# JDUMP(Wenzhou_tags,'osmturbo.bboxed_tages(*Wenzhou)')
+	#
+	# print(f'geo_box(*Wenzhou,17) {make_bbox(*Wenzhou,17)}')
+	# print(f'geo_box(in china 300) {make_bbox(2.619815468215485, 114.1057837750644,300)}')
+	# #22.619815468215485, 114.1057837750644
+	# print(f'geo_box(in Japan) {make_bbox(34.49284645577351, 135.5710672655183,100)}')
+	exiflat=gps_alpha_to_float(' 52 deg 57\' 12.63" N')
+	exiflon=gps_alpha_to_float('5 deg 56\' 5.33" E')
+	lat,lon=052.9536054, 005.9345688
+	tags=osmturbo.tags(lat,lon,200)
+	JDUMP(tags,'Sweet Home ?')
+	# for node in osmturbo.iterate_nodes_in_bbox(52.95350833333334,5.934813888888889,100):
+	# 	JDUMP(node ,f'{node.lat:8.5f},{node.lon:8.5f}')
+	print(f'dif lat {abs(lat-exiflat)} dif lon {abs(lon-exiflon)} ')
 
-	new_york_tags=osmturbo.bboxed_tags(*new_york)
-	JDUMP(new_york_tags,'osmturbo.bboxed_tages(*new_york)')
-
-	Wenzhou_tags=osmturbo.bboxed_tags(*Wenzhou)
-	JDUMP(Wenzhou_tags,'osmturbo.bboxed_tages(*Wenzhou)')
-
-	print(f'geo_box(*Wenzhou,17) {make_bbox(*Wenzhou,17)}')
-	print(f'geo_box(in china 300) {make_bbox(2.619815468215485, 114.1057837750644,300)}')
-	#22.619815468215485, 114.1057837750644
-	print(f'geo_box(in Japan) {make_bbox(34.49284645577351, 135.5710672655183,100)}')
-	
-	
 def test_geo_box():
 	print(f'geo_box(*suri_coords,17) {make_bbox(*suri_coords,17)}')
 
-
-
 if __name__ == '__main__':
 	#test_geo_box()
-	#test_osmturbo()
+	test_osmturbo()
 	# pant=request_nwr(*pantheon_paris,400)
 	# JDUMP(pant)
-	dat=request_around_tags(Japan[0],Japan[1],'addr:country','addr:postcode',radius=1000)
-	JDUMP(dat,'Around Japan')
+	# dat=request_around_tags(Japan[0],Japan[1],'addr:country','addr:postcode',radius=1000)
+	# JDUMP(dat,'Around Japan')
+
+	# dat=tags(52.95350833333334,5.934813888888889,'addr:country','addr:postcode',radius=1000)
+	# JDUMP(dat,'Around Me')
