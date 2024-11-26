@@ -20,22 +20,25 @@ def start_cursing():
 
 def done_cursing():
 	global stdscr
-
-if stdscr != None:
-	curses.nocbreak()
-	stdscr.keypad(False)
-	curses.echo()
-	stdscr = None
+	if stdscr != None:
+		curses.nocbreak()
+		stdscr.keypad(False)
+		curses.echo()
+		curses.endwin()
+		stdscr = None
+		print(f'Cursing was stoped.\n')
 
 atexit.register(done_cursing)
 
 def main() -> None:
 	start_cursing()
-	begin_x = 20;
+	begin_x = 8;
 	begin_y = 7
 	height = 5;
 	width = 40
 	win = curses.newwin(height, width, begin_y, begin_x)
+	win.addstr('Hay')
+	win.refresh()
 	time.sleep(10)
 	done_cursing()
 
