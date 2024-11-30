@@ -15,10 +15,9 @@ from pathseeker import PathSeeker
 from pathsyntax import syntax_text
 from metadata import JDUMP
 import metadata as meta
-DEBUGPRINT=print
 
-	
 #DEBUGRETURN=return  return is not a function. This stops the script here.
+DEBUGPRINT=print
 DEBUGEXIT=exit
 
 processed_file='/No Such File ' + time.ctime() # for signal handler to fail
@@ -141,6 +140,10 @@ parser.add_argument('--labels',
                     action='store_true'
                     )
 args = parser.parse_args()
+def print_json(d,title=None):
+	if title:
+		print(f'{title}=')
+	print(json.dumps(d,indent=4))
 
 def explain()->None:
 	with open('README','r') as rm:
@@ -217,246 +220,6 @@ def list_to_do():
 		os.renames(ok_file,f'{ok_file}.{int(time.time()) // 60}')
 	return 0
 
-def exit_error(e,message=None)->None:
-	print(f"I/O error ({e.errno}): {e.strerror}")
-	if message:
-		print(message)
-	# I/O error (28): No space left on device
-	if e.errno == 28 :
-		now=time.ctime()
-		shutil.copy(ok_file,ok_file + '.' + now )
-		print('You can try to write the remaining files to an other '
-	      'medium')
-	exit(1)
-	
-	# chunk size optimising
-	
-def differ_percentage(a,b):
-	"""gives a the percentage the smallest divers from the biggest."""
-	a = abs(a)
-	b = abs(b)
-	if a > b :
-		fraction = (b/a)*100
-	else:
-		fraction = (a/b)*100
-	return 100.0 - fraction
-
-def format_bytesize(size_in_bytes,strlen=0):
-	"""Make a compact human readable string of byte sizes."""
-	units = ["B", "KB", "MB", "GB", "TB"]
-	size = size_in_bytes
-	unit_index = 0
-
-	# Loop totdat de grootte kleiner is dan 1024 of de hoogste eenheid is bereikt
-	
-	while size >= 1024 and unit_index < len(units) - 1:
-		size /= 1024
-		unit_index += 1
-
-	# Return de grootte als een string met twee decimalen en de juiste eenheid
-	ret = f"{size:.2f}{units[unit_index]}"
-	if strlen:
-		return ret.rjust(strlen,' ')
-	return ret
-
-chunk_size=0
-chunk_got_bigger=True
-copy_speed=1.0
-prev_copy_speed=copy_speed
-
-def double_chunk(consigment,chunk)->int:
-	consigment['chunk_growing']=True
-	chunk+=chunk
-	maxchunk=consigment['maxchunk']
-	if chunk >= maxchunk:
-		return maxchunk
-	return chunk
-
-def decrease_chunk(consigment,chunk,fraction=4)->int:
-	"""Make the chunks a fraction smaller so 2 halves 4 substracs 1/4."""
-	fsblocksize=consigment['fsblocksize']
-	consigment['chunk_growing']=False
-	cut_size=chunk // fraction
-	chunk-=cut_size
-	chunk-= chunk % fsblocksize
-	if chunk <= fsblocksize:
-		return fsblocksize
-	return chunk
-
-AverageChunk=0
-ChunkCount=0
-def average_chunk_size(chunk_size):
-	global AverageChunk,ChunkCount
-	new_count=ChunkCount + 1
-	muliplier=ChunkCount/new_count
-	delta=chunk_size/new_count
-	AverageChunk=(AverageChunk*muliplier) + delta
-	ChunkCount=new_count
-	return AverageChunk
-
-# end chunk size optimising
-
-def write_chunks_to_file(input_file_path, output_file_path ):
-	#DEBUGPRINT(f'BKC {input_file_path} \n {output_file_path}')
-	global FsMaxFileSize
-	global chunk_size,chunk_got_bigger,copy_speed,prev_copy_speed
-	bytes_done=0
-	file_size = os.path.getsize(input_file_path)
-	if args.verbose:
-		print(f'filesize: {format_bytesize(file_size)}')
-	if file_size > FsMaxFileSize:
-		print(f'->{input_file_path}<-')
-		print(f'{FsMaxFileSize} {file_size} ')
-		return OSError(27,'Too Big for Filesystem.')
-		
-	with open(input_file_path, 'rb') as input_file:
-		while True:
-			start_time = time.time()
-			chunk = input_file.read(chunk_size)
-			if not chunk:
-				break
-
-			try:
-				with open(output_file_path, 'ab') as output_file:
-					output_file.write(chunk)
-			except OSError as e:
-				print('write_chunks_to_file Failed')
-				return e
-			end_time = time.time()
-			bytes_copied=len(chunk)
-			bytes_done+=bytes_copied
-			time_used = end_time - start_time
-			copy_speed = bytes_copied / time_used
-			speed_difference_percent = differ_percentage(copy_speed ,
-			                                        prev_copy_speed)
-			speed='='
-			
-			if speed_difference_percent > DIFFER_PERCENTAGE:
-				if copy_speed > prev_copy_speed:
-					speed='^'
-					if chunk_got_bigger:
-						chunk_size = double_chunk(chunk_size)
-					else:
-						chunk_size = decrease_chunk(chunk_size)
-				else:
-					speed='v'
-					if chunk_got_bigger:
-						chunk_size = decrease_chunk(chunk_size)
-					else:
-						chunk_size = double_chunk(chunk_size)
-			average_chunk_size(chunk_size)
-			prev_copy_speed = copy_speed
-			percent_done= (100*bytes_done)/file_size
-			if args.verbose:
-				print( "\r" +
-						f'{speed}' +
-						f'{speed_difference_percent:5.2f}% ' +
-						f'[{format_bytesize(AverageChunk)}] ' +
-						format_bytesize(copy_speed,9)  + '/s ' +
-						format_bytesize(file_size-bytes_done) +
-						' >[' + format_bytesize(chunk_size) + ']> ' +
-						format_bytesize(bytes_done) +
-						f' {percent_done:.2f}% done.' +
-						"     " ,
-						end=''
-					)
-	if args.verbose:print()
-	return None
-
-def BadFile(consignment,nasty,error):
-	source_path=consignment['source_path']
-	bad_file=consignment['bad_file']
-	# print (f'/nError:{error.errno} "{error.strerror}"')
-	# if os.path.exists(nasty_dest):
-	# 	# remove the failed copy
-	# 	os.remove(nasty_dest)
-	# 	print (f'Removed "{nasty_dest}"')
-	
-	if not os.path.exists(bad_file): # if no bad_file write a header to it
-	# so can bee used as an copy.list later
-		with open(bad_file,'w') as bad:
-			bad.write(DATA_BEGIN_MARKER + '\n')
-			bad.write(source_path + '\n')
-
-	with open(bad_file,'a') as bad:
-		bad.write(nasty + '\n')
-	if error.errno == 75: # Error:27 "File too large"
-		return
-	exit_error(error)
-
-def target_fs_properties(consigment):
-	"""Determine the maximum file size and the block size for the
-	filesystem "path" is on.
-	returns the global FsMaxFileSize,FsBlockSize,
-	FsBlockSize"""
-	fs_max_file = {
-	'fat16': 2 * 1024**3,    # 2 GB in bytes
-	'vfat': 4 * 1024**3,    # 4 GB in bytes
-    'fat32': 4 * 1024**3,    # 4 GB in bytes
-    'exfat': 16 * 1024**6,   # 16 EB in bytes
-    'ntfs': 16 * 1024**4,    # 16 TB in bytes
-    'hfs_plus': 8 * 1024**6, # 8 EB in bytes
-    'apfs': 8 * 1024**6,     # 8 EB in bytes
-    'ext4': 16 * 1024**4,     # 16 TB in bytes
-    'btrfs': 16 * 1024**6,    # 16 EB in bytes
-    'xfs': 8 * 1024**6,       # 8 EB in bytes
-    'reiserfs': 8 * 1024**6,  # 8 EB in bytes
-    'jfs': 4 * 1024**6,       # 4 EB in bytes
-    'ufs': 2**32 - 1,         # 4 GB in bytes (with 32-bit limit)
-    'zfs': 16 * 1024**6 ,      # 16 EB in bytes
-	'f2fs': 16 * 1024**4,
-	'udf': 16 * 1024**6 ,
-}
-	
-	partitions=psutil.disk_partitions()
-	sorted_partitions = sorted(partitions, key=lambda x: len(x.mountpoint),
-	                           reverse=True)
-	
-	for part in sorted_partitions:
-		if  part.mountpoint in consigment['dest_path']:
-			consigment['fsmaxfilesize']=fs_max_file[part.fstype]
-			st = os.statvfs(part.mountpoint)
-			consigment['fsblocksize']=st.f_bsize
-			break
-	#DEBUGPRINT( f'type {part.fstype} {FsMaxFileSize=} {FsBlockSize=}')
-	return consigment['fsmaxfilesize'],consigment['fsblocksize']
-
-# def copying_done(count):
-# 	global bad_file,DATA_END_MARKER
-# 	if not os.path.exists(bad_file):
-# 		#DEBUGPRINT (f'All {count} files are copied Bye.')
-# 		exit(0)
-#
-# 	print(f'{count} files with success copied .')
-# 	print(f'The files in "{bad_file}" failed.')
-# 	print('These files could not be copied,')
-# 	print('because of errors or filesystem limitations.')
-# 	print(f'You can retry this list on an other medium or filesystem.')
-# 	with open(bad_file,'a') as bad:
-# 		bad.write(DATA_END_MARKER+'\n')
-# 	exit(0)
-
-def file_check_ok(source,target,l)->bool:
-	# if the destination of src exists and the
-	# sizes are the same it wil be ok and return is True
-	try:
-		size_src=os.stat(source).st_size
-	except OSError as e:
-		print(f'{e.errno} "{e.strerror}"')
-		exit(e.errno)
-	try:
-		size_dst=os.stat(target).st_size
-	except OSError as e:
-		if e.errno == 2: # No such file
-			return False
-		print (f'Can\'t stat "{target}"')
-		print(f'{e.errno} "{e.strerror}"')
-		exit(e.errno)
-	if size_src == size_dst:
-		return True
-	os.remove(target)
-	return False
-	
 def process_filelisting(consignment):
 	# consignment['dest_path'] = args.destination
 	# consignment['language']     = args.language
@@ -496,11 +259,13 @@ def process_filelisting(consignment):
 				#DEBUGPRINT(f'{keys=}')
 				consignment['store_labels']=consignment['store_labels'].union(keys)
 
-			print(json.dumps(mission,indent=4))
+			print_json(mission,title='mission')
 			mission.clear()
 			continue
 		
 		#lu.assure_dir(os.path.dirname(dest))
+		mission['destination']=os.path.join(consignment['dest_path']+mission["dest_file"])
+		mission['verbose']=consignment['verbose']
 		write_chunks_to_file(mission)
 		#time.sleep(1)
 		listing.save_progress(mission)
@@ -513,8 +278,6 @@ def process_filelisting(consignment):
 	if args.gps_info:
 		listing.dump_info(args.gps_info)
 
-
-		
 	def destination(self):
 		return self.destination_file
 		
@@ -522,7 +285,6 @@ def track_and_trace():
 	if args.post_it:
 		return os.path.join(os.path.expanduser('~'),args.post_it)
 	return os.path.join(os.path.expanduser('~'),'listcopy')
-
 
 def main() -> None:
 	consignment={}
@@ -558,6 +320,8 @@ def main() -> None:
 		parser.print_help()
 		print(f'Need at least an input file and a destination!')
 		exit(0)
+
+	consignment['verbose']=args.verbose
 
 	consignment['dest_path'] = lu.end_slash(args.destination)
 	consignment['language'] = args.language

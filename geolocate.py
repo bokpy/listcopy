@@ -1,19 +1,13 @@
 #!/bin/python3
 # request status_code https://en.wikipedia.org/wiki/List_of_HTTP_status_codes
-from collections import deque
+
 import json
 import os.path
-#
-# from numpy.f2py.symbolic import Language
-# from osm2geojson.main import element_to_shape
 import requests
 import re
 import atexit
 from math import  radians, cos, sin, asin, sqrt
-#import overpass
-from listutils import meters_per_degree, LANGUAGES, R_EARTH
-
-#from haversine import haversine,inverse_haversine,Unit,Direction
+from listutils import meters_per_degree
 
 # makes it easy to find debug stuff to remove
 DEBUGEXIT=exit
@@ -24,16 +18,14 @@ def JDUMP(dct,title=''):
 	if(title): print(title)
 	print(f'{jd}')
 
-#OVERPASS_API = overpass.API()
 OVERPASS_URL = "http://overpass-api.de/api/interpreter"
 
-#LANGUAGE_RE=re.compile(r'([^:]*)|.*:(eng|nl|eu|fy)$')
 LANGUAGE_RE=re.compile(r'(^[^:]*$)|(.*:(simple|en|nl|fy)$)')
 WANTED_LAGUAGES=['fy','nl','en']
 LATI=0
 LNGI=1
 SMALLDISTANCE=0.25
-BOXSIDE=20 # default bbox size in meters
+BOXSIDE=20.0 # default bbox size in meters
 
 def pc(coord:float)->str:
 	return f'{coord:011.7f}'
@@ -377,45 +369,6 @@ class OsmTurbo(list):
 		for key,value in nigh.items():
 			ret[key]=value[1]
 		return ret
-		# DEBUGPRINT(f'{neartags=}')
-		# ret={}
-		# for key,data in neartags.items(): # strip "distance"
-		# 	ret[key]=data['value']
-		# return ret
-	#
-	# def no_tags(S,latitude,longitude,box_side=BOXSIDE):
-	# 	def dist(lat1,lon1,lat2,lon2):
-	# 		dlat=lat1-lat2
-	# 		dlon=lon1-lon2
-	# 		return dlat*dlat + dlon*dlon
-	# 	DIST=0
-	# 	TAG=1
-	# 	raw={}
-	# 	repeat=0
-	# 	while True:
-	# 		for i in range(1,len(S)-2):
-	# 			node=S[i]
-	# 			#distance=haversine(node.lat,node.lon,latitude,longitude)
-	# 			distance=dist(node.lat,node.lon,latitude,longitude)
-	# 			for key,value in node.items():
-	# 				if key in raw:
-	# 					if distance < raw[key][DIST]:
-	# 						if 'addr:housenumber' in key:
-	# 							DEBUGPRINT(f'{raw[key][DIST]} > {distance}  {value}->{raw[key][TAG]}')
-	# 						raw[key]=(distance,value)
-	# 				else:
-	# 					raw[key]=(distance,value)
-	# 		repeat+=1
-	# 		if raw or repeat > 1:
-	# 			break
-	# 		S.request_admin(latitude,longitude)
-	# 		S.request_nwr(latitude,longitude,box_side)
-	#
-	# 	JDUMP(raw,'nigh tags')
-	# 	ret={}
-	# 	for key,value in raw.items():
-	# 		ret[key]=value[TAG]
-	# 	return ret
 
 	def iterate_nodes_in_bbox(S,latitude,longitude,box_side=BOXSIDE):
 		"""
@@ -441,8 +394,8 @@ class OsmTurbo(list):
 			#while S[i].lat < 100.0:
 				lon=S[i].lon
 				if (lon > lon_min) and (lon < lon_max):
-					DEBUGPRINT(f'lat {S[i].lat - latitude:6.4f} {S[i].lat:6.4f} ')
-					DEBUGPRINT(f'lon {S[i].lon - longitude:6.4f} {S[i].lon:6.4f} ')
+					# DEBUGPRINT(f'lat {S[i].lat - latitude:6.4f}  {S[i].lat:6.4f} ')
+					# DEBUGPRINT(f'lon {S[i].lon - longitude:6.4f} {S[i].lon:6.4f} ')
 					pop=0
 					yield S[i]
 				i+=1
@@ -450,130 +403,11 @@ class OsmTurbo(list):
 			if pop > 0:
 				S.request_nwr(latitude,longitude,box_side)
 				S.request_admin(latitude,longitude)
-	#
-	# def _nigh_tags(S,latitude,longitude,box_side=BOXSIDE):
-	# 	"""
-	# 	Select the the tags from the data base in the box nearest to the point latitude,longitude
-	# 	:param latitude: latitude of box centre
-	# 	:param longitude: longitude of box centre
-	# 	:param box_side: sides of box in meters
-	# 	:return: dictionary of tags, the distance to a nearest node
-	# 	"""
-	# 	tags={}
-	# 	node_distance=0.0
-	# 	nigh=R_EARTH*10
-	# 	def evaluate(node):
-	# 		#sssssssssDEBUGPRINT(f' evaluate({repr(node)})')
-	# 		nonlocal tags,node_distance
-	# 		for tag,value in node.items():
-	# 			if (tag not in tags) or (tags[tag]['distance'] > node_distance):
-	# 				tags[tag]={'value':value,'distance':node_distance}
-	# 	for node in S.iterate_nodes_in_bbox(latitude,longitude,box_side):
-	# 		node_distance=haversine(node.lat,node.lon,latitude,longitude)
-	# 		if node_distance < nigh:
-	# 			nigh=node_distance
-	# 		evaluate(node)
-	# 	if tags == {}:
-	# 		return {},nigh
-	# 	ret={}
-	# 	for tag,value in tags.items():
-	# 		ret[tag]=value['value']
-	# 	return ret,nigh
-	#
-	# def nigh_tags(S,latitude,longitude,box_side=BOXSIDE):
-	# 	"""
-	# 	Select the the tags from the data base in the box nearest to the point latitude,longitude
-	# 	If nothing is found or nothing was close request more data from OpenStreetMap in the
-	# 	bbox(latitude,longitude,box_side) and if needed admin data at latitude,longitude
-	# 	:param latitude: latitude of box centre
-	# 	:param longitude: longitude of box centre
-	# 	:param box_side: sides of box in meters
-	# 	:return: dictionary of tags in the bbox close to or at latitude,longitude
-	# 	"""
-	# 	tags,dist=S._nigh_tags(latitude,longitude,box_side)
-	# 	if not tags:
-	# 		S.request_admin(latitude,longitude)
-	# 		S.request_nwr(latitude,longitude,box_side)
-	# 		tags,_=S._nigh_tags(latitude,longitude,box_side)
-	# 		return tags
-	#
-	# 	if (dist < SMALLDISTANCE) and ('admin_node_count' in tags):
-	# 		return tags
-	# 	if not 'admin_node_count' in tags:
-	# 		S.request_admin(latitude,longitude)
-	# 	if dist > SMALLDISTANCE:
-	# 		S.request_nwr(latitude,longitude,box_side)
-	# 	tags,_= S._nigh_tags(latitude,longitude,box_side)
-	# 	return tags
 
 	def request_nwr(S,latitude,longitude,box_side=BOXSIDE):
 		data=request_nwr(latitude,longitude,box_side)
 		if data:
 			S.absorb_data(data,latitude,longitude)
-	#
-	# def find_tags_in_bbox(S,latitude,longitude,box_side=BOXSIDE):
-	# 	"""
-	# 	Find a list of OsmNodes in the "bbox"
-	# 	:param latitude:  latitude  of the centre of the square box
-	# 	:param longitude: longitude of the centre of the square box
-	# 	:param box_side:  length in meters of the sides
-	# 	:return:
-	# 	dict={key:
-	# 			{'value':value,
-	# 			 'distance',distance of tag to latitude,longitude
-	# 			 }
-	# 		}
-	# 	"""
-	# 	#DEBUGPRINT(f'find_tags_in_bbox({latitude},{longitude},{box_side})')
-	# 	def ISBIG(a,b):
-	# 		if a>b : return ' 3XL'
-	# 		if a<b : return ' 3XS'
-	# 		return ' == '
-	# 	lat_min,lon_min,lat_max,lon_max=geo_box(latitude,longitude,box_side)
-	# 	index=S.find_latitude(lat_min)
-	# 	harvest=[]
-	# 	def osm_request():
-	# 		"""
-	# 		Do a request to OpenStreetMap if there is no stored data for this
-	# 		point in the box.
-	# 		:return: response of "osm_query()"
-	# 		"""
-	# 		bbox=make_bbox_str(lat_min,lon_min,lat_max,lon_max)
-	# 		nodes=make_tag_nodes('nwr')
-	# 		data=osm_query(bbox+nodes)
-	# 		#JDUMP(data)
-	# 		return data
-	#
-	# 	def search():
-	# 		"""
-	# 		Look for tags in the box [lat_min,lon_min,lat_max,lon_max] and store
-	# 		:return:
-	# 		"""
-	# 		nonlocal harvest,index
-	# 		i=index-1
-	# 		while True:
-	# 			i+=1
-	# 			lat=S[i].lat
-	# 			#DEBUGPRINT(f'{lat=} {ISBIG(lat,lat_max)} {lat_max=}')
-	# 			if lat > lat_max:
-	# 				break
-	# 			lon=S[i].lon
-	# 			if (lon > lon_min) and (lon < lon_max):
-	# 				#DEBUGPRINT(f'harvest.append({str(S[i])})')
-	# 				harvest.append(S[i])
-	# 				continue
-	#
-	# 	data_requested=False
-	# 	while True:
-	# 		search()
-	# 		if (harvest and  ('admin_node_count' in harvest)) or data_requested:
-	# 			break
-	# 		if not harvest:
-	# 			data=osm_request()
-	# 			S.absorb_data(data,latitude,longitude)
-	# 		S.request_admin(latitude,longitude)
-	# 		data_requested=True
-	# 	return harvest
 
 def adopt_osm_element_for_osmnode(osm_element,lat,lon):
 	"""
