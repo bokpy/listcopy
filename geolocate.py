@@ -12,7 +12,7 @@ from listutils import meters_per_degree
 # makes it easy to find debug stuff to remove
 DEBUGEXIT=exit
 DEBUGPRINT=print
-DEBUGEXIT=exit
+
 def JDUMP(dct,title=''):
 	jd=json.dumps(dct,indent=4)
 	if(title): print(title)
@@ -30,23 +30,25 @@ BOXSIDE=20.0 # default bbox size in meters
 def pc(coord:float)->str:
 	return f'{coord:011.7f}'
 
+
 def haversine(lat1, lon1, lat2, lon2):
-    """
-    Calculate the great circle distance in meters between two points
-    on the earth (specified in decimal degrees)
-    Grabed from the internet and changed lat lon order to keep the latitude longitude order in
-    function parameters
-    """
-    # convert decimal degrees to radians
-    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
-    # haversine formula
-    dlon = lon2 - lon1
-    dlat = lat2 - lat1
-    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
-    c = 2 * asin(sqrt(a))
-    # r = 6371 # Radius of earth in kilometers. Use 3956 for miles. Determines return value units.
-    r = 6378137.0 # Radius of earth in meters.
-    return c * r
+	"""
+	Calculate the great circle distance in meters between two points
+	on the earth (specified in decimal degrees)
+	Grabed from the internet and changed lat lon order to keep the latitude longitude order in
+	function parameters
+	"""
+	# convert decimal degrees to radians
+	lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+	# haversine formula
+	dlon = lon2 - lon1
+	dlat = lat2 - lat1
+	a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
+	c = 2 * asin(sqrt(a))
+	# r = 6371 # Radius of earth in kilometers. Use 3956 for miles. Determines return value units.
+	r = 6378137.0  # Radius of earth in meters.
+	return c * r
+
 
 HTTP_STATUS_CODES = {
     200: "OK",
@@ -186,7 +188,7 @@ def request_around_tags(latitude,longitude,*args,radius=500.0):
 	for tag in args:
 		query+=f'node["{tag}"](around:{radius},{latitude},{longitude});\n'
 	query+=f');\nout body;\n'
-	DEBUGPRINT(query)
+	#DEBUGPRINT(query)
 	response =  requests.get(OVERPASS_URL,{'data':query})
 	if not response:
 		return {}
@@ -256,6 +258,7 @@ class OsmTurbo(list):
 	def find_latitude(S,lat):
 		h=len(S)
 		l=0
+		#m=(l+h)//2
 		# STOPPER=100
 		while l < h:
 			# STOPPER-=1
@@ -263,7 +266,7 @@ class OsmTurbo(list):
 			# 	raise RuntimeError ('STOPPER Stop')
 			m=(l+h)//2
 			m_val=S[m].lat
-			#print (f'{l:2} {m:2} {h:2}')
+			#DEBUGPRINT (f'{l:2} {m:2} {h:2}')
 			if m_val < lat:
 				l=m+1
 			elif m_val > lat:
@@ -379,17 +382,17 @@ class OsmTurbo(list):
 		:return: yielded OsmNode's
 		"""
 		lat_min,lon_min,lat_max,lon_max=geo_box(latitude,longitude,box_side)
-		DEBUGPRINT(f'{(lat_min,latitude,lat_max,lon_min,longitude,lon_max)}')
-		index_min=S.find_latitude(lat_min)
-		index_max=S.find_latitude(lat_max)
-		DEBUGPRINT(f'lat_min {repr(S[index_min])}')
-		DEBUGPRINT(f'lat_max {repr(S[index_max])}')
-		if S[index_min].lat>latitude:
-			raise RuntimeError (f'{S[index_max].lat} > {latitude}')
-		if latitude > S[index_max].lat:
-			raise RuntimeError (f'{latitude} > {S[index_max].lat}')
+		DEBUGPRINT(f'{lat_min=:7.4f},{latitude=:7.4f},{lat_max=:7.4f},{lon_min=:7.4f},{longitude=:7.4f},{lon_max=:7.4f}')
+		# DEBUGPRINT(f'lat_min {repr(S[index_min])}')
+		# DEBUGPRINT(f'lat_max {repr(S[index_max])}')
+		# if S[index_min].lat > latitude:
+		# 	raise RuntimeError (f'{S[index_max].lat} > {latitude}')
+		# if latitude > S[index_max].lat:
+		# 	raise RuntimeError (f'{latitude} > {S[index_max].lat}')
 		pop=2
 		while pop > 0:
+			index_min = S.find_latitude(lat_min)
+			index_max = S.find_latitude(lat_max)
 			for i in range(index_min,index_max):
 			#while S[i].lat < 100.0:
 				lon=S[i].lon

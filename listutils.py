@@ -10,94 +10,6 @@ import re
 import traceback
 from time import sleep
 
-NL_MAAND= {
-    "Jan": "Jan",
-    "Feb": "Feb",
-    "Mar": "Mar",
-    "Apr": "Apr",
-    "May": "Mei",
-    "Jun": "Jun",
-    "Jul": "Jul",
-    "Aug": "Aug",
-    "Sep": "Sep",
-    "Oct": "Okt",
-    "Nov": "Nov",
-    "Dec": "Dec"
-}
-NL_DAG={
-    "Mon": "Ma",
-    "Tue": "Di",
-    "Wed": "Wo",
-    "Thu": "Do",
-    "Fri": "Vr",
-    "Sat": "Za",
-    "Sun": "Zo"
-}
-#FRIS_MONTHS = {
-#     'Jan': 'Jan',
-#     'Feb': 'Feb',
-#     'Mar': 'Mrt',
-#     'Apr': 'Apr',
-#     'May': 'Mai',
-#     'Jun': 'Jun',
-#     'Jul': 'Jul',
-#     'Aug': 'Aug',
-#     'Sep': 'Sep',
-#     'Oct': 'Okt',
-#     'Nov': 'Nov',
-#     'Dec': 'Des'
-# }
-FRIS_MONTHS = {
-'Jan':'jannewaris',
-'Feb':'febrewaris',
-'Mar':'maart',
-'Apr':'april',
-'May':'maaie',
-'Jun':'juny',
-'Jul':'july',
-'Aug':'augustus',
-'Sep':'septimber',
-'Oct':'oktober',
-'Nov':'novimber',
-'Dec':'desimber'
-}
-FRIS_DAYS = {
-    'Mon': 'moandei',
-    'Tue': 'tiisdei',
-    'Wed': 'woansdei',
-    'Thu': 'tongersdei',
-    'Fri': 'freed',
-    'Sat': 'sneon',
-    'Sun': 'snein'
-}
-ENG_DAYS = {
-	'Mon': "Monday",
-	'Tue': "Tuesday",
-	'Wed': "Wednesday",
-	'Thu': "Thursday",
-	'Fri': "Friday",
-	'Sat': "Saturday",
-	'Sun': "Sunday"
-}
-ENG_MONTHS = {
-    "Jan": "January",
-    "Feb": "February",
-    "Mar": "March",
-    "Apr": "April",
-    "May": "May",
-    "Jun": "June",
-    "Jul": "July",
-    "Aug": "August",
-    "Sep": "September",
-    "Oct": "October",
-    "Nov": "November",
-    "Dec": "December"
-}
-LANGUAGES={'nl':(NL_DAG,NL_MAAND),
-           'fy':(FRIS_DAYS,FRIS_MONTHS),
-           'eng':(ENG_DAYS,ENG_MONTHS)
-           }
-
 DATA_BEGIN_MARKER='-------->Data_Begin_Marker-------->'
 DATA_END_MARKER='<--------Data_End_Marker<--------'
 CONTINUE='<CONTINUE>'
@@ -106,27 +18,21 @@ FILTEROUT=['/Cookies/','/Microsoft/','/Windows/','/Cache','#.*#$','\.lnk$',
            '\.ini$','/NTUSER.DAT',]
 DEBUGPRINT=print
 
-# class DequeStack(deque):
-# 	def __init__(S):
-# 		super(deque, S).__init__()
-#
-# 	def push(S,val):
-# 		S.append(val)
-#
-# 	def peek(S):
-# 		return S[0]
-
-# def pathseeker_help():
-# 	print(help_text)
+# def month_str(month,lang):
+# 	m=int(month)
+# 	if lang not in LANGUAGES:
+# 		return f'{month} ? {lang}'
+# 	months = LANGUAGES[lang][1]
+# 	return months[table
 
 class LocalTimeString:
 	
 	def __init__(self,lang='eng'):
-		self.set_language(lang)
+		#self.set_language(lang)
 		self.set_time(time.time())
 		
-	def set_language(self,lang):
-		self.day_names,self.month_names=LANGUAGES[lang]
+	# def set_language(self,lang):
+	# 	self.day_names,self.month_names=LANGUAGES[lang]
 		
 	def set_time(self,epoch_time):
 		ct = time.ctime(epoch_time)
@@ -195,6 +101,11 @@ def end_slash(directory:str)->str:
 	if directory[-1:]=='/':
 		return directory
 	return directory + '/'
+
+def no_end_slash(directory:str)->str:
+	if directory[-1:]=='/':
+		return directory[:-1]
+	return directory
 	
 # "2024:09:03 10:51:43+02:00" -> epoch time
 TIMESTAMP_RE=re.compile(r'(\d+):(\d+):(\d+) (\d+):(\d+):(\d+).*')
@@ -205,27 +116,6 @@ def timestamp2epouch(tmstmp):
 	tsg=ts.group
 	dat = dt.datetime(int(tsg(1)),int(tsg(2)),int(tsg(3)),int(tsg(4)),int(tsg(5)))
 	return time.mktime(dat.timetuple())
-
-# # Original byte string
-# original_bytes = b"Hello, World!"
-#
-# # Part to replace
-# to_replace = b"World"
-#
-# # New part to insert
-# new_part = b"Python"
-#
-# # Find the start and end index of the part to replace
-# start_index = original_bytes.find(to_replace)
-# end_index = start_index + len(to_replace)
-#
-# # Replace the part
-# if start_index != -1:  # Check if the part exists
-#     modified_bytes = original_bytes[:start_index] + new_part + original_bytes[end_index:]
-# else:
-#     modified_bytes = original_bytes  # No change if part not found
-#
-# print(modified_bytes)  # Output: b'Hello, Python!'
 
 def unicode_check(ford:bytes)->str:
 	"""
@@ -301,186 +191,6 @@ def directory_walker(directory,rename_unicode=False):
 						yield (cur_dir,ret )
 				else:
 					yield (cur_dir,entry)
-
-# class InputFileIterator:
-# 	def __init__(self,consigment,mission):
-# 		self.mission=mission
-# 		mission['source_root_path']=''
-# 		input_file   = consigment['input']
-# 		self.dest_dir= consigment['dest_path']
-# 		self.ok_file = consigment['ok_file']
-# 		try:
-# 			with open(input_file,'r') as f:
-# 				self.filelist=f.readlines()
-# 		except IOError as e:
-# 			print(f'InputFileIterator could not open "{input_file}"')
-# 			print(f'error {e.errno} "{e.strerr}"')
-# 			exit(e.errno)
-# 		self.filelist_len = len(self.filelist)
-# 		self.strip_newline()
-# 		skip=self.read_progress()
-# 		self.index=-1
-# 		self._go_to_start(skip)
-#
-# 	def __iter__(self):
-# 		return self
-#
-# 	def __next__(self):
-# 		if not self._kick_index():
-# 			self.index-=1
-# 			DEBUGPRINT(f'__next__ Should not happen!!!')
-# 			return
-#
-# 		if self.current()==DATA_END_MARKER:
-# 			self.mission['source_root_path']=''
-# 			self._kick_index()
-# 		#DEBUGPRINT(f'{self.root_path=}')
-# 		if self.mission['source_root_path']:
-# 			self.root_path_length=len(self.mission['source_root_path'])
-# 			#DEBUGPRINT(f'{self.root_path}')
-# 			#return self.current(),self.current()[self.root_path_length:]
-# 			return self.current(),self.root_path_length
-#
-# 	def __str__(self):
-# 		return self.current()[self.root_path_length:]
-#
-# 	def find_begin(self)->(int,str):
-# 		i=-1
-# 		while i < self.filelist_len:
-# 			i += 1
-# 			if self.filelist[i]==DATA_BEGIN_MARKER:
-# 				#DEBUGPRINT(f'{i+2} "{self.filelist[i+1]}"')
-# 				return i+2,self.filelist[i+1]
-#
-# 	def find_end_after_index(self,index)->int:
-# 		while self.filelist[index] != DATA_END_MARKER:
-# 			index+=1
-# 			if index >= self.filelist_len:
-# 				return 0
-# 		return index-1
-#
-# 	def random_pic(self,num):
-# 		start,root_dir=self.find_begin()
-# 		end=self.find_end_after_index(start)
-# 		items=end-start
-# 		if num > items:
-# 			num=items
-# 		basked=[x for x in range(start,end+1)]
-#
-# 		print(f'{DATA_BEGIN_MARKER}')
-# 		print(f'{root_dir}')
-# 		while num>0:
-# 			i=random.randint(0,len(basked)-1)
-# 			print (self.filelist[i])
-# 			del(basked[i])
-# 			num-=1
-# 		print(f'{DATA_END_MARKER}')
-#
-# 	def _kick_index(self):
-# 		self.index+=1
-# 		if self.index < self.filelist_len:
-# 			return True
-# 		self.index-=1 # stay put and keep repeating StopIteration
-# 		#DEBUGPRINT('FIRE STOPITERATION FIRE STOPITERATION FIRE STOPITERATION FIRE STOPITERATION FIRE STOPITERATION ')
-# 		raise StopIteration
-#
-# 	def _data_begin_marker_found(self):
-# 		"""
-# 		The next line is the source path root.
-# 		store it and the length for whom that needs it
-# 		:return:
-# 		"""
-# 		self._kick_index()
-# 		root_path = self.current()
-# 		self.mission['source_root_path'] = root_path
-# 		self.root_path_length=len(root_path )
-#
-# 	def _go_to_start(self,skip:int)->None:
-# 		"""
-# 		Find where the copying was interrupted and determine the root_path
-# 		of the listed files at that point in the listing.
-# 		:param skip: number of files already copied before.
-# 		:return: None
-# 		"""
-# 		while self.index < skip:
-# 			if self.current() == DATA_BEGIN_MARKER: # read self.root_path
-# 				self._data_begin_marker_found()
-# 			if self.current() == DATA_END_MARKER: # root_path no longer valid
-# 				self.mission['source_root_path']=''
-# 				self.root_path_length=0
-# 			self._kick_index()
-# 		while not self.mission['source_root_path']:
-# 			# if we didn't get a valid path where we are now
-# 			# read until we find it or till end of the list
-# 			if self.current() == DATA_BEGIN_MARKER:
-# 				self._data_begin_marker_found()
-# 				self._kick_index()
-# 				return
-# 			try:
-# 				self._kick_index()
-# 			except StopIteration:
-# 				return
-#
-# 	def set_language(self,language): # Virtual
-# 		pass
-#
-# 	def load_info(self,file:str): # Virtual
-# 		pass
-#
-# 	def dump_info(self,file:str): # Virtual
-# 		pass
-#
-# 	# def destination(self)->str:
-# 	# 	dst=self.current()
-# 	# 	dst=dst[self.root_path_length:]
-#
-# 	def current(self):
-# 		return self.filelist[self.index]
-#
-# 	def source_path_length(self):
-# 		return self.root_path_length
-#
-# 	def save_progress(self,destination_root_path):
-# 		try:
-# 			with open(self.ok_file,'w') as f:
-# 				f.write(f'{self.index}\n{destination_root_path}\n{self.current()}\n')
-# 		except OSError as e:
-# 			print(f'Writing "{self.ok_file}" Failed.')
-# 			print(f'{e.errno} {e.strerror}')
-# 			exit (e.errno)
-#
-# 	def read_progress(self)->int:
-# 		if not os.path.exists(self.ok_file): # new session start from the beginning
-# 			return 0
-# 		with open(self.ok_file,'r') as f:
-# 			data=f.read()
-# 		if not data:
-# 			ic(data)
-# 			print(f'"{self.ok_file}" was empty')
-# 			return 0
-# 		data=data.split('\n')
-# 		self.skip=int(data[0])
-# 		if (self.skip<0):
-# 			print(f'''Looks like all work was done.
-# files where copied to "{self.dest_dir}"
-# rm "{self.ok_file}" to do it again.
-# ''')
-# 			exit(0)
-# 		if self.dest_dir == CONTINUE[:-1]:
-# 			self.dest_dir=data[1]
-# 		check_file = data[2]
-# 		if check_file == self.filelist[self.skip]:
-# 			return self.skip
-# 		print(f'InputFileIterator:read_progress')
-# 		print(f'index at {self.skip} does point to an other file as before.')
-# 		print(f'Was :"{check_file}"')
-# 		print(f'Is  :"{self.filelist[self.skip]}"')
-# 		exit(1)
-#
-# 	def strip_newline(self):
-# 		fl=self.filelist
-# 		for i in range(len(fl)):
-# 			fl[i]=fl[i][:-1]
 
 def kilo_mega(strval)->int:
 	"""

@@ -7,13 +7,14 @@ import sys
 import json
 import time
 import signal
-
-from geolocate import OsmNode, OsmTurbo
 import listutils as lu
+
+from geolocate    import OsmNode, OsmTurbo
 from filelistiter import InputFileIterator
-from pathseeker import PathSeeker
-from pathsyntax import syntax_text
-from metadata import JDUMP
+from pathseeker   import PathSeeker
+from replicator   import Replicator
+from pathsyntax   import syntax_text
+from metadata     import JDUMP
 import metadata as meta
 
 #DEBUGRETURN=return  return is not a function. This stops the script here.
@@ -112,10 +113,11 @@ parser.add_argument('-j', '--json',
 						 action='store'
                     )
 #l l l l l l l l l l l l l l l l
-langs='","'.join(lu.LANGUAGES.keys())
+#langs='","'.join(lu.LANGUAGES.keys())
+langs='Not Implemented'
 parser.add_argument('-l', '--language',
                     help=f'Language for days and months "{langs}".',
-                    choices=lu.LANGUAGES.keys(),
+                    #choices=lu.LANGUAGES.keys(),
                     nargs='?',
                     metavar='',
                     default='eng',
@@ -235,15 +237,17 @@ def process_filelisting(consignment):
 	# else:
 	# 	consignment['gps_info'] = os.path.expanduser('~/.osm.data')
 	# consignment['current_file'] = Noneglobal destination_path
-	mission={}
-	listing = InputFileIterator(consignment,mission)
-	# DEBUGEXIT(0)
-	target_fs_properties(consignment) # test and store the capabilities of the device where the destination directory lives
-	osmturbo=OsmTurbo(consignment)
-	count=0
+	mission    = {}
+	listing    = InputFileIterator(consignment,mission)
+	replicator = Replicator(consignment)
+	osmturbo   = OsmTurbo(consignment)
+	count      = 0
 	#for src_full,source_path_length in listing:
 	for src_full in listing.file_reaper():
-		print('<'*35+'-'*40+'>'*35)
+		#time.sleep(1)
+		os.system('cls||clear')
+		#DEBUGPRINT(chr(27) + "[2J")
+		DEBUGPRINT('<'*35+'-'*40+'>'*35)
 		DEBUGPRINT(f'"{src_full}"')
 		#mission['source_file']=src_full
 		#mission['dest_root_path']=consignment['dest_path']
@@ -252,7 +256,8 @@ def process_filelisting(consignment):
 		#DEBUGEXIT(483)
 		pathseeker = PathSeeker(consignment)
 		pathseeker.compose_path(mission)
-		JDUMP(mission,'mission')
+		DEBUGPRINT(f'Dest "{mission["dest_file"]}"')
+		#JDUMP(mission,'mission')
 		if 'dry_run' in consignment:
 			if 'store_labels' in consignment:
 				keys=[k for k in pathseeker.knowledege().keys()]
@@ -262,24 +267,22 @@ def process_filelisting(consignment):
 			print_json(mission,title='mission')
 			mission.clear()
 			continue
-		
-		#lu.assure_dir(os.path.dirname(dest))
-		mission['destination']=os.path.join(consignment['dest_path']+mission["dest_file"])
-		mission['verbose']=consignment['verbose']
-		write_chunks_to_file(mission)
-		#time.sleep(1)
-		listing.save_progress(mission)
+		mission['destination'] = os.path.join(consignment['dest_path']+mission["dest_file"])
+		mission['verbose']     = consignment['verbose']
+		replicator.write_chunks_to_file(mission)
 		count+=1
+		listing.save_completed(consignment['dest_path'])
 		mission.clear()
-	if 'store_labels' in consignment:
-		for label in consignment['store_labels']:
-			print(f'{label}')
 
-	if args.gps_info:
-		listing.dump_info(args.gps_info)
+	# if 'store_labels' in consignment:
+	# 	for label in consignment['store_labels']:
+	# 		print(f'{label}')
 
-	def destination(self):
-		return self.destination_file
+	# if args.gps_info:
+	# 	listing.dump_info(args.gps_info)
+
+	# def destination(self):
+	# 	return self.destination_file
 		
 def track_and_trace():
 	if args.post_it:
@@ -323,15 +326,13 @@ def main() -> None:
 
 	consignment['verbose']=args.verbose
 
-	consignment['dest_path'] = lu.end_slash(args.destination)
+	consignment['dest_path'] = lu.no_end_slash(args.destination)
 	consignment['language'] = args.language
 	consignment['input'] = args.input
-	if args.post_it:
-		consignment['ok_file'] = args.post_it + '.ok'
-		consignment['bad_file'] = args.post_it + '.bad'
-	else:
-		consignment['ok_file'] = os.path.expanduser('~/.listcopy.ok')
-		consignment['bad_file'] = os.path.expanduser('~/.listcopy.bad')
+	good_bad_stem=os.path.expanduser(args.post_it)
+	consignment['ok_file']  = good_bad_stem + '.ok'
+	consignment['bad_file'] = good_bad_stem + '.bad'
+
 	if args.gps_info:
 		consignment['gps_info'] = args.gps_info
 	else:
@@ -343,7 +344,6 @@ def main() -> None:
 	consignment['maxchunk']      = 1024*1024*16
 	consignment['fsmaxfilesize'] = 1024*1024
 	consignment['fsblocksize']   = 1024
-	consignment['chunk_growing'] = False
 	if args.labels:
 		consignment['store_labels']  = set()
 	# pathseeker=PathSeeker(args.substitute,args.gps_info,args.language)

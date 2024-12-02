@@ -32,6 +32,7 @@ class InputFileIterator:
 		valid=False
 		seen=0
 		while S.index < S.filelist_len:
+			DEBUGPRINT(f'{seen=} {S.completed=}')
 			S.index+=1
 			if S.at_index() == DATA_BEGIN_MARKER:
 				S.index+=1
@@ -44,8 +45,8 @@ class InputFileIterator:
 			if valid:
 				seen+=1
 				if seen > S.completed:
-					S.mission['source_file']=S.at_index()
-					S.mission['source_root_path']=S.root_path
+					S.mission['source_file']      = S.at_index()
+					S.mission['source_root_path'] = S.root_path
 					yield S.at_index()
 					S.completed+=1
 
@@ -72,10 +73,10 @@ class InputFileIterator:
 	def at_index(self):
 		return self.filelist[self.index]
 
-	def save_completed(self, destination_root_path):
+	def save_completed(self,destination_root_path):
 		try:
 			with open(self.ok_file, 'w') as f:
-				f.write(f'{self.completed}\n{self.mission["dest_root_path"]}\n{self.at_index()}\n')
+				f.write(f'{self.completed+1}\n{destination_root_path}\n{self.at_index()}\n')
 		except OSError as e:
 			print(f'Writing "{self.ok_file}" Failed.')
 			print(f'{e.errno} {e.strerror}')

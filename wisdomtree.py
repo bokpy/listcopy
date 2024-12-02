@@ -20,26 +20,6 @@ def exiftool_tags_write(filepath,tags_dict):
 	"""
 
 	tags=[f'-{key}+={value}' for key,value in tags_dict.items()]
-	DEBUGPRINT(f'{tags=}')
-
-	# tags={}
-	# tags.update(tags_dict)
-	# tags["SourceFile"]=filepath
-	# JDUMP(tags,'exiftool_tags_write')
-	# tags_json = json.dumps(tags)
-	# import subprocess
-	#
-	# # Define the command and input data
-	# command = ["your_command", "arg1", "arg2"]
-	# input_data = "Your input data\n"
-	#
-	# # Run the subprocess with input
-	# result = subprocess.run(command, input=input_data, text=True, capture_output=True)
-	#
-	# # Output results
-	# print("Return Code:", result.returncode)
-	# print("Standard Output:", result.stdout)
-	# print("Standard Error:", result.stderr)
 
 	try:
 		result = subprocess.run(
@@ -54,32 +34,6 @@ def exiftool_tags_write(filepath,tags_dict):
 		print("ExifTool Output:", result.stdout)
 	except subprocess.CalledProcessError as e:
 		print("exiftool_tags_write Error:", e.stderr)
-
-
-	# exiftool -MyCustomTag="MyValue" image.jpg
-	# exiftool -Comment="MyCustomTag=MyValue" image.png
-	# exiftool -MyCustomTag="MyValue" image.tiff
-	# convert image.gif -set comment "MyCustomTag=MyValue" output.gif
-	#exiftool -XMP:MyCustomTag="MyValue" image.webp
-	# exiftool -json=tags.json image.jpg
-	# {
-#   "SourceFile": "image.jpg",
-#   "Title": "A beautiful sunset",
-#   "Author": "John Doe",
-#   "Keywords": ["sunset", "nature", "vacation"]
-# }
-	#
-	# cat tags.json | exiftool -json=- image.jpg
-	#
-    # cat tags.json: Outputs the JSON content.
-    # -json=-: Tells exiftool to read the JSON from standard input (-).
-    # image.jpg: Specifies the target JPG file to apply the tags.
-#
-# cat tags.json | exiftool -json=-
-
-#This applies metadata to all the files specified in the SourceFile field of the JSON.
-
-	pass
 
 def service_call(*args,splitlines=True):
 	try:
@@ -148,12 +102,13 @@ def call_exiftool(filepath):
 	ret['month']=str(early_date[1])
 	ret['day']  =str(early_date[2])
 	return ret
-
+fy_months_long  = [	'jannewaris','febrewaris','maart','april','maaie','juny','july','augustus','septimber','oktober','novimber','desimber']
 class TreeOfKnowledge(dict):
 	# noinspection PyMethodParameters
 	def __init__(S,consignment:dict):
 		dict.__init__(S)
 		S.osm=consignment['OsmTurbo']
+		S.lang=consignment['language']
 
 	def reset(S,mission:dict):
 		for key in 'Exiftool','Brainz':
@@ -174,10 +129,27 @@ class TreeOfKnowledge(dict):
 		S['Exiftool']  = {}
 		get_mime_etc(sf,S['Exiftool'])
 		S.Exif=S['Exiftool']
+		S.add_date_labels_to_exif()
 		low_exif={}
 		for key,value in S.Exif.items():
 			low_exif[key.lower()]=value
 		S.Exif.update(low_exif)
+
+	def add_date_labels_to_exif(S):
+		# 2024:09:03 10:51:43"
+		date_time=''
+		if "DateTimeOriginal" in S.Exif:
+			date_time=S.Exif["DateTimeOriginal"]
+		elif "CreateDate" in S.Exif:
+			date_time=S.Exif["CreateDate"]
+		if not date_time:
+			return
+		S.Exif['year' ] = date_time[:4]
+		S.Exif['month'] = date_time[5:7]
+		S.Exif['monthstr'] = fy_months_long[int(S.Exif['month'])-1]
+		S.Exif['day']   = date_time[8:10]
+		S.Exif['time']  = date_time[-8:]
+
 
 	def show_exif_data(S):
 		for key in S.Exif:
@@ -252,7 +224,7 @@ class TreeOfKnowledge(dict):
 				if latitude != None: # no coordinates no luck
 					if not 'OsmData' in S:
 						S['OsmData']=S.osm.tags(latitude,longitude,100)
-						JDUMP(S['OsmData'],"S['OsmData']")
+						#JDUMP(S['OsmData'],"S['OsmData']")
 					#JDUMP(S.Exif,'S.Exif')
 					if label in S['OsmData']:
 						value=S['OsmData'][label]
@@ -281,7 +253,7 @@ class TreeOfKnowledge(dict):
 			lat_asc,lon_asc = S.Exif["GPSPosition"].split(',')
 			S.Exif['lat'] = gps_alpha_to_float(lat_asc)
 			S.Exif['lon'] = gps_alpha_to_float(lon_asc)
-		DEBUGPRINT(f"get_coordinates calculated {S.Exif['lat']},{S.Exif['lon']}")
+		#DEBUGPRINT(f"get_coordinates calculated {S.Exif['lat']},{S.Exif['lon']}")
 		return S.Exif['lat'],S.Exif['lon']
 
 def main() -> None:
