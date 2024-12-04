@@ -369,6 +369,31 @@ def upcase_initial(string):
 		return string
 	return string[0].upper() + string[1:]
 
+class Base62:
+	digits=['0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+	        'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+	        'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+	digs=62
+
+	def __init__(S,number=0):
+		S.number=number
+
+	def __int__(S):
+		return S.number
+
+	def plus(S,step=1):
+		S.number+=step
+
+	def __str__(S):
+		value=S.number
+		ret=''
+		while True:
+			ret=S.digits[value%S.digs]+ret
+			value//=S.digs
+			if value <= 0:
+				break
+		return ret
+
 def main():
 	test_meters_per_degree()
 

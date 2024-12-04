@@ -142,6 +142,13 @@ class TreeOfKnowledge(dict):
 			date_time=S.Exif["DateTimeOriginal"]
 		elif "CreateDate" in S.Exif:
 			date_time=S.Exif["CreateDate"]
+		elif "TrackCreateDate" in S.Exif:
+			date_time=S.Exif["TrackCreateDate"]
+		elif "VolumeCreateDate" in S.Exif:
+			date_time=S.Exif["VolumeCreateDate"]
+		elif "VolumeModifyDate" in S.Exif:
+			date_time=S.Exif["VolumeModifyDate"]
+
 		if not date_time:
 			return
 		S.Exif['year' ] = date_time[:4]

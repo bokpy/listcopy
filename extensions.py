@@ -936,10 +936,10 @@ class MagicMime:
 		diagnose = subprocess.check_output(["file","-i", self.path])
 		self.diagnose = lu.bytes_to_utf8(diagnose) # make sure diagnose a str
 		mime=self.mime_tag()
-		DEBUGPRINT(f'{mime=}')
+		#DEBUGPRINT(f'{mime=}')
 		for want in self.wanted:
 			if want in mime:
-				DEBUGPRINT(f'{want} in {mime}')
+				#DEBUGPRINT(f'{want} in {mime}')
 				return True
 		return False
 		

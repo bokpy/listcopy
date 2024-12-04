@@ -21,6 +21,10 @@ import metadata as meta
 DEBUGPRINT=print
 DEBUGEXIT=exit
 
+def eat(*args):
+	pass
+verbose=eat # verbose = print for verbose
+
 processed_file='/No Such File ' + time.ctime() # for signal handler to fail
 
 #skiplist=None
@@ -237,6 +241,8 @@ def process_filelisting(consignment):
 	# else:
 	# 	consignment['gps_info'] = os.path.expanduser('~/.osm.data')
 	# consignment['current_file'] = Noneglobal destination_path
+	global verbose,eat
+	verbose    = [eat,print][consignment['verbose']]
 	mission    = {}
 	listing    = InputFileIterator(consignment,mission)
 	replicator = Replicator(consignment)
@@ -245,10 +251,10 @@ def process_filelisting(consignment):
 	#for src_full,source_path_length in listing:
 	for src_full in listing.file_reaper():
 		#time.sleep(1)
-		os.system('cls||clear')
+		#os.system('cls||clear')
 		#DEBUGPRINT(chr(27) + "[2J")
-		DEBUGPRINT('<'*35+'-'*40+'>'*35)
-		DEBUGPRINT(f'"{src_full}"')
+		verbose('<'*35+'-'*40+'>'*35)
+		verbose(f'"{src_full}"')
 		#mission['source_file']=src_full
 		#mission['dest_root_path']=consignment['dest_path']
 		#mission['source_root_path']=src_full[:source_path_length]
@@ -256,7 +262,7 @@ def process_filelisting(consignment):
 		#DEBUGEXIT(483)
 		pathseeker = PathSeeker(consignment)
 		pathseeker.compose_path(mission)
-		DEBUGPRINT(f'Dest "{mission["dest_file"]}"')
+		verbose(f'Dest "{mission["dest_file"]}"')
 		#JDUMP(mission,'mission')
 		if 'dry_run' in consignment:
 			if 'store_labels' in consignment:
@@ -274,12 +280,21 @@ def process_filelisting(consignment):
 		listing.save_completed(consignment['dest_path'])
 		mission.clear()
 
-	# if 'store_labels' in consignment:
-	# 	for label in consignment['store_labels']:
-	# 		print(f'{label}')
+	if 'store_labels' in consignment:
+		for label in consignment['store_labels']:
+			print(f'{label}')
 
-	# if args.gps_info:
-	# 	listing.dump_info(args.gps_info)
+	if args.gps_info:
+		listing.dump_info(args.gps_info)
+
+	print(f'Done copying {count} files')
+	ok = consignment['ok_file']
+	try:
+		os.remove(ok)
+		print(f'"{ok}" removed.')
+	except OSError as e:
+		print(f'Failed to remove "{ok}".')
+		print(f'{e}')
 
 	# def destination(self):
 	# 	return self.destination_file

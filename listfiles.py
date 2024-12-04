@@ -105,15 +105,15 @@ parser.add_argument('--show-mime',
 args = parser.parse_args()
 
 class FileListing:
-    initiated=False
-    excl_re=None
-    incl_re=None
-    ext_select =None
-    check_size=False
-    bigger =1e8
-    smaller=0
-    magic=None
-    tumble=lu.Tumbler()
+    initiated  = False
+    excl_re    = None
+    incl_re    = None
+    ext_select = None
+    check_size = False
+    bigger     = 1e8
+    smaller    = 0
+    magic      = None
+    tumble     = lu.Tumbler()
     
     def __init__(self,args,directory,output_file):
         """
@@ -121,9 +121,9 @@ class FileListing:
         :param directory: Directory to scan for criteria matching files.
         :param output_file: Open fd to write the results to.
         """
-        self.catalog=directory
-        self.outp   =output_file
-        self.args   = args
+        self.catalog = directory
+        self.outp    = output_file
+        self.args    = args
         if not self.initiated:
             self.make_filters()
             self.initiated=True
@@ -207,7 +207,7 @@ class FileListing:
                 path = cur.path.decode(encoding ='utf-8', errors = 'ignore')
             except UnicodeDecodeError as e:
                 print(f'UnicodeDecodeError {e}')
-                print(f'May be "unicode_broom.py" can solve the problem.')
+                print(f'Maybe "unicode_broom.py" can solve the problem.')
                 print(f'Bee careful with your data always backup in time.')
                 exit(1)
         else:
@@ -244,16 +244,19 @@ class FileListing:
         
         while not empty():
             cur_dir=pop()
-            for entry in os.scandir(cur_dir):
-                if entry.is_symlink():
-                    continue
-                if entry.is_dir():
-                    #DEBUGPRINT(f'Push: "{entry.path}"')
-                    push(entry.path)
-                    continue
-                self.current_entry=entry
-                if self.filter():
-                    self.write() # writes self.string_path
+            try:
+                for entry in os.scandir(cur_dir):
+                    if entry.is_symlink():
+                        continue
+                    if entry.is_dir():
+                        #DEBUGPRINT(f'Push: "{entry.path}"')
+                        push(entry.path)
+                        continue
+                    self.current_entry=entry
+                    if self.filter():
+                        self.write() # writes self.string_path
+            except PermissionError as e:
+                print (f'"{cur_dir}" {e}')
 
  
 def main() -> None:

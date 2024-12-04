@@ -12,7 +12,16 @@
     <option name="rewriteBookmarkType" value="true" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="7d47a416-3b1c-466e-a851-3e5a458f6704" name="Changes" comment="" />
+    <list default="true" id="7d47a416-3b1c-466e-a851-3e5a458f6704" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/daintyfront.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/extensions.py" beforeDir="false" afterPath="$PROJECT_DIR$/extensions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/geolocate.py" beforeDir="false" afterPath="$PROJECT_DIR$/geolocate.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/listcopy.py" beforeDir="false" afterPath="$PROJECT_DIR$/listcopy.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/listfiles.py" beforeDir="false" afterPath="$PROJECT_DIR$/listfiles.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/listutils.py" beforeDir="false" afterPath="$PROJECT_DIR$/listutils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/replicator.py" beforeDir="false" afterPath="$PROJECT_DIR$/replicator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/wisdomtree.py" beforeDir="false" afterPath="$PROJECT_DIR$/wisdomtree.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -93,7 +102,7 @@
     "Python.update_extensions.executor": "Run",
     "Python.wisdomtree.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "24e87305",
+    "git-widget-placeholder": "28c8fa42",
     "last_opened_file_path": "/home/bob/.osm.data",
     "run.code.analysis.last.selected.profile": "aDefault",
     "settings.editor.selected.configurable": "reference.settingsdialog.IDE.editor.colors.Python",
@@ -249,7 +258,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-python-sdk-d7ad00fb9fc3-c546a90a8094-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-242.23726.102" />
+        <option value="bundled-python-sdk-6a3326d57233-c546a90a8094-com.jetbrains.pycharm.community.sharedIndexes.bundled-PC-242.24807.21" />
       </set>
     </attachedChunks>
   </component>

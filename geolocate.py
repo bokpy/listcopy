@@ -286,6 +286,8 @@ class OsmTurbo(list):
 			lines = f.readlines()
 		for line in lines:
 			node=eval_line_to_osmnode(line)
+			if node:
+				S.append(node)
 			# try:
 			# 	node=eval(line)
 			# except SyntaxError as e:
@@ -294,7 +296,6 @@ class OsmTurbo(list):
 			# 		print(part)
 			# 	print(e)
 			# 	exit(100)
-			S.append(node)
 
 	def savenodes(S):
 		print (f'Saving OsmTurbo data to "{S.file_name}"')
@@ -319,9 +320,9 @@ class OsmTurbo(list):
 			if collon < 0:
 				return True
 			l=len(tag)-collon
-			meybee_lang=tag[-l+1:]
-			if (l > 4) and ( '-' in meybee_lang):
-				if '-Latn' == meybee_lang[-5:]: # eg "name:ja-Latn": "Kura-zushi",
+			maybe_lang=tag[-l+1:]
+			if (l > 4) and ( '-' in maybe_lang):
+				if '-Latn' == maybe_lang[-5:]: # eg "name:ja-Latn": "Kura-zushi",
 					return True
 				return False
 			if tag[-l+1:] in WANTED_LAGUAGES:
@@ -337,19 +338,19 @@ class OsmTurbo(list):
 		for element in elements:
 			if (not "tags" in element) or (not "admin_level" in element["tags"]):
 				continue
-			admin_tags      =element["tags"]
-			admin_level     =admin_tags['admin_level']
-			admin_level_str =level_str[admin_level]
-			id=element["id"]
+			admin_tags      = element["tags"]
+			admin_level     = admin_tags['admin_level']
+			admin_level_str = level_str[admin_level]
+			id              = element["id"]
 			for tag,value in admin_tags.items():
 				if not prefered_language(tag):
 					continue
 				tags[admin_level_str+tag]=value
 				count+=1
 				#DEBUGPRINT(f'{admin_level_str+key}:{value}')
-		tags['admin_node_count']=count
-		osmnode=OsmNode(id=id,lat=latitude,lon=longitude,tags=tags,type='admin')
-		S.append(osmnode)
+			tags['admin_node_count']=count
+			osmnode=OsmNode(id=id,lat=latitude,lon=longitude,tags=tags,type='admin')
+			S.append(osmnode)
 		S.rearrange()
 		return tags
 
@@ -439,7 +440,9 @@ def eval_line_to_osmnode(line):
 	#DEBUGPRINT(f'{line}')
 	match=osmnode_re.match(line)
 	if not match:
-		raise RuntimeError (f'eval_line_to_osmnode("{line}" Failed)')
+		print (f'eval_line_to_osmnode("{line}" Failed)')
+		print (f'The "osmnode_re" did not match.')
+		return None
 	id,lat,lon,tags,type=match.groups()
 	#DEBUGPRINT(f'{match.groups()}')
 	# tags_dump=json.dumps(tags)
@@ -449,8 +452,16 @@ def eval_line_to_osmnode(line):
 	except Exception as e:
 		print(f'eval_line_to_osmnode("{line}")')
 		print(f'Exception {e}')
-		exit(1)
-	return OsmNode(int(id),float(lat),float(lon),tags,type)
+		return None
+	try:
+		return OsmNode(int(id),float(lat),float(lon),tags,type)
+	except Exception as e:
+		print(f'"{line}"')
+		print(f'Failed to create an OsmNode"')
+		print(f'Error: {e}')
+	return None
+	#return new_osmnode
+	#return OsmNode(int(id),float(lat),float(lon),tags,type)
 
 class OsmNode(dict):
 	def __init__(S,id:int,lat:float,lon:float,tags:dict,type='unknown'):

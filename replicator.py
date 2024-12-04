@@ -2,14 +2,42 @@
 import os
 import time
 import psutil
-from listutils import DATA_BEGIN_MARKER, DATA_END_MARKER
-DEBUGPRINT = print
+import duplicates
 
-def duplicate(fa,fb):
-	DEBUGPRINT(f'A {os.path.getsize(fa)} B {os.path.getsize(fb)}')
-	if os.path.getsize(fa) != os.path.getsize(fb):
-		return False
-	return True
+from listutils import DATA_BEGIN_MARKER,Base62 # DATA_END_MARKER
+DEBUGPRINT = print
+DEBUGEXIT = exit
+
+def eat(*args):
+	pass
+verbose=eat # verbose = print for verbose
+
+class NameConflictSolver(Base62):
+
+	def __init__(S):
+		Base62.__init__(S,int (time.time()%100))
+
+	def rename(S,file):
+		point = file.rfind('.')
+		slash = file.rfind('/')
+		if slash > point:
+			ext  = ''
+			path = file
+		else:
+			ext  = file[point:]
+			path = file[:point]
+		while True:
+			S.plus()
+			count=str(S)
+			try_name = f'{path}({count}){ext}'
+			if not os.path.exists(try_name):
+				return try_name
+
+# def duplicate(fa,fb):
+# 	DEBUGPRINT(f'A {os.path.getsize(fa)} B {os.path.getsize(fb)}')
+# 	if os.path.getsize(fa) != os.path.getsize(fb):
+# 		return False
+# 	return True
 
 def target_fs_properties(consigment):
 	"""Determine the maximum file size and the block size for the
@@ -54,7 +82,7 @@ def exit_error(e, message=None) -> None:
 		print(message)
 	# I/O error (28): No space left on device
 	if e.errno == 28:
-		now = time.ctime()
+		# now = time.ctime()
 		# shutil.copy(ok_file, ok_file + '.' + now)
 		print('You can try to write the remaining files to an other '
 		      'medium')
@@ -66,13 +94,17 @@ def least_sig(f,intdigits=3,deci_digits=3):
 	point=fstr.find('.')
 	return fstr[point-intdigits:point] + fstr[point:point+deci_digits+1]
 
-big=[' <-- ',' --> ']
+big=[' slower ',' faster ']
 pos=[' - ',' + ']
 
 class Throttle:
 	def __init__(S,consigment):
-		S.block_size = consigment['fsblocksize']
-		S.best       = 16*S.block_size
+		S.block_size      = consigment['fsblocksize']
+		S.best             = 16*S.block_size
+		S.prior_period     = 0.0
+		S.prior_clock      = 0
+		S.prior_chunksize  = 0
+		S.chunksize        = 0
 
 	def show(S,comment=''):
 		print(f'\nThrottle: {comment}')
@@ -88,11 +120,19 @@ class Throttle:
 		return S.chunksize
 
 	def clock_chunk(S,bytes_copied):
-		DEBUGPRINT(f'{bytes_copied=} {S.chunksize=}')
+		def decrease_chunk_size(chunk_change):
+			if (S.chunksize - chunk_change) < S.block_size:
+				S.chunksize = S.block_size
+			else:
+				S.chunksize -= chunk_change
+			return S.chunksize
+
+		#DEBUGPRINT(f'{bytes_copied=} {S.chunksize=}')
 		if bytes_copied < S.chunksize:
-			#DEBUGPRINT(f'{bytes_copied= } < {S.chunksize} so done' )
+			#DEBUGPRINT(f'{bytes_copied= } < {S.chunksize} done?' )
 			#DEBUGPRINT(f'Save {S.chunksize=} to {S.best=}')
 			S.best = S.chunksize
+		#	return S.chunksize
 			return 0
 
 		now = time.time()
@@ -115,36 +155,47 @@ class Throttle:
 
 		prior_chunk_speed = S.prior_chunksize / S.prior_period
 		chunk_speed       = S.chunksize / period
-		chunk_delta       = abs (S.chunksize * time_delta / period)
-		DEBUGPRINT(f'{chunk_speed=:7.3f} {big[chunk_speed>prior_chunk_speed]} {prior_chunk_speed=:7.3f}')
-		#DEBUGPRINT(f'{chunk_delta=:7.3f}')
-		if chunk_delta > S.chunksize: # something wrong here TODO
-			chunk_delta= S.chunksize // 2
-		if chunk_speed > prior_chunk_speed:
-			if S.chunksize > S.prior_chunksize:
-				# bigger chunksize improved speed so increase the size
-				S.chunksize += chunk_delta
+		chunk_delta       = S.prior_chunksize - S.chunksize
+		speed_delta       = (prior_chunk_speed - chunk_speed ) / prior_chunk_speed
+		# DEBUGPRINT(f'speed is    {chunk_speed/1000.0:4.1f} {big[chunk_speed>prior_chunk_speed]} than '
+		#            f' {prior_chunk_speed/1000.0:4.1f} delta {speed_delta:7.3f}')
+
+		chunk_change = abs (int (speed_delta * chunk_delta))
+		if chunk_change >= S.block_size:
+			if chunk_speed > prior_chunk_speed:
+				if S.chunksize > S.prior_chunksize:
+					# bigger chunksize improved speed so increase the size
+					#DEBUGPRINT('bigger chunksize improved speed so increase the size')
+					#DEBUGPRINT(f'chunk {S.chunksize} + {chunk_change} = {S.chunksize + chunk_change}')
+					S.chunksize += chunk_change
+				else:
+					# smaller chunksize improved speed so decrease the size
+					#DEBUGPRINT('smaller chunksize improved speed so decrease the size')
+					#DEBUGPRINT(f'chunk {S.chunksize} - {chunk_change} = {S.chunksize - chunk_change}')
+					decrease_chunk_size(chunk_change)
 			else:
-				# smaller chunksize improved speed so decrease the size
-				S.chunksize -= chunk_delta
-		else:
-			if S.chunksize > S.prior_chunksize:
-				# bigger chunksize decreased speed so decrease the size
-				S.chunksize -= chunk_delta
-			else:
-				# smaller chunksize decreased speed so increase the size
-				S.chunksize += chunk_delta
+				if S.chunksize > S.prior_chunksize:
+					# bigger chunksize decreased speed so decrease the size
+					#DEBUGPRINT('bigger chunksize decreased speed so decrease the size')
+					#DEBUGPRINT(f'chunk {S.chunksize} - {chunk_change} = {S.chunksize - chunk_change}')
+					decrease_chunk_size(chunk_change)
+				else:
+					# smaller chunksize decreased speed so increase the size
+					#DEBUGPRINT('smaller chunksize decreased speed so increase the size')
+					#DEBUGPRINT(f'chunk {S.chunksize} + {chunk_change} = {S.chunksize + chunk_change}')
+					S.chunksize += chunk_change
 
 		S.prior_period = period
 		S.prior_clock  = now
-		# round_chunksize = int(S.chunksize + S.block_size//2 )
-		# round_chunksize = round_chunksize - round_chunksize % S.block_size
-		# S.chunksize     = round_chunksize
-		# round_chunks = int (S.chunksize / S.block_size) * S.block_size
-		S.chunksize  = int (S.chunksize / S.block_size) * S.block_size
-		if S.chunksize < 0:
-			DEBUGPRINT(f'{S.chunksize= } < 0')
-			S.show('Negativ Chunk')
+		# # round_chunksize = int(S.chunksize + S.block_size//2 )
+		# # round_chunksize = round_chunksize - round_chunksize % S.block_size
+		# # S.chunksize     = round_chunksize
+		# # round_chunks = int (S.chunksize / S.block_size) * S.block_size
+		# S.chunksize  = int ((S.chunksize / S.block_size) + 1 ) * S.block_size
+		# if S.chunksize <  S.block_size:
+		# 	DEBUGPRINT(f'{S.chunksize= } < {S.block_size=}')
+		# 	S.show('Too small chunk.')
+		# 	DEBUGEXIT(1)
 		S.prior_chunksize  = S.chunksize
 		return S.chunksize
 
@@ -191,10 +242,14 @@ def BadFile(consignment, nasty, error):
 
 class Replicator:
 	def __init__(S, consignment):
-		S.consignment = consignment
+		global verbose,eat
+		verbose=[eat,print][consignment['verbose']]
+		S.consignment  = consignment
 		target_fs_properties(consignment)  # updates S.consigment['fsmaxfilesize'] and S.consigment['fsblocksize']
-		S.fs_max_file = consignment['fsmaxfilesize']
-		S.throttle=Throttle(consignment)
+		S.fs_max_file  = consignment['fsmaxfilesize']
+		S.throttle     = Throttle(consignment)
+		S.double_namer = NameConflictSolver()
+		#S.COPY_CHECK = 89
 
 	def check_dir(S,destination):
 		dest_path=os.path.dirname(destination)
@@ -204,7 +259,7 @@ class Replicator:
 		except OSError as ed:
 			print(f'os.makedirs "{dest_path}" Failed')
 			print(f'{ed}')
-			return ed.errno
+			exit(ed.errno)
 
 	def write_chunks_to_file(S, mission):
 		source      = mission['source_file']
@@ -216,23 +271,25 @@ class Replicator:
 			return OSError(27, 'Too Big for Filesystem.')
 
 		if os.path.exists(destination):
-			DEBUGPRINT(f'"{source}" and \n"{destination}" existists',end=' ')
+			verbose(f'"{source}" and \n"{destination}" existists',end=' ')
 			dup_size=os.path.getsize(destination)
 			if file_size == dup_size:
-				DEBUGPRINT(f'Same size')
+				verbose(f'Same size')
+				return 0
 			else:
-				DEBUGPRINT(f'{file_size=} {dup_size=}')
-			return 0
+				verbose(f'{file_size=} != {dup_size=}')
+				destination=S.double_namer.rename(destination)
+				verbose(f'Renamed: "{destination}"')
 
-		if mission['verbose']:
-			print(f'filesize: {format_bytesize(file_size)}')
+		verbose(f'filesize: {format_bytesize(file_size)}')
 
 		S.check_dir(destination)
+
 		with open(source, 'rb') as sf:
 			chunk_size = S.throttle.start_timer()
 			to_write=file_size
 			while to_write:
-				DEBUGPRINT(f'{chunk_size=}',end=' ')
+				verbose(f'chunk_size {chunk_size}',end=' ')
 				data_chunk = sf.read(chunk_size)
 				if not data_chunk:
 					break
@@ -247,6 +304,15 @@ class Replicator:
 					return e.errno
 				os.sync()
 				chunk_size = S.throttle.clock_chunk(written)
+			# S.COPY_CHECK-=1
+			# if S.COPY_CHECK <=0:
+			# 	S.COPY_CHECK=23
+			# 	if not duplicates.cmp(source,destination, shallow=False):
+			# 		DEBUGPRINT(f'Copy "{source}"')
+			# 		DEBUGPRINT(f'  to "{destination}"\nFAILED!')
+			# 		DEBUGPRINT(f'{os.stat(source)}')
+			# 		DEBUGPRINT(f'{os.stat(destination)}')
+			# 		exit(258)
 		return 0
 
 def file_check_ok(source, target, l) -> bool:
