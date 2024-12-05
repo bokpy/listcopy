@@ -22,7 +22,7 @@ def center_char(mid, length, fill=' '):
 	return fill * fh + mid + fill * sh
 
 
-label_re = r'((?:label|subdir|literal){[^}]+})'
+label_re = r'((?:label|subdir|literal|replace){[^}]+})'
 bind_re = r'\+"([^"]+)"\+'
 slash_re = r'([_/])'
 fork_re = r'(\()'
@@ -62,15 +62,16 @@ def show_tag_stack(stack, title=''):
 		print(f'{i:3} {stack[i]}')
 
 
-TT_BIND = 0  # + VALUE value and mainline
+TT_BIND  = 0  # + VALUE value and mainline
 TT_SLASH = 1  # / SIMPLE only mainline
 TT_LABEL = 2  # B VALUE value and mainline
-TT_FORK = 3  # * mainline and diverge
-TT_TIE = 4  # # SIMPLE only mainline
-TT_NAME = 5  # N VALUE value and mainline
+TT_FORK  = 3  # * mainline and diverge
+TT_TIE   = 4  # # SIMPLE only mainline
+TT_NAME  = 5  # N VALUE value and mainline
 TT_SPLIT = 6  # | mainline and diverge
-TT_NOP = 7  # 0 SIMPLE no value only mainline (Needed ?)
-TT_FILE = 8  # F mime, extensions, mainline and diverge
+TT_NOP   = 7  # 0 SIMPLE no value only mainline (Needed ?)
+TT_FILE  = 8  # F mime, extensions, mainline and diverge
+#TT_SUBST = 9  # S
 
 # TT_CLEAN = {TT_LABEL,TT_NAME}
 TT_RANGE = range(TT_BIND, TT_NOP + 1)
@@ -214,6 +215,10 @@ class TagToken(dict):
 				S['label'], S['slice'] = slice[0]
 				return
 			S['label'] = val
+			return
+
+		if type == 'replace':
+			S['replace'] = val
 			return
 
 		raise ValueError(f'"{value}" unsupported label type.')

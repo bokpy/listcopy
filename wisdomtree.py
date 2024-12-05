@@ -11,6 +11,17 @@ from icecream import ic
 from metadata import get_mime_etc
 from tagtoken import TagToken
 
+camera={
+'IMG'  : ('Apple iPhone','Samsung Galaxy','Google Pixel'),
+'DSC'  : ('Sony Cyber-shot','Nikon Coolpix'),
+'CIMG' : ('Casio Exilim','Android'),
+'PXL'  : ('Nokia older model','Android smartphone'),
+'VID'  : ('Samsung Galaxy','LG' ),
+'IMG_' : ('Apple iPhone'),
+'DCIM' : ('SMARTPHONE','Android','iOS')
+}
+camera_re=re.compile(r'(IMG|IMG|DSC|CIMG|PXL|VID|IMG_|DCIM).(\d+)' )
+
 def exiftool_tags_write(filepath,tags_dict):
 	"""
 	Does not work needs tweaking of exiftool configuration
@@ -187,6 +198,8 @@ class TreeOfKnowledge(dict):
 	def pick_me(S,file_tok):
 		return file_tok.am_I_the_one(S.Exif)
 
+
+
 	def consult_the_serpent(S,tokkie:TagToken):
 		"""
 		Determine the kind of token and try to the find the data to the label.
@@ -240,6 +253,11 @@ class TreeOfKnowledge(dict):
 						tokkie['payload']=value
 						return value
 					#DEBUGPRINT(f'Look for {label} at {latitude},{longitude} got {tokkie["payload"]}')
+
+		if 'replace' in tokkie:
+			tokkie['payload']=''
+			DEBUGPRINT(f'tokkie replace trigered')
+			return tokkie['payload']
 
 		return None
 

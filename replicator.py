@@ -130,10 +130,14 @@ class Throttle:
 			S.pause_time = time.time()
 			S.pause_time += S.throttle_on
 
-	def start_timer(S):
+	def start_timer(S,file_size):
 		S.prior_clock      = time.time()
 		S.prior_period     = -1.0
 		S.prior_chunksize  = 0
+		if file_size < S.chunksize:
+			S.chunksize = file_size - ( file_size % S.block_size)
+			S.chunksize += S.block_size
+			return S.chunksize
 		S.chunksize        = S.best # - (4 * S.block_size)
 		#S.pause(S.prior_clock)
 		return S.chunksize
@@ -270,44 +274,47 @@ class Replicator:
 		S.double_namer = NameConflictSolver()
 		#S.COPY_CHECK = 89
 
-	def remove_space_slash(S,mission):
-		dest   = mission['destination']
-		found = False
-		length = len(dest)
-		while True:
-			step1   = dest.replace(' /','/')
-			step2   = step1.replace('/ ','/')
-			length2 = len(step2)
-			DEBUGPRINT(f'"{step2}"')
-			if not found:
-				found = length2 <  length
-			if length2 == length:
-				mission['destination'] = step2
-				return found
-			dest = step2
-			length = len(dest)
-
 	def check_dir(S,mission):
-		dest_path=os.path.dirname(mission['destination'])
-		try:
-			os.makedirs(dest_path, mode=0o777, exist_ok=True)
-			return 0
-		except OSError as ed:
-			print(f'os.makedirs("{dest_path}") Failed')
-			print(f'{ed}')
-			if ed.errno == 22: # [Errno 22]Invalid argument:
-				dest=mission['destination']
-				m=re.findall(r'[\\:?*<>|]+',dest)
-				if m:
-					for c in m:
-						dest=dest.replace(c,'X')
-					# print(f'"{dest}"')
-					# input("Press Enter to continue...")
-					mission['destination']=dest
-					S.check_dir(mission)
-				if S.remove_space_slash(mission):
-					S.check_dir(mission)
-			exit(ed.errno)
+
+		def replace_ilegal():
+			path  = mission['destination']
+			match = re.findall(r'[\\:?*<>|]+',path)
+			if not match:
+				return False
+			for character in match:
+				path  = path.replace(character,'X')
+			mission['destination'] = path
+			return True
+
+		def remove_space_slash():
+			path     = mission['destination']
+			found    = False
+			path_len = len(path)
+			while True:
+				space_slash = path.replace(' /','/')
+				slash_space = space_slash.replace('/ ','/')
+				new_len = len(slash_space)
+				DEBUGPRINT(f'{path_len:3} {new_len:3} "{slash_space}"')
+				if not found:
+					found = new_len < path_len
+				if new_len == path_len:
+					mission['destination'] = slash_space
+					return found
+				path     = slash_space
+				path_len = new_len
+
+		while True:
+			dest_path=os.path.dirname(mission['destination'])
+			try:
+				os.makedirs(dest_path, mode=0o777, exist_ok=True)
+				return 0
+			except OSError as ed:
+				print(f'os.makedirs("{dest_path}") Failed')
+				print(f'{ed}')
+				if ed.errno == 22 and (replace_ilegal() or remove_space_slash()):
+					# [Errno 22]Invalid argument:
+					continue
+				exit(ed.errno)
 
 	def write_chunks_to_file(S, mission):
 		S.check_dir(mission) # destination can change if the directory can bee made
@@ -335,7 +342,7 @@ class Replicator:
 		#S.check_dir(destination)
 
 		with open(source, 'rb') as sf:
-			chunk_size = S.throttle.start_timer()
+			chunk_size = S.throttle.start_timer(file_size)
 			to_write=file_size
 			while to_write:
 				verbose(f'chunksize: {str(Suffix(chunk_size))}')
