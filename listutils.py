@@ -394,6 +394,30 @@ class Base62:
 				break
 		return ret
 
+class Suffix:
+	#suffix=['B','KB','MB','GB','TB']
+	suffix=['Bytes', 'KB' , 'MB' , 'GB' , 'TB' , 'PB' , 'EB' , 'ZB' , 'YB']
+	lensuf=len(suffix)
+
+	def __init__(S,value):
+		S.value=value
+		val = int (value)
+		i=0
+		while val > 1024:
+			i+=1
+			val//=1024
+			S.value/=1024.0
+		if i == 0:
+			S.valuestr= f'{int(S.value):3}{S.suffix[i]}'
+			return
+		if i >= S.lensuf:
+			S.valuestr= 'Off Scale'
+			return
+		S.valuestr = f'{S.value:6.2f}{S.suffix[i]}'
+
+	def __str__(self):
+		return self.valuestr
+
 def main():
 	test_meters_per_degree()
 

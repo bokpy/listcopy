@@ -2,13 +2,14 @@
 import os
 import time
 import psutil
+import re
 import duplicates
 
-from listutils import DATA_BEGIN_MARKER,Base62 # DATA_END_MARKER
+from listutils import DATA_BEGIN_MARKER,Base62,Suffix # DATA_END_MARKER
 DEBUGPRINT = print
 DEBUGEXIT = exit
 
-def eat(*args):
+def eat(*args,**kwargs):
 	pass
 verbose=eat # verbose = print for verbose
 
@@ -94,7 +95,7 @@ def least_sig(f,intdigits=3,deci_digits=3):
 	point=fstr.find('.')
 	return fstr[point-intdigits:point] + fstr[point:point+deci_digits+1]
 
-big=[' slower ',' faster ']
+big=['<<<','>>>']
 pos=[' - ',' + ']
 
 class Throttle:
@@ -105,18 +106,36 @@ class Throttle:
 		S.prior_clock      = 0
 		S.prior_chunksize  = 0
 		S.chunksize        = 0
+		S.throttle_off     = 0.0
+		S.throttle_on      = 0.0
+		S.pause_time       = -1.0
+		if 'throttle' in consigment:
+			on,off = consigment['throttle'].split(',')
+			S.throttle_on  = float(on)
+			S.throttle_off = float(off)
+			S.pause_time   = time.time()
+
 
 	def show(S,comment=''):
 		print(f'\nThrottle: {comment}')
 		print(f'{least_sig(S.prior_clock)} prior_clock')
 		print(f'chunk {S.chunksize}')
 
+	def pause(S,now):
+		if S.pause_time<0:
+			return
+		if now > S.pause_time:
+			time.sleep(S.throttle_off)
+			os.system("clear")
+			S.pause_time = time.time()
+			S.pause_time += S.throttle_on
+
 	def start_timer(S):
 		S.prior_clock      = time.time()
 		S.prior_period     = -1.0
 		S.prior_chunksize  = 0
-		S.chunksize        = (S.best + S.block_size) // 2
-		#S.show('started timer')
+		S.chunksize        = S.best # - (4 * S.block_size)
+		#S.pause(S.prior_clock)
 		return S.chunksize
 
 	def clock_chunk(S,bytes_copied):
@@ -128,14 +147,15 @@ class Throttle:
 			return S.chunksize
 
 		#DEBUGPRINT(f'{bytes_copied=} {S.chunksize=}')
+		now = time.time()
 		if bytes_copied < S.chunksize:
 			#DEBUGPRINT(f'{bytes_copied= } < {S.chunksize} done?' )
+			verbose(f'File copied.')
 			#DEBUGPRINT(f'Save {S.chunksize=} to {S.best=}')
 			S.best = S.chunksize
-		#	return S.chunksize
+			S.pause(now)
 			return 0
 
-		now = time.time()
 		if S.prior_period < 0: # first clocking
 			S.prior_period     = now - S.prior_clock
 			S.prior_clock      = now
@@ -145,7 +165,7 @@ class Throttle:
 			return S.chunksize
 
 		period      = now    - S.prior_clock
-		time_delta  = period - S.prior_period
+		# time_delta  = period - S.prior_period
 		# if abs(time_delta) < 0.005:
 		# 	##DEBUGPRINT(f'Stable {time_delta=}')
 		# 	S.prior_period = period
@@ -157,8 +177,7 @@ class Throttle:
 		chunk_speed       = S.chunksize / period
 		chunk_delta       = S.prior_chunksize - S.chunksize
 		speed_delta       = (prior_chunk_speed - chunk_speed ) / prior_chunk_speed
-		# DEBUGPRINT(f'speed is    {chunk_speed/1000.0:4.1f} {big[chunk_speed>prior_chunk_speed]} than '
-		#            f' {prior_chunk_speed/1000.0:4.1f} delta {speed_delta:7.3f}')
+		verbose(f'speed is {chunk_speed/1000.0:5.1f} {big[chunk_speed>prior_chunk_speed]} {prior_chunk_speed/1000:5.1f} delta {speed_delta:7.3f}')
 
 		chunk_change = abs (int (speed_delta * chunk_delta))
 		if chunk_change >= S.block_size:
@@ -251,17 +270,47 @@ class Replicator:
 		S.double_namer = NameConflictSolver()
 		#S.COPY_CHECK = 89
 
-	def check_dir(S,destination):
-		dest_path=os.path.dirname(destination)
+	def remove_space_slash(S,mission):
+		dest   = mission['destination']
+		found = False
+		length = len(dest)
+		while True:
+			step1   = dest.replace(' /','/')
+			step2   = step1.replace('/ ','/')
+			length2 = len(step2)
+			DEBUGPRINT(f'"{step2}"')
+			if not found:
+				found = length2 <  length
+			if length2 == length:
+				mission['destination'] = step2
+				return found
+			dest = step2
+			length = len(dest)
+
+	def check_dir(S,mission):
+		dest_path=os.path.dirname(mission['destination'])
 		try:
 			os.makedirs(dest_path, mode=0o777, exist_ok=True)
 			return 0
 		except OSError as ed:
-			print(f'os.makedirs "{dest_path}" Failed')
+			print(f'os.makedirs("{dest_path}") Failed')
 			print(f'{ed}')
+			if ed.errno == 22: # [Errno 22]Invalid argument:
+				dest=mission['destination']
+				m=re.findall(r'[\\:?*<>|]+',dest)
+				if m:
+					for c in m:
+						dest=dest.replace(c,'X')
+					# print(f'"{dest}"')
+					# input("Press Enter to continue...")
+					mission['destination']=dest
+					S.check_dir(mission)
+				if S.remove_space_slash(mission):
+					S.check_dir(mission)
 			exit(ed.errno)
 
 	def write_chunks_to_file(S, mission):
+		S.check_dir(mission) # destination can change if the directory can bee made
 		source      = mission['source_file']
 		destination = mission['destination']
 		file_size = os.path.getsize(source)
@@ -281,15 +330,15 @@ class Replicator:
 				destination=S.double_namer.rename(destination)
 				verbose(f'Renamed: "{destination}"')
 
-		verbose(f'filesize: {format_bytesize(file_size)}')
+		verbose(f'filesize:  {str(Suffix(file_size))}')
 
-		S.check_dir(destination)
+		#S.check_dir(destination)
 
 		with open(source, 'rb') as sf:
 			chunk_size = S.throttle.start_timer()
 			to_write=file_size
 			while to_write:
-				verbose(f'chunk_size {chunk_size}',end=' ')
+				verbose(f'chunksize: {str(Suffix(chunk_size))}')
 				data_chunk = sf.read(chunk_size)
 				if not data_chunk:
 					break
@@ -301,7 +350,8 @@ class Replicator:
 				except OSError as e:
 					print(f'write {len(data_chunk)} bytes to "{destination}" Failed')
 					print(f'{e}')
-					return e.errno
+					exit(e.errno)
+
 				os.sync()
 				chunk_size = S.throttle.clock_chunk(written)
 			# S.COPY_CHECK-=1

@@ -6,6 +6,7 @@ import os.path
 import requests
 import re
 import atexit
+import bisect
 from math import  radians, cos, sin, asin, sqrt
 from listutils import meters_per_degree
 
@@ -235,7 +236,7 @@ class OsmTurbo(list):
 		if (len(S) == 0) or ( S[0].id != sentinel_low.id):
 			S.append(sentinel_low)
 			S.append(sentinel_high)
-		S.rearrange()
+		S.rearrange() # list should be sorted at lat "latitude" but just check
 		#S.DEBUG_show_data()
 		consigment['OsmTurbo']=S
 		atexit.register(S.savenodes)
@@ -310,8 +311,7 @@ class OsmTurbo(list):
 		elements=osm_data["elements"]
 		for element in elements:
 			if adopt_osm_element_for_osmnode(element,lat,lon):
-				S.append(OsmNode(**element))
-		S.rearrange()
+				bisect.insort_left(S,OsmNode(**element))
 
 	def request_admin(S,latitude,longitude):
 		level_str={'2':'country:','3':'region:','4':'sector:','5':'community:'}
@@ -350,8 +350,7 @@ class OsmTurbo(list):
 				#DEBUGPRINT(f'{admin_level_str+key}:{value}')
 			tags['admin_node_count']=count
 			osmnode=OsmNode(id=id,lat=latitude,lon=longitude,tags=tags,type='admin')
-			S.append(osmnode)
-		S.rearrange()
+			bisect.insort_left(S,osmnode)
 		return tags
 
 	def tags(S,latitude,longitude,box_side=BOXSIDE):
@@ -504,6 +503,9 @@ class OsmNode(dict):
 		#	DEBUGPRINT(f'{key=}:{S[key]}')
 			something+=f'{S[key]} '
 		return f'OsmNode(..{S.id % 10000:04}[{S.lat:07.3f}, {S.lon:07.3f}] {something[:14]})'
+
+	def __lt__(S,O):
+		return S.lat < O.lat
 
 	def is_close_to(S,other):
 		haversine(S.lat,S.lon,other.lat,other.lon) < SMALLDISTANCE

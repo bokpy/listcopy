@@ -157,7 +157,6 @@ class TreeOfKnowledge(dict):
 		S.Exif['day']   = date_time[8:10]
 		S.Exif['time']  = date_time[-8:]
 
-
 	def show_exif_data(S):
 		for key in S.Exif:
 			print(f'{key:>20}:{ S.Exif[key]}')
@@ -181,6 +180,9 @@ class TreeOfKnowledge(dict):
 			# means dot is at the end of the path so there is an exstension
 			return ''
 		return '.' +  ext
+
+	# def check_evil_chars(S,path):
+	# 	eval_re=re.compile(r[.,check_evil_chars(path)])
 
 	def pick_me(S,file_tok):
 		return file_tok.am_I_the_one(S.Exif)

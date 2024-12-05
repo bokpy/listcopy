@@ -145,6 +145,11 @@ parser.add_argument('--labels',
                     help='Show the labels that are usable for the files in the listing at the end.',
                     action='store_true'
                     )
+#throttle throttle throttle throttle throttle throttle throttle throttle throttle throttle throttle
+parser.add_argument('--throttle',
+                    help='Slow down to save the ssd drive "on time,off time" eg 2.5,0.5 is 2.5 secs on 0.5 off.',
+                    action='store'
+                    )
 args = parser.parse_args()
 def print_json(d,title=None):
 	if title:
@@ -359,6 +364,8 @@ def main() -> None:
 	consignment['maxchunk']      = 1024*1024*16
 	consignment['fsmaxfilesize'] = 1024*1024
 	consignment['fsblocksize']   = 1024
+	if args.throttle:
+		consignment['throttle']  = args.throttle
 	if args.labels:
 		consignment['store_labels']  = set()
 	# pathseeker=PathSeeker(args.substitute,args.gps_info,args.language)

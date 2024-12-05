@@ -188,6 +188,7 @@ class PathSeeker:
 			path+=fruit
 			#DEBUGPRINT(f'{fruit}',end='')
 		#DEBUGPRINT()
+		#path=S.good_and_evil.check_evil_chars(path)
 		path+=S.good_and_evil.check_exstension(path)
 		mission['dest_file']=path
 		return path

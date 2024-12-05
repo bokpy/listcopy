@@ -5,14 +5,19 @@ import os
 from icecream import ic
 
 DEBUGPRINT = print
+def eat(*args,**kwargs):
+	pass
+verbose=eat # verbose = print for verbose
 
 class InputFileIterator:
-	def __init__(self, consigment, mission):
+	def __init__(self, consignment, mission):
+		global verbose,eat
+		verbose=[eat,print][consignment['verbose']]
 		self.mission   = mission
-		self.ok_file   = consigment['ok_file']
+		self.ok_file   = consignment['ok_file']
 		self.completed = 0
 		self.index     = -1
-		self.read_listing(consigment["input"])
+		self.read_listing(consignment["input"])
 		self.read_completed()
 		self.root_path=''
 
@@ -32,7 +37,7 @@ class InputFileIterator:
 		valid=False
 		seen=0
 		while S.index < S.filelist_len:
-			DEBUGPRINT(f'{seen=} {S.completed=}')
+			verbose(f'{S.completed:5}')
 			S.index+=1
 			if S.at_index() == DATA_BEGIN_MARKER:
 				S.index+=1
