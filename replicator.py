@@ -13,6 +13,7 @@ def eat(*args,**kwargs):
 	pass
 verbose=eat # verbose = print for verbose
 
+
 class NameConflictSolver(Base62):
 
 	def __init__(S):
@@ -334,7 +335,7 @@ class Replicator:
 				return 0
 			else:
 				verbose(f'{file_size=} != {dup_size=}')
-				destination=S.double_namer.rename(destination)
+				destination= mission['destination'] = S.double_namer.rename(destination)
 				verbose(f'Renamed: "{destination}"')
 
 		verbose(f'filesize:  {str(Suffix(file_size))}')

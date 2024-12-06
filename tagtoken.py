@@ -22,7 +22,7 @@ def center_char(mid, length, fill=' '):
 	return fill * fh + mid + fill * sh
 
 
-label_re = r'((?:label|subdir|literal|replace){[^}]+})'
+label_re = r'((?:label|subdir|literal|replace|meaning){[^}]+})'
 bind_re = r'\+"([^"]+)"\+'
 slash_re = r'([_/])'
 fork_re = r'(\()'
@@ -219,6 +219,10 @@ class TagToken(dict):
 
 		if type == 'replace':
 			S['replace'] = val
+			return
+
+		if type == 'meaning':
+			S['meaning'] = val
 			return
 
 		raise ValueError(f'"{value}" unsupported label type.')

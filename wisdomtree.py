@@ -6,6 +6,7 @@ from sys import stdout
 
 from brainzmusic import BrainzMusic, DEBUGPRINT
 from geolocate import OsmTurbo, gps_alpha_to_float, JDUMP
+from collections import deque
 from icecream import ic
 
 from metadata import get_mime_etc
@@ -21,6 +22,68 @@ camera={
 'DCIM' : ('SMARTPHONE','Android','iOS')
 }
 camera_re=re.compile(r'(IMG|IMG|DSC|CIMG|PXL|VID|IMG_|DCIM).(\d+)' )
+
+def guess_meaning(string):
+	string_len = len(string)
+	if not string_len:
+		return 0.0
+	run=0
+	alpha_count = 0
+	alpha_run  = []
+	for i in range(0,string_len):
+		if string[i].isalpha():
+			run += 1
+			alpha_count += 1
+			continue
+		if run:
+			alpha_run.append(run)
+			run=0
+		if string[i] == ' ':
+			alpha_count += 1
+			continue
+		if string[i].isdigit():
+			alpha_count -= 1
+		else:
+			alpha_count -= 2
+
+	if run:
+		alpha_run.append(run)
+	run_len=len(alpha_run)
+	if run_len < 1:
+		return 0.0
+	char_count=sum(alpha_run)
+	alpha_factor = alpha_count / string_len
+	word_factor  = char_count  / run_len
+	# Dutch:   Average word length is 5.1 letters.
+	# English: Average word length is 4.6 letters.print(aplha_run)
+	word_factor  /= 4.85 # average
+	return word_factor * alpha_factor
+
+def extract_meaning(lines,min=0.8):
+	lines_with_meaning=[]
+	words_with_meaning=set()
+	words_inorder=deque()
+
+	def add_to_set(line):
+		for word in line.split(' '):
+			words_with_meaning.add(word)
+			words_inorder.appendleft(word)
+
+	for line in lines:
+		meaning = guess_meaning(line)
+		print(f'{meaning=}')
+		if meaning > min :
+			lines_with_meaning.append(line)
+			add_to_set(line)
+	ret=''
+	space=''
+	while words_with_meaning and words_inorder:
+		word=words_inorder.pop()
+		if word in words_with_meaning:
+			ret+=f'{space}{word}'
+			space= ' '
+			words_with_meaning.remove(word)
+	return ret
 
 def exiftool_tags_write(filepath,tags_dict):
 	"""
@@ -120,16 +183,23 @@ class TreeOfKnowledge(dict):
 		dict.__init__(S)
 		S.osm=consignment['OsmTurbo']
 		S.lang=consignment['language']
+		# S.tokkie_select={
+		# 	'label'   : TreeOfKnowledge.label_tokkie,
+		# 	'subdir'  : TreeOfKnowledge.subdir_tokkie,
+		# 	'replace' : TreeOfKnowledge.replace_tokkie
+		# }
 
 	def reset(S,mission:dict):
 		for key in 'Exiftool','Brainz':
 			S.pop(key,None)
 
 		def get_extension(filename):
-			point = filename.rfind('.')
-			if point < 0: return ''
-			ext = filename[point + 1:].upper()
+			match = re.match(r'.*\.(\w+)$',filename,flags=re.ASCII)
+			ext=''
+			if match:
+				ext = match.group(1).upper()
 			return ext
+
 		sf = mission['source_file']
 		S['Fullpath'] = sf
 		cut=len(mission['source_root_path'])
@@ -177,20 +247,19 @@ class TreeOfKnowledge(dict):
 			return None
 		return S[key]
 
-	def check_exstension(S,path):
-		if not "FileTypeExtension" in S.Exif:
-			return ''
-		dot = path.rfind('.')
-		ext=S.Exif["FileTypeExtension" ]
-		if dot < 0:
-			if ext:
-				return '.' + ext
-			return ''
-		slash=path.rfind('/')
-		if dot > slash:
-			# means dot is at the end of the path so there is an exstension
-			return ''
-		return '.' +  ext
+	def check_extension(S,path):
+		match = re.match(r'.*(\.\w+)$',path,flags=re.ASCII)
+		if match:
+			match_len=len (match.group(1))
+			if match_len > 3:
+				return path
+			path=path[-match_len:]
+		extension = S['Extension']
+		if "FileTypeExtension" in S.Exif:
+			extension = S.Exif["FileTypeExtension" ]
+		if path[-1] == '.':
+			return path + extension
+		return path + '.' + extension
 
 	# def check_evil_chars(S,path):
 	# 	eval_re=re.compile(r[.,check_evil_chars(path)])
@@ -198,7 +267,88 @@ class TreeOfKnowledge(dict):
 	def pick_me(S,file_tok):
 		return file_tok.am_I_the_one(S.Exif)
 
+	def subdir_tokkie(S,tokkie):
+		i=int(tokkie['subdir'])
+		if i == 0: # full original path above the source path
+			tokkie['payload'] = S["Tailpath"]
+			return tokkie['payload']
+		tsp=S['Tailsplit']
+		tail_len=len(tsp)
+		if abs(i) > tail_len: # no subdir is in reach
+			return None
+		if i < 0: # count below filename
+			i=tail_len+i
+		else: # count from start
+			i-=1
+		tokkie['payload']=tsp[i]
+		return tsp[i]
 
+	def label_tokkie(S,tokkie):
+		label=tokkie['label']
+		if label in S.Exif:
+			tokkie.set_payload(S.Exif[label])
+			return tokkie['payload']
+
+		if S.Exif['general'] == 'audio':
+			return S.audio_tokkie(tokkie)
+
+		if S.Exif['general'] == 'image':
+			# for a image with coordinates "OpenStreetMap" could possibly supply the wanted data
+			latitude,longitude=S.get_coordinates()
+			if latitude == None: # no coordinates no luck
+				return None
+			return S.geo_tokkie(tokkie,latitude,longitude,label)
+
+	def meaning_tokkie(S,tokkie):
+		meaning      = tokkie['meaning']
+		meaning_full = None
+		best_score   = -10
+
+		if meaning == 'subdir':
+			for subdir in S['Tailsplit']:
+				sub_score = guess_meaning(subdir)
+				DEBUGPRINT(f'{sub_score:6.3f} "{subdir}"')
+				if sub_score > best_score:
+					best_score   = sub_score
+					meaning_full = subdir
+			if best_score > 0.8:
+				tokkie['payload'] = meaning_full
+				return tokkie['payload']
+
+		if meaning == 'all':
+			DEBUGPRINT(f'meaning == "all" {S["Tailsplit"]}')
+			extracted = extract_meaning(S['Tailsplit'])
+			DEBUGPRINT(f'{extracted =}')
+			tokkie['payload'] = extracted
+			return tokkie['payload']
+		return None
+
+	def replace_tokkie(S,tokkie):
+		tokkie['payload']=''
+		DEBUGPRINT(f'tokkie replace trigered')
+		return tokkie['payload']
+
+	def geo_tokkie(S,tokkie,latitude,longitude,label):
+		if not 'OsmData' in S:
+				S['OsmData']=S.osm.tags(latitude,longitude,100)
+			#JDUMP(S['OsmData'],"S['OsmData']")
+		#JDUMP(S.Exif,'S.Exif')
+		if label in S['OsmData']:
+			value=S['OsmData'][label]
+			tokkie['payload']=value
+			return tokkie['payload']
+		return None
+
+	def audio_tokkie(S,tokkie):
+		# for audio "MusicBrainz" could possibly supply the wanted data
+		if not 'brainz' in S:
+			S['brainz']=BrainzMusic(S['Fullpath'])
+		label = tokkie['label']
+		if label in S['brainz']:
+			value = S['brainz'][label]
+			tokkie['payload']=value
+			return value
+		return None
 
 	def consult_the_serpent(S,tokkie:TagToken):
 		"""
@@ -208,58 +358,79 @@ class TreeOfKnowledge(dict):
 		:return: the data if found else None
 		"""
 		if 'subdir' in tokkie:
-			i=int(tokkie['subdir'])
-			if i == 0: # full original path above the source path
-				tokkie['payload'] = S["Tailpath"]
-				return tokkie['payload']
-
-			tsp=S['Tailsplit']
-			tail_len=len(tsp)
-			if abs(i) > tail_len: # no subdir is in reach
-				return None
-			if i < 0: # count below filename
-				i=tail_len+i
-			else: # count from start
-				i-=1
-			tokkie['payload']=tsp[i]
-			return tsp[i]
+			return S.subdir_tokkie(tokkie)
 
 		if 'label' in tokkie:
-			label=tokkie['label']
-
-			if label in S.Exif:
-				tokkie.set_payload(S.Exif[label])
-				return tokkie['payload']
-
-			if S.Exif['general'] == 'audio':
-				# for audio "MusicBrainz" could possibly supply the wanted data
-				if not 'brainz' in S:
-					S['brainz']=BrainzMusic(S['Fullpath'])
-				if label in S['brainz']:
-					value = S['brainz'][label]
-					tokkie['payload']=value
-					return value
-
-			if S.Exif['general'] == 'image':
-				# for a image with coordinates "OpenStreetMap" could possibly supply the wanted data
-				latitude,longitude=S.get_coordinates()
-				if latitude != None: # no coordinates no luck
-					if not 'OsmData' in S:
-						S['OsmData']=S.osm.tags(latitude,longitude,100)
-						#JDUMP(S['OsmData'],"S['OsmData']")
-					#JDUMP(S.Exif,'S.Exif')
-					if label in S['OsmData']:
-						value=S['OsmData'][label]
-						tokkie['payload']=value
-						return value
-					#DEBUGPRINT(f'Look for {label} at {latitude},{longitude} got {tokkie["payload"]}')
+			return S.label_tokkie(tokkie)
 
 		if 'replace' in tokkie:
-			tokkie['payload']=''
-			DEBUGPRINT(f'tokkie replace trigered')
-			return tokkie['payload']
+			return S.replace_tokkie(tokkie)
+
+		if 'meaning' in tokkie:
+			return S.meaning_tokkie(tokkie)
 
 		return None
+
+	# def consult_the_serpent(S,tokkie:TagToken):
+	# 	"""
+	# 	Determine the kind of token and try to the find the data to the label.
+	# 	token{label} -> tokkie['payload']
+	# 	:param tokkie: TagToken for witch to get matching data.
+	# 	:return: the data if found else None
+	# 	"""
+	# 	if 'subdir' in tokkie:
+	# 		i=int(tokkie['subdir'])
+	# 		if i == 0: # full original path above the source path
+	# 			tokkie['payload'] = S["Tailpath"]
+	# 			return tokkie['payload']
+	#
+	# 		tsp=S['Tailsplit']
+	# 		tail_len=len(tsp)
+	# 		if abs(i) > tail_len: # no subdir is in reach
+	# 			return None
+	# 		if i < 0: # count below filename
+	# 			i=tail_len+i
+	# 		else: # count from start
+	# 			i-=1
+	# 		tokkie['payload']=tsp[i]
+	# 		return tsp[i]
+	#
+	# 	if 'label' in tokkie:
+	# 		label=tokkie['label']
+	#
+	# 		if label in S.Exif:
+	# 			tokkie.set_payload(S.Exif[label])
+	# 			return tokkie['payload']
+	#
+	# 		if S.Exif['general'] == 'audio':
+	# 			# for audio "MusicBrainz" could possibly supply the wanted data
+	# 			if not 'brainz' in S:
+	# 				S['brainz']=BrainzMusic(S['Fullpath'])
+	# 			if label in S['brainz']:
+	# 				value = S['brainz'][label]
+	# 				tokkie['payload']=value
+	# 				return value
+	#
+	# 		if S.Exif['general'] == 'image':
+	# 			# for a image with coordinates "OpenStreetMap" could possibly supply the wanted data
+	# 			latitude,longitude=S.get_coordinates()
+	# 			if latitude != None: # no coordinates no luck
+	# 				if not 'OsmData' in S:
+	# 					S['OsmData']=S.osm.tags(latitude,longitude,100)
+	# 					#JDUMP(S['OsmData'],"S['OsmData']")
+	# 				#JDUMP(S.Exif,'S.Exif')
+	# 				if label in S['OsmData']:
+	# 					value=S['OsmData'][label]
+	# 					tokkie['payload']=value
+	# 					return value
+	# 				#DEBUGPRINT(f'Look for {label} at {latitude},{longitude} got {tokkie["payload"]}')
+	#
+	# 	if 'replace' in tokkie:
+	# 		tokkie['payload']=''
+	# 		DEBUGPRINT(f'tokkie replace trigered')
+	# 		return tokkie['payload']
+	#
+	# 	return None
 
 	def osm_knowledge(S):
 		if not 'OsmData' in S:
