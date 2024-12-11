@@ -782,6 +782,7 @@ class SelectOnExtension:
 		#DEBUGPRINT(f'add {self.my_set=}')
 		#DEBUGPRINT(args)
 		for arg in args:
+			#DEBUGPRINT(f'SelectOnExtension.add({arg})')
 			if isinstance(arg,str):
 				if arg in extension_dict.keys():
 					#DEBUGPRINT(f'"{arg}" in extension_dict.keys()')

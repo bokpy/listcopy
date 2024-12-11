@@ -4,9 +4,12 @@ syntax_text=f'''
 Fore every class of files categorized by a comma separated list of "mime types" and/or "extension(s)" 
 a substitution path can be defined by a list of labels.
 
-This labels are retrieved if possible in order by:
- 
- a call to "exiftool" (labels are formatted to lowercase space and / replaced by an underscore.
+label{{exif-,osm-,musicbrainz-,file tag}} tags can be sliced like label{{year[-2:]}}
+
+Labels are retrieved if possible in order by:
+
+a call to "file -i".
+a call to "exiftool".
 
 for audio: if needed followed with a "https://api.acoustid.org/v2/lookup" request.
            "brainzmusic.py" expects to find a key in "~/.local/listcopy/AcoustID.key"
@@ -14,10 +17,24 @@ for audio: if needed followed with a "https://api.acoustid.org/v2/lookup" reques
 
 for images with gps data: geological label data is retrieved from "Overpass" "OpenStreetMap".
 
+subdir{{int}}
+
 The subdirectories of the original path can be copied.
 Positive numbers indicate a subdirectory above the source directory.
-Negative numbers indicate a subdirectory below the filename (-1 is the filename).
+Negative numbers indicate a subdirectory below and the filename (-1 is the filename).
 Zero full path above the source directory.
+
+meaning{{all|best|first|second|top}}
+
+try to find for human clear meaning in:
+all    : full path
+best   : select the words from the highest scoring subir
+second : select the words from the second scoring subir
+top    : select the high scoring above value meaning{{top,value}}
+
+literal{{"a literal text"}}
+
+puts the text in the destination path
 
 # starts a comment on a line
 / stands for itself '/'
@@ -45,6 +62,12 @@ Example: image,video:/label{{artist}}/label{{album }}+" year "+ label{{year}}/na
            
 <tag> for "label" all labels the current program can retrieve.
 Order is important so put the most specific in front.
+
+adding a tag:
+	in tagtoken.py   : add what you like to label_re say "amazing"
+	                   add an entry for "amazing" to TagToken.init_label
+	in wisdomtree.py : TreeOfKnoledge.consult_the_serpent add an if statement "amazing" 
+	                   add a handler function to TreeOfKnoledge
 '''
 
 def main() -> None:

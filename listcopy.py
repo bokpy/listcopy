@@ -254,6 +254,7 @@ def process_filelisting(consignment):
 	osmturbo   = OsmTurbo(consignment)
 	count      = 0
 	#for src_full,source_path_length in listing:
+	pathseeker = PathSeeker(consignment)
 	for src_full in listing.file_reaper():
 		#time.sleep(1)
 		#os.system('cls||clear')
@@ -265,7 +266,6 @@ def process_filelisting(consignment):
 		#mission['source_root_path']=src_full[:source_path_length]
 		#DEBUGPRINT(f'{mission=}')
 		#DEBUGEXIT(483)
-		pathseeker = PathSeeker(consignment)
 		pathseeker.compose_path(mission)
 		verbose(f'Dest "{mission["dest_file"]}"')
 		#JDUMP(mission,'mission')
@@ -274,15 +274,15 @@ def process_filelisting(consignment):
 				keys=[k for k in pathseeker.knowledege().keys()]
 				#DEBUGPRINT(f'{keys=}')
 				consignment['store_labels']=consignment['store_labels'].union(keys)
-
 			print_json(mission,title='mission')
 			mission.clear()
 			continue
 		mission['destination'] = os.path.join(consignment['dest_path']+mission["dest_file"])
 		mission['verbose']     = consignment['verbose']
+		replicator.check_destination(mission,consignment)
+		listing.save_processing(consignment['dest_path'],mission,False)
 		replicator.write_chunks_to_file(mission)
 		count+=1
-		listing.save_completed(consignment['dest_path'])
 		mission.clear()
 
 	if 'store_labels' in consignment:

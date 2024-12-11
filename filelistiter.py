@@ -2,6 +2,7 @@
 from listutils import DATA_BEGIN_MARKER, DATA_END_MARKER, CONTINUE
 import random
 import os
+import time
 from icecream import ic
 
 DEBUGPRINT = print
@@ -12,12 +13,14 @@ verbose=eat # verbose = print for verbose
 class InputFileIterator:
 	def __init__(self, consignment, mission):
 		global verbose,eat
+		self.consignment=consignment
 		verbose=[eat,print][consignment['verbose']]
 		self.mission   = mission
 		self.ok_file   = consignment['ok_file']
 		self.completed = 0
 		self.index     = -1
 		self.read_listing(consignment["input"])
+		self.consignment['last_file_accessed']='diddly_squat'
 		self.read_completed()
 		self.root_path=''
 
@@ -36,8 +39,8 @@ class InputFileIterator:
 	def file_reaper(S):
 		valid=False
 		seen=0
+		verbose(f'Resume at list item {S.completed:5}')
 		while S.index < S.filelist_len:
-			verbose(f'{S.completed:5}')
 			S.index+=1
 			if S.at_index() == DATA_BEGIN_MARKER:
 				S.index+=1
@@ -54,6 +57,7 @@ class InputFileIterator:
 					S.mission['source_root_path'] = S.root_path
 					yield S.at_index()
 					S.completed+=1
+					verbose(f'{S.completed:5}')
 
 	def __str__(self):
 		return self.at_index()[self.root_path_length:]
@@ -78,14 +82,19 @@ class InputFileIterator:
 	def at_index(self):
 		return self.filelist[self.index]
 
-	def save_completed(self,destination_root_path):
-		try:
-			with open(self.ok_file, 'w') as f:
-				f.write(f'{self.completed+1}\n{destination_root_path}\n{self.at_index()}\n')
-		except OSError as e:
-			print(f'Writing "{self.ok_file}" Failed.')
-			print(f'{e.errno} {e.strerror}')
-			exit(e.errno)
+	def save_processing(self,destination_root_path,mission,interupt=True):
+		saves = [self.ok_file]
+		if interupt:
+			saves.append(self.ok_file + '.' + time.ctime())
+
+		for file in saves :
+			try:
+				with open(file, 'w') as f:
+					f.write(f'{self.completed+1}\n{destination_root_path}\n{mission["destination"]}\n')
+			except OSError as e:
+				print(f'Writing "{self.file}" Failed.')
+				print(f'{e.errno} {e.strerror}')
+				exit(e.errno)
 
 	def read_completed(self)->None:
 		self.completed=0
@@ -98,7 +107,11 @@ class InputFileIterator:
 			print(f'"{self.ok_file}" was empty')
 			return
 		data = data.split('\n')
-		self.completed=int(data[0])
+		self.completed=int(data[0])-1
+		#PRINT_OFF(f'last_file_accessed: "{data[2]}"')
+		#input("Press enter")
+		self.consignment['last_file_accessed'] = data[2]
+
 
 	def strip_newline(self):
 		fl = self.filelist

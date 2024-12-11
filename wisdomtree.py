@@ -1,12 +1,15 @@
 #!/usr/bin/python3
 import subprocess
 import re
-import json
-from sys import stdout
+import os
+
+from scipy.cluster.hierarchy import average
+from scipy.stats import alpha
 
 from brainzmusic import BrainzMusic, DEBUGPRINT
 from geolocate import OsmTurbo, gps_alpha_to_float, JDUMP
 from collections import deque
+import math
 from icecream import ic
 
 from metadata import get_mime_etc
@@ -23,13 +26,36 @@ camera={
 }
 camera_re=re.compile(r'(IMG|IMG|DSC|CIMG|PXL|VID|IMG_|DCIM).(\d+)' )
 
+dont_like_re=re.compile(r'download|desktop|temp|backup|Sander|Nieuwe map|new folder|VIDEO TS',flags=re.IGNORECASE)
+
+def asymptotic_function(x, k=1.0):
+	return 1 - math.exp(-k * x)
+
+def remove_double_spaces(line):
+	match=re.findall(r'(  +)',line)
+	if not match:
+		return line
+	for spaces in match:
+		line=line.replace(spaces,' ')
+	return line
+
 def guess_meaning(string):
+	"""
+	Making an estimation if it is a string with meaning for a human or a code or something
+	:param string: sting to look at.
+	:return: an estimation about the meaning of the string above 0.8 is a value to start experimenting with.
+	"""
 	string_len = len(string)
 	if not string_len:
-		return 0.0
+		return 0.0,'nada'
 	run=0
 	alpha_count = 0
 	alpha_run  = []
+	string = string.replace('.',' ')
+	string = string.replace('-',' ')
+	string = string.replace('_',' ')
+	string=remove_double_spaces(string)
+	string_len = len(string)
 	for i in range(0,string_len):
 		if string[i].isalpha():
 			run += 1
@@ -41,7 +67,10 @@ def guess_meaning(string):
 		if string[i] == ' ':
 			alpha_count += 1
 			continue
+		if string[i] in "\"',.:;-+_":
+			continue
 		if string[i].isdigit():
+			continue
 			alpha_count -= 1
 		else:
 			alpha_count -= 2
@@ -50,39 +79,104 @@ def guess_meaning(string):
 		alpha_run.append(run)
 	run_len=len(alpha_run)
 	if run_len < 1:
-		return 0.0
-	char_count=sum(alpha_run)
-	alpha_factor = alpha_count / string_len
-	word_factor  = char_count  / run_len
+		return 0.0,'zilch'
 	# Dutch:   Average word length is 5.1 letters.
 	# English: Average word length is 4.6 letters.print(aplha_run)
-	word_factor  /= 4.85 # average
-	return word_factor * alpha_factor
+	#word_factor  /= 4.85 # average
+
+	length_scores=[0.95,0.98,1.05,1.2,1.05,1.0,0.95,0.9,0.85]
+	# characters   1    2    3    4   5   6   7   8   9  10
+	alpha_count=0
+	word_length_factor  = 1.0
+	for word_length in alpha_run:
+		alpha_count += word_length
+		if word_length < len(length_scores):
+			word_length_factor  *= length_scores[word_length]
+			continue
+		word_length_factor  *= 0.84
+
+	alpha_factor = alpha_count / string_len
+	length_factor= asymptotic_function(string_len,0.3)
+	dont_like_factor=1.0
+	if dont_like_re.findall(string):
+		dont_like_factor=0.2
+	return  alpha_factor * word_length_factor  * dont_like_factor * length_factor,string
+
+def naked_filename(path):
+	slash = path.rfind('/')
+	name = path
+	if slash > -1:
+		name = path[slash+1:]
+	dot = name.rfind('.')
+	if dot < 0:
+		return name
+	return name[:dot]
 
 def extract_meaning(lines,min=0.8):
+	"""
+	From a list of lines pick the lines that probably have human meaning.
+	Then concatenate these words in order without duplicates.
+	:param lines: list of lines or words
+	:param min: lower limit of the guess_meaning(line) value to use the line
+	:return: a string constructed form the input lines
+	"""
 	lines_with_meaning=[]
 	words_with_meaning=set()
 	words_inorder=deque()
 
 	def add_to_set(line):
 		for word in line.split(' '):
-			words_with_meaning.add(word)
+			low_word=word.lower()
+			words_with_meaning.add(low_word)
 			words_inorder.appendleft(word)
 
 	for line in lines:
-		meaning = guess_meaning(line)
-		print(f'{meaning=}')
+		line=os.path.splitext(line)[0]
+		line=line.replace('.',' ')
+		meaning,string = guess_meaning(line)
+		#DEBUGPRINT(f'score: {meaning:6.2f}"{string}"')
 		if meaning > min :
 			lines_with_meaning.append(line)
 			add_to_set(line)
 	ret=''
 	space=''
+	#DEBUGPRINT(f'{min=} len words_with_meaning {len( words_with_meaning)} inorder {len(words_inorder)}')
 	while words_with_meaning and words_inorder:
+		#DEBUGPRINT(f'{words_with_meaning=}')
+		#DEBUGPRINT(f'{words_inorder     =}')
+		#DEBUGPRINT(f'"{ret}"')
 		word=words_inorder.pop()
-		if word in words_with_meaning:
+		low_word=word.lower()
+		if low_word in words_with_meaning:
 			ret+=f'{space}{word}'
 			space= ' '
-			words_with_meaning.remove(word)
+
+			words_with_meaning.remove(low_word)
+	if ret=='' or ( guess_meaning(ret)[0] < min):
+		#DEBUGPRINT(f'No meaning "{ret}" score {guess_meaning(ret)}')
+		return None
+	return ret
+
+def duration_str(duration):
+	#"Duration": "0:21:06",
+
+	timeing=re.findall(r'(\d\d|\d)',duration )
+	if not timeing:
+		return duration
+	ret=''
+	i=len(timeing)
+	if i > 3:
+		i=3
+		timeing=timeing[:3]
+	hms=["s","m","u"]
+	zero=True
+	for t in timeing:
+		i-=1
+		it = int(t)
+		if zero and it == 0:
+			continue
+		zero=False
+		ret+=f'{it:02}{hms[i]}'
 	return ret
 
 def exiftool_tags_write(filepath,tags_dict):
@@ -139,14 +233,13 @@ date_re=re.compile(r'\D*(\d\d\d\d):(\d\d):(\d\d) .*')
 def call_exiftool(filepath):
 	"""
 	Get data with "exiftool" for this file "filepath".
-	Look for the youngest date mentioned
 	:param filepath: full path to file to query for data
 	:return: dictionary with lowercase keys spaces and '/' replaced with an underscore '_'
 	         and striped.
 	         {} if failed.
 
 	"""
-	early_date=(3000,12,31)
+	#early_date=(3000,12,31)
 	lines=service_call('exiftool',filepath)
 	if not lines:
 		return {}
@@ -154,27 +247,14 @@ def call_exiftool(filepath):
 	collon=lines[0].find(':')
 	for i in range(0,len(lines)):
 		line=lines[i]
-		key=line[:collon].strip().lower()
+		key=line[:collon].strip()
 		key=key.replace(' ','_')
 		key=key.replace('/','_')
 		value=line[collon+2:]
-		if date_match:=date_re.match(value):
-			datum=tuple([int(x) for x in date_match.groups()])
-			early_date=youngest_date(early_date,datum)
-		ret[key]=value
 		#GPS Latitude                    : 52 deg 57' 12.54" N
         #GPS Longitude                   : 5 deg 54' 50.64" E
         #GPS Position                    : 52 deg 57' 12.54" N, 5 deg 54' 50.64" E
-		if key == 'gps_latitude':
-			ret['latitude']=gps_alpha_to_float(value)
-		if key == 'gps_longitude':
-			ret['longitude']=gps_alpha_to_float(value)
-		if key == 'gps_position':
-			latitude,longitude=value.split(',')
-			ret['position']=(gps_alpha_to_float(latitude),gps_alpha_to_float(longitude))
-	ret['year'] =str(early_date[0])
-	ret['month']=str(early_date[1])
-	ret['day']  =str(early_date[2])
+
 	return ret
 fy_months_long  = [	'jannewaris','febrewaris','maart','april','maaie','juny','july','augustus','septimber','oktober','novimber','desimber']
 class TreeOfKnowledge(dict):
@@ -210,7 +290,12 @@ class TreeOfKnowledge(dict):
 		S['Exiftool']  = {}
 		get_mime_etc(sf,S['Exiftool'])
 		S.Exif=S['Exiftool']
+		S.add_geo_labels_to_exif()
 		S.add_date_labels_to_exif()
+		S.add_duration_tag_to_exif()
+		S.Exif['shortname']=naked_filename(sf)
+		len_split=len(S['Tailsplit'] )
+		S['Tailsplit'][len_split-1]=S.Exif['shortname']
 		low_exif={}
 		for key,value in S.Exif.items():
 			low_exif[key.lower()]=value
@@ -219,17 +304,10 @@ class TreeOfKnowledge(dict):
 	def add_date_labels_to_exif(S):
 		# 2024:09:03 10:51:43"
 		date_time=''
-		if "DateTimeOriginal" in S.Exif:
-			date_time=S.Exif["DateTimeOriginal"]
-		elif "CreateDate" in S.Exif:
-			date_time=S.Exif["CreateDate"]
-		elif "TrackCreateDate" in S.Exif:
-			date_time=S.Exif["TrackCreateDate"]
-		elif "VolumeCreateDate" in S.Exif:
-			date_time=S.Exif["VolumeCreateDate"]
-		elif "VolumeModifyDate" in S.Exif:
-			date_time=S.Exif["VolumeModifyDate"]
-
+		for datelabel in "DateTimeOriginal","CreateDate","CreationDate","TrackCreateDate","VolumeCreateDate","VolumeModifyDate" ,"FileModifyDate":
+			if datelabel in S.Exif:
+				date_time=S.Exif[datelabel]
+				break
 		if not date_time:
 			return
 		S.Exif['year' ] = date_time[:4]
@@ -237,6 +315,23 @@ class TreeOfKnowledge(dict):
 		S.Exif['monthstr'] = fy_months_long[int(S.Exif['month'])-1]
 		S.Exif['day']   = date_time[8:10]
 		S.Exif['time']  = date_time[-8:]
+
+	def add_geo_labels_to_exif(S):
+		if "GPSLatitude" in S.Exif:
+			S.Exif['lat'] = gps_alpha_to_float( S.Exif["GPSLatitude"] )
+			S.Exif['lon'] = gps_alpha_to_float( S.Exif["GPSLongitude"])
+			return S.Exif['lat'],S.Exif['lon']
+		elif "GPSPosition" in S.Exif:
+			lat_asc,lon_asc = S.Exif["GPSPosition"].split(',')
+			S.Exif['lat'] = gps_alpha_to_float(lat_asc)
+			S.Exif['lon'] = gps_alpha_to_float(lon_asc)
+			return S.Exif['lat'],S.Exif['lon']
+		return None,None
+
+	def add_duration_tag_to_exif(S):
+		if not 'Duration' in S.Exif:
+			return
+		S.Exif['durationstr']=duration_str(S.Exif['Duration'])
 
 	def show_exif_data(S):
 		for key in S.Exif:
@@ -248,7 +343,9 @@ class TreeOfKnowledge(dict):
 		return S[key]
 
 	def check_extension(S,path):
-		match = re.match(r'.*(\.\w+)$',path,flags=re.ASCII)
+		DEBUGPRINT(f'check_extension("{path}")')
+		#match = re.match(r'.*(\.\w+)$',path,flags=re.ASCII)
+		match = re.match(r'.*(\.[A-Za-z]+\d*\w*)$',path,flags=re.ASCII)
 		if match:
 			match_len=len (match.group(1))
 			if match_len > 3:
@@ -304,28 +401,52 @@ class TreeOfKnowledge(dict):
 		meaning_full = None
 		best_score   = -10
 
-		if meaning == 'subdir':
-			for subdir in S['Tailsplit']:
-				sub_score = guess_meaning(subdir)
-				DEBUGPRINT(f'{sub_score:6.3f} "{subdir}"')
-				if sub_score > best_score:
-					best_score   = sub_score
-					meaning_full = subdir
-			if best_score > 0.8:
-				tokkie['payload'] = meaning_full
-				return tokkie['payload']
-
 		if meaning == 'all':
-			DEBUGPRINT(f'meaning == "all" {S["Tailsplit"]}')
+			#DEBUGPRINT(f'meaning == "all" {S["Tailsplit"]}')
 			extracted = extract_meaning(S['Tailsplit'])
-			DEBUGPRINT(f'{extracted =}')
+			#DEBUGPRINT(f'{extracted =}')
 			tokkie['payload'] = extracted
 			return tokkie['payload']
-		return None
+
+		if meaning == 'best' or meaning == 'first':
+			for subdir in S['Tailsplit']:
+				sub_score,subdir_str  = guess_meaning(subdir)
+				#DEBUGPRINT(f'{sub_score:6.3f} "{subdir}"')
+				if sub_score > best_score:
+					best_score   = sub_score
+					meaning_full = subdir_str
+			tokkie['payload'] = meaning_full
+			return tokkie['payload']
+
+		if meaning == 'second':
+			meaninglist=[(guess_meaning(subdir)) for subdir in S['Tailsplit'] ]
+			if len(meaninglist) < 2:
+				tokkie['payload'] = None
+				return tokkie['payload']
+			meaninglist.sort(reverse=True)
+			for meaning in meaninglist:
+				print(f'{meaning[0]:6.2f} "{meaning[1]}"')
+			tokkie['payload'] = meaninglist[1][1]
+			return tokkie['payload']
+
+		if 'top' in meaning:
+			try:
+				level=float(meaning.split(',')[1])
+			except ValueError:
+				print(f"Can't parse {meaning}")
+				exit(1)
+
+			#DEBUGPRINT(f'meaning == "top {level=}"')
+			extracted = extract_meaning(S['Tailsplit'],level)
+			#DEBUGPRINT(f'{extracted =}')
+			tokkie['payload'] = extracted
+			return tokkie['payload']
+
+		return  None
 
 	def replace_tokkie(S,tokkie):
 		tokkie['payload']=''
-		DEBUGPRINT(f'tokkie replace trigered')
+		DEBUGPRINT(f'TreeOfKnowledge.replace is not implemented "yet?"')
 		return tokkie['payload']
 
 	def geo_tokkie(S,tokkie,latitude,longitude,label):
@@ -350,6 +471,13 @@ class TreeOfKnowledge(dict):
 			return value
 		return None
 
+	def regex_tokkie(S,tokkie):
+		DEBUGPRINT(f'regex_tokkie({tokkie=})')
+		DEBUGPRINT(f'Not implemented yet')
+		tokkie['payload']=''
+		return tokkie['payload']
+		return None
+
 	def consult_the_serpent(S,tokkie:TagToken):
 		"""
 		Determine the kind of token and try to the find the data to the label.
@@ -368,6 +496,10 @@ class TreeOfKnowledge(dict):
 
 		if 'meaning' in tokkie:
 			return S.meaning_tokkie(tokkie)
+
+		if 'regex' in tokkie:
+			return S.regex_tokkie(tokkie)
+
 
 		return None
 

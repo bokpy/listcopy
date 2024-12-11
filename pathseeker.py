@@ -66,17 +66,20 @@ class PathSeeker:
 		format+='\n'
 		#DEBUGPRINT(f'remove_whitespace {format} type({type(format)})')
 		head=-1
-		quote=False
+		quote=''
 		end=len(format)-1
 		lines=[]
 		line=''
 		while head < end:
 			#DEBUGPRINT(f'{line=}')
 			head+=1
-			if (format[head]=="'") or (format[head]=='"'):
-				line+='"'
-				#DEBUGPRINT(f'Flip Quote')
-				quote = not quote
+			if not quote and ((format[head]=="'") or (format[head]=='"')):
+				quote = format[head]
+				line+=format[head]
+				continue
+			if quote == format[head]:
+				quote = ''
+				line+=format[head]
 				continue
 			if quote:
 				line+=format[head]
@@ -93,6 +96,7 @@ class PathSeeker:
 			line+=format[head]
 		# for line in lines:
 		# 	DEBUGPRINT(line)
+		# input('remove whitespace 97')
 		return lines
 
 	def grow_tree(self,lines:list)->list:

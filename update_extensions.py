@@ -72,7 +72,7 @@ DO NOT EDIT regenerate with update_extensions.py > extensionsets.py''')
 		set_name=f'set_{ext_type}'
 		extensions_dict[ext_type]=set_name
 		#print(f'{set_name} = set()')
-		print(f'\n# noinspection SpellCheckingInspection')
+		print(f'# noinspection SpellCheckingInspection')
 		print(f'{set_name} = {{')
 		FileinfoComRequester(ext_type).distillate()
 		print(f'}}\n')

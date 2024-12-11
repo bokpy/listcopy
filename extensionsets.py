@@ -367,7 +367,6 @@ set_text = {
 	'DOX' , # MultiMate Document
 }
 
-
 # noinspection SpellCheckingInspection
 set_data = {
 	'GAMBL' , # Vernier Graphical Analysis Project
@@ -871,7 +870,6 @@ set_data = {
 	'WB2' , # Corel Quattro Pro File
 	'IVT' , # Beyond 20/20 Table File
 }
-
 
 # noinspection SpellCheckingInspection
 set_audio = {
@@ -1377,7 +1375,6 @@ set_audio = {
 	'VMF' , # Vocaltec Media File
 }
 
-
 # noinspection SpellCheckingInspection
 set_video = {
 	'STR' , # YouTube Livestream Recording
@@ -1882,7 +1879,6 @@ set_video = {
 	'VSH' , # VideoStudio HTML5 Project
 }
 
-
 # noinspection SpellCheckingInspection
 set_3d_image = {
 	'BBMODEL' , # Blockbench 3D Model
@@ -2307,7 +2303,6 @@ set_3d_image = {
 	'RIG' , # Antibody Model Rig File
 	'RAY' , # Rayshade Image
 }
-
 
 # noinspection SpellCheckingInspection
 set_raster_image = {
@@ -2813,7 +2808,6 @@ set_raster_image = {
 	'IC3' , # High Resolution Imagic Graphics File
 }
 
-
 # noinspection SpellCheckingInspection
 set_vector_image = {
 	'SVG' , # Scalable Vector Graphic
@@ -3028,7 +3022,6 @@ set_vector_image = {
 	'IGT' , # iGrafx Document Template
 	'NAP' , # NAP Metafile
 }
-
 
 # noinspection SpellCheckingInspection
 set_page_layout = {
@@ -3348,7 +3341,6 @@ set_page_layout = {
 	'SBPAGE' , # Storybook Creator 4 Page
 }
 
-
 # noinspection SpellCheckingInspection
 set_spreadsheet = {
 	'PRESTO' , # Presto Project Spreadsheet
@@ -3421,7 +3413,6 @@ set_spreadsheet = {
 	'WKU' , # Lotus 1-2-3 Spreadsheet
 	'WLS' , # 602Tab Spreadsheet
 }
-
 
 # noinspection SpellCheckingInspection
 set_database = {
@@ -3672,7 +3663,6 @@ set_database = {
 	'R2D' , # Borland Reflex Database
 }
 
-
 # noinspection SpellCheckingInspection
 set_executable = {
 	'APK' , # Android Package File
@@ -3904,7 +3894,6 @@ set_executable = {
 	'SMM' , # Ami Pro Macro
 	'BNS' , # Compiled Rabbit Network Script
 }
-
 
 # noinspection SpellCheckingInspection
 set_game = {
@@ -4410,7 +4399,6 @@ set_game = {
 	'NSBCA' , # Nintendo DS Model Animation File
 }
 
-
 # noinspection SpellCheckingInspection
 set_cad = {
 	'BAK' , # AutoCAD Drawing Backup
@@ -4783,7 +4771,6 @@ set_cad = {
 	'PCA' , # Archicad Teamwork Draft Archive
 }
 
-
 # noinspection SpellCheckingInspection
 set_gis = {
 	'GMAP' , # Garmin Map File
@@ -4967,7 +4954,6 @@ set_gis = {
 	'WFD' , # Wayfinder Map File
 	'DVC' , # IDRISI Vector Definition File
 }
-
 
 # noinspection SpellCheckingInspection
 set_web = {
@@ -5242,7 +5228,6 @@ set_web = {
 	'FCGI' , # FastCGI File
 }
 
-
 # noinspection SpellCheckingInspection
 set_plugin = {
 	'APLG' , # Audials Plug-in
@@ -5480,7 +5465,6 @@ set_plugin = {
 	'Q4Q' , # Solar Cell Photoshop Plug-in
 }
 
-
 # noinspection SpellCheckingInspection
 set_font = {
 	'VFB' , # FontLab Studio Font File
@@ -5545,7 +5529,6 @@ set_font = {
 	'PFT' , # ChiWriter Printer Font
 	'SFT' , # ChiWriter Screen Font
 }
-
 
 # noinspection SpellCheckingInspection
 set_system = {
@@ -5872,7 +5855,6 @@ set_system = {
 	'RVP' , # Sharp Blu-ray Player Firmware File
 	'IM4M' , # IMG4 Manifest
 }
-
 
 # noinspection SpellCheckingInspection
 set_settings = {
@@ -6378,7 +6360,6 @@ set_settings = {
 	'MSW' , # Painter Color Mixer Swatches
 }
 
-
 # noinspection SpellCheckingInspection
 set_encoded = {
 	'BHX' , # BinHex Encoded File
@@ -6675,7 +6656,6 @@ set_encoded = {
 	'HBX' , # BinHex Encoded File
 	'LXV' , # JumpDrive Secure II Vault
 }
-
 
 # noinspection SpellCheckingInspection
 set_compressed = {
@@ -7041,7 +7021,6 @@ set_compressed = {
 	'XFP' , # FormsForWeb Extensible Form Package
 }
 
-
 # noinspection SpellCheckingInspection
 set_disk_image = {
 	'VFD' , # Virtual Floppy Disk
@@ -7265,7 +7244,6 @@ set_disk_image = {
 	'K3B' , # K3b Disk Burning Project File
 	'TAP' , # Oric Tape Image
 }
-
 
 # noinspection SpellCheckingInspection
 set_developer = {
@@ -7771,7 +7749,6 @@ set_developer = {
 	'R' , # REBOL Script
 }
 
-
 # noinspection SpellCheckingInspection
 set_backup = {
 	'IV2I' , # Norton Ghost Incremental Virtual Volume Image
@@ -8098,7 +8075,6 @@ set_backup = {
 	'OBK' , # OrangeCD Backup File
 	'SCBACKUP' , # Secret Calculator Folder Backup
 }
-
 
 # noinspection SpellCheckingInspection
 set_misc = {
@@ -8603,7 +8579,6 @@ set_misc = {
 	'TCR' , # TouchMagix Creative Suite Published File
 	'MCF' , # MasterCook 2 Cookbook File
 }
-
 
 # noinspection SpellCheckingInspection
 extension_dict={

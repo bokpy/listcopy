@@ -22,7 +22,7 @@ def center_char(mid, length, fill=' '):
 	return fill * fh + mid + fill * sh
 
 
-label_re = r'((?:label|subdir|literal|replace|meaning){[^}]+})'
+label_re = r'((?:label|subdir|literal|replace|meaning|regex){[^}]+})'
 bind_re = r'\+"([^"]+)"\+'
 slash_re = r'([_/])'
 fork_re = r'(\()'
@@ -45,14 +45,11 @@ re_path = re.compile(
 )
 int_re = re.compile('[+-]*\d+')
 
-
 def showTagToken(S):
 	S.show()
 
-
 def TagTokenPrintShort(S):
 	print(S.str_short(), end=' ')
-
 
 def show_tag_stack(stack, title=''):
 	if title:
@@ -60,7 +57,6 @@ def show_tag_stack(stack, title=''):
 	# for i in range(0,len(stack)):
 	for i in range(len(stack) - 1, -1, -1):
 		print(f'{i:3} {stack[i]}')
-
 
 TT_BIND  = 0  # + VALUE value and mainline
 TT_SLASH = 1  # / SIMPLE only mainline
@@ -225,6 +221,10 @@ class TagToken(dict):
 			S['meaning'] = val
 			return
 
+		if type == 'regex':
+			S['regex'] = val
+			return
+
 		raise ValueError(f'"{value}" unsupported label type.')
 
 	def init_name(S, value):
@@ -293,6 +293,10 @@ class TagToken(dict):
 				continue
 			if lose_wagon.is_tie():
 				while True:
+					if not len(fork_stack):
+						print(f'Met a Problem in:\n "{token_string}"')
+						print(f'May be a mistake in ( | ) syntax.')
+						raise RuntimeError ('TagToken.do_shunting quiting.')
 					side_train = fork_stack.pop()
 					end_wagon = side_train.add_caboose(lose_wagon)
 					if side_train.is_fork():

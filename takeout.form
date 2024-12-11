@@ -1,0 +1,88 @@
+ISO:/literal{"fideo/kompaktdisk"}
+    ( / label{VolumeName}|
+     literal{""}
+    )
+    (
+    / subdir{-2} literal{" jier "} label{year} |
+    / subdir{-2} |
+    / literal{"jier "} label{year}  |
+    literal{""}
+    )
+    / name:subdir{-1}
+    ;
+
+# google takeout handling
+
+JSON:/literal{"json"}/name:subdir{0};
+
+image:/literal{ôfbyldings}
+    (
+    / label{year}_label{monthstr}  / label{addr:city}_label{addr:street} |
+    / label{year} / label{addr:city}_label{addr:street} |
+    / label{addr:city}_label{addr:street} |
+    / label{year}_label{monthstr} |
+    / label{year} |
+    literal{""}
+    )
+    (
+    / label{make} literal{" model "} label{Model}
+    | / label{make}
+    | / label{model}
+    | literal{""}
+    )
+(
+  / meaning{top,0.6}
+| / meaning{second} / meaning{first}
+| / meaning{first}
+| / label{shortname}
+| / literal{"moniker"}
+)
+name:literal{""};
+
+audio:/literal{lûd_en_ferskes}
+     (
+     / label{Album} literal{" jier "} label{Year} |
+     / label{Album} |
+     / label{Year}  |
+     literal{""}
+     )
+     (
+     / name :label{title} |
+     / name:subdir{-1}
+     );
+
+video,MP4:/literal{filmkes}
+    (
+ #   / label{year} _ label{month} / label{addr:city} _ label{addr:street} _ label{addr:housenumber}
+ # | / label{year} _ label{month} / label{addr:city} _ label{addr:street}
+ # | / label{year} _ label{month} / label{addr:city} _ label{addr:street}
+ # | / label{addr:city} _ label{addr:street}
+ # | / label{year} _ label{month} _ label{day}
+ # | / regex{"r'dit is een regular expression'"}
+    / label{year} _ label{month}
+    | / label{Year}
+    | replace{"test"}
+    | literal{""}
+    )
+    (
+      / label{make} literal{" model "} label{Model}
+    | / label{make}
+    | / label{model}
+    | literal{""}
+    )
+    (
+    / meaning{second}
+    | literal{""}
+    )
+( / meaning{top,0.54}
+| / meaning{best}
+| / subdir{-2}
+| / label{FileName}
+)
+(
+_label{durationstr}
+| literal{""}
+)
+name:literal{""};
+
+default:/literal{"undefined default"}/name:subdir{0};

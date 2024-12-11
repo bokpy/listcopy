@@ -10,10 +10,7 @@ import extensions as ext
 from metadata import DEBUGPRINT
 
 DEBUGEXIT=exit
-
-FILTEROUT=['/Cookies/','/Microsoft/','/Windows/','/Cache','#.*#$','\.lnk$',
-           '\.tmp$','\.log$','\.err$','~$','/AppData/',
-           '\.ini$','/NTUSER.DAT',]
+FILTEROUT=['/Cookies/','/Microsoft/','/Windows/','/Cache','#.*#$','\.lnk$','\.tmp$','\.log$','\.err$','~$','^~','/AppData/','\.ini$','/NTUSER.DAT','\.thumbnails','^{.*}$','NTUSER\.']
 
 parser = argparse.ArgumentParser(
 prog='listfiles.py',
@@ -121,6 +118,7 @@ class FileListing:
         :param directory: Directory to scan for criteria matching files.
         :param output_file: Open fd to write the results to.
         """
+        print(f'Scan: "{directory}" ',end='')
         self.catalog = directory
         self.outp    = output_file
         self.args    = args
@@ -129,10 +127,12 @@ class FileListing:
             self.initiated=True
         self.current_entry=None
         self.string_path=None
+        self.count = 0
         self.write(lu.DATA_BEGIN_MARKER)
         self.write(directory)
         self.walk()
         self.write(lu.DATA_END_MARKER)
+        print(f'\n{self.count} files written to "{output_file.name}"')
         
     def write(self,data=None):
         if not data:
@@ -152,43 +152,42 @@ class FileListing:
         compose and compile regular expressions to filter path's in or out
         :return: side effects self.(excl_re,incl_re,ext_re,bigger,smaller)
         """
-        
-        sa=self.args
+
         excl_str=skip_str=filter_str=incl_str=ext_str=match_str=''
         incl_list=[]
         
         # construct the regular expression that excludes paths
-        if sa.filter: filter_str="|".join(lu.FILTEROUT)
-        if sa.skip:   skip_str  ="|".join(sa.skip)
+        if self.args.filter: filter_str="|".join(FILTEROUT)
+        if self.args.skip:   skip_str  ="|".join(self.args.skip)
         if filter_str and skip_str: # concatenate if there a two
             excl_str=skip_str + '|' + filter_str
         else: # one the real one or the empty string goes in excl_str
             excl_str=skip_str + filter_str
         if excl_str:
-            self.excl_re=re.compile(excl_str)
+            self.excl_re=re.compile(excl_str,flags=re.IGNORECASE)
         
         # construct extension checker
-        if sa.extension:
-            self.ext_select=ext.SelectOnExtension(sa.extension)
+        if self.args.extension:
+            self.ext_select=ext.SelectOnExtension(self.args.extension)
             # self.ext_select.show()
             # DEBUGEXIT(0)
         
         # construct the regular expression that filters for paths with a matching substring
-        if sa.match:
-            match_str="|".join(sa.match)
+        if self.args.match:
+            match_str="|".join(self.args.match)
             self.incl_re=re.compile(match_str,flags=re.IGNORECASE)
         
         # selection on mime type
-        if sa.mime_type:
-            self.magic=ext.MagicMime(sa.mime_type)
+        if self.args.mime_type:
+            self.magic=ext.MagicMime(self.args.mime_type)
             
         # if size matters
-        if sa.bigger:
-            self.bigger=lu.kilo_mega(sa.bigger)
+        if self.args.bigger:
+            self.bigger=lu.kilo_mega(self.args.bigger)
             self.check_size=True
   
-        if sa.smaller:
-            self.smaller=lu.kilo_mega(sa.smaller)
+        if self.args.smaller:
+            self.smaller=lu.kilo_mega(self.args.smaller)
             self.check_size=True
         
     
@@ -255,12 +254,13 @@ class FileListing:
                     self.current_entry=entry
                     if self.filter():
                         self.write() # writes self.string_path
+                        self.count+=1
             except PermissionError as e:
                 print (f'"{cur_dir}" {e}')
 
  
 def main() -> None:
-    DEBUGPRINT(f'{args.show_mime=} {args.scandir}')
+    #DEBUGPRINT(f'{args.show_mime=} {args.scandir}')
     if args.show_mime:
         low= args.show_mime.lower()
         if low =='general':
@@ -274,22 +274,19 @@ def main() -> None:
     output_file=None
     if args.append:
         output_file=args.append
-        print (f'Append listing to: "{output_file}"')
+        print (f'Append: ',end='')
         open_mode='a'
     elif args.output:
         output_file=args.output
-        print (f'Write listing to: "{output_file}"')
+        print (f'Write: ',end='')
         open_mode='w'
     
     if output_file:
         output_file=os.path.expanduser(output_file)
     for catalogue in args.scandir:
         catalogue=os.path.expanduser(catalogue)
-        print(f'Start scanning: "{catalogue}"')
-        if open_mode=='w':
-            print (f'Write to: "{output_file}"')
-        else:
-           print (f'Append to: "{output_file}')
+        #print(f'Start scanning: "{catalogue}" ',end='')
+        print (f' "{output_file}"')
         with open(output_file,open_mode) as f:
             FileListing(args,catalogue,f)
         open_mode='a'

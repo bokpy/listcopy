@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+from collections import deque
 import os
 import time
 import psutil
@@ -13,11 +14,14 @@ def eat(*args,**kwargs):
 	pass
 verbose=eat # verbose = print for verbose
 
-
+name_seed=None
 class NameConflictSolver(Base62):
 
 	def __init__(S):
-		Base62.__init__(S,int (time.time()%100))
+		global  name_seed
+		if not name_seed:
+			name_seed=int (time.time()) % 100
+		Base62.__init__(S,name_seed)
 
 	def rename(S,file):
 		point = file.rfind('.')
@@ -90,6 +94,23 @@ def exit_error(e, message=None) -> None:
 		      'medium')
 	exit(1)
 
+def replace_ilegal(path ):
+	if not isinstance(path,str):
+		print(f'Got {path} of type({type(path)}')
+		print(f"can't handle this return "'hopeless')
+		return 'hopeless'
+		#path=path.decode(encoding ='utf-8', errors = 'ignore')
+
+	match = re.findall(r'([\\:?*<>|]| / | /|/ )+',path)
+	if not match:
+		return path
+	for chars in match:
+		if '/' in chars:
+			path = path.replace(chars, '/')
+			continue
+		path = path.replace(chars, '-')
+	return path
+
 # chunk size optimising
 def least_sig(f,intdigits=3,deci_digits=3):
 	fstr=str(f)
@@ -100,6 +121,12 @@ big=['<<<','>>>']
 pos=[' - ',' + ']
 
 class Throttle:
+	working=deque(['w      ','wo     ','wor    ','work   ','worki  ','workin ','working',
+	               ' orking',' orkin ','  rkin ','  rki  ','   ki  ','   k   ',
+	               '      g','     ng','    ing','   king','  rking',' orking','working',
+	               'wor ing','wor  ng','wo   ng','wo    g','w     g','w      ','       ']
+	              )
+
 	def __init__(S,consigment):
 		S.block_size      = consigment['fsblocksize']
 		S.best             = 16*S.block_size
@@ -110,12 +137,34 @@ class Throttle:
 		S.throttle_off     = 0.0
 		S.throttle_on      = 0.0
 		S.pause_time       = -1.0
+		S.work_clock       =  0.0
+		S.work_clock_interval =  0.2
+		S.last_file_accessed = consigment['last_file_accessed']
 		if 'throttle' in consigment:
 			on,off = consigment['throttle'].split(',')
 			S.throttle_on  = float(on)
 			S.throttle_off = float(off)
 			S.pause_time   = time.time()
 
+	def verbose_sleep(S):
+		S.throttle_off
+		print(f'\rsleep {S.throttle_off:5.3f} secs ',end='',flush=True)
+		secs=int(S.throttle_off)
+		wakeup=0
+		if secs > 2:
+			secs-=2
+			wakeup = 5
+
+		while secs:
+			time.sleep(1.0)
+			print('z',end='',flush=True)
+			secs-=1
+		while wakeup > 0:
+			time.sleep(0.4)
+			print(' ring',end='',flush=True)
+			wakeup -= 1
+		print(' go',end='',flush=True)
+		time.sleep(S.throttle_off - int(S.throttle_off))
 
 	def show(S,comment=''):
 		print(f'\nThrottle: {comment}')
@@ -123,13 +172,28 @@ class Throttle:
 		print(f'chunk {S.chunksize}')
 
 	def pause(S,now):
-		if S.pause_time<0:
-			return
-		if now > S.pause_time:
+		global verbose
+		if S.pause_time < 0:
+			S.pause_time = now + S.throttle_on
+			return now
+		if now < S.pause_time:
+			if now > S.work_clock:
+				work=S.working.popleft()
+				verbose(f'\r{work} {" "*10}',end='',flush=True)
+				S.working.append(work)
+				S.work_clock = now + S.work_clock_interval
+			return now
+		#PRINT_OFF(f'{verbose=}')
+		os.sync()
+		if verbose == print:
+			S.verbose_sleep()
+		else:
 			time.sleep(S.throttle_off)
-			os.system("clear")
-			S.pause_time = time.time()
-			S.pause_time += S.throttle_on
+		#os.system("clear") # clears the terminal screen
+		now = time.time()
+		S.pause_time = now + S.throttle_on
+		S.work_clock = now
+		return now
 
 	def start_timer(S,file_size):
 		S.prior_clock      = time.time()
@@ -140,7 +204,7 @@ class Throttle:
 			S.chunksize += S.block_size
 			return S.chunksize
 		S.chunksize        = S.best # - (4 * S.block_size)
-		#S.pause(S.prior_clock)
+		verbose()
 		return S.chunksize
 
 	def clock_chunk(S,bytes_copied):
@@ -151,12 +215,14 @@ class Throttle:
 				S.chunksize -= chunk_change
 			return S.chunksize
 
-		#DEBUGPRINT(f'{bytes_copied=} {S.chunksize=}')
+		#PRINT_OFF(f'{bytes_copied=} {S.chunksize=}')
 		now = time.time()
+		now = S.pause(now)
+
 		if bytes_copied < S.chunksize:
-			#DEBUGPRINT(f'{bytes_copied= } < {S.chunksize} done?' )
+			#PRINT_OFF(f'{bytes_copied= } < {S.chunksize} done?' )
 			verbose(f'File copied.')
-			#DEBUGPRINT(f'Save {S.chunksize=} to {S.best=}')
+			#PRINT_OFF(f'Save {S.chunksize=} to {S.best=}')
 			S.best = S.chunksize
 			S.pause(now)
 			return 0
@@ -172,7 +238,7 @@ class Throttle:
 		period      = now    - S.prior_clock
 		# time_delta  = period - S.prior_period
 		# if abs(time_delta) < 0.005:
-		# 	##DEBUGPRINT(f'Stable {time_delta=}')
+		# 	##PRINT_OFF(f'Stable {time_delta=}')
 		# 	S.prior_period = period
 		# 	S.clock_start  = now
 		# 	S.chunksize    = S.prior_chunksize
@@ -182,31 +248,31 @@ class Throttle:
 		chunk_speed       = S.chunksize / period
 		chunk_delta       = S.prior_chunksize - S.chunksize
 		speed_delta       = (prior_chunk_speed - chunk_speed ) / prior_chunk_speed
-		verbose(f'speed is {chunk_speed/1000.0:5.1f} {big[chunk_speed>prior_chunk_speed]} {prior_chunk_speed/1000:5.1f} delta {speed_delta:7.3f}')
+		#verbose(f'speed is {chunk_speed/1000.0:5.1f} {big[chunk_speed>prior_chunk_speed]} {prior_chunk_speed/1000:5.1f} delta {speed_delta:7.3f}')
 
 		chunk_change = abs (int (speed_delta * chunk_delta))
 		if chunk_change >= S.block_size:
 			if chunk_speed > prior_chunk_speed:
 				if S.chunksize > S.prior_chunksize:
 					# bigger chunksize improved speed so increase the size
-					#DEBUGPRINT('bigger chunksize improved speed so increase the size')
-					#DEBUGPRINT(f'chunk {S.chunksize} + {chunk_change} = {S.chunksize + chunk_change}')
+					#PRINT_OFF('bigger chunksize improved speed so increase the size')
+					#PRINT_OFF(f'chunk {S.chunksize} + {chunk_change} = {S.chunksize + chunk_change}')
 					S.chunksize += chunk_change
 				else:
 					# smaller chunksize improved speed so decrease the size
-					#DEBUGPRINT('smaller chunksize improved speed so decrease the size')
-					#DEBUGPRINT(f'chunk {S.chunksize} - {chunk_change} = {S.chunksize - chunk_change}')
+					#PRINT_OFF('smaller chunksize improved speed so decrease the size')
+					#PRINT_OFF(f'chunk {S.chunksize} - {chunk_change} = {S.chunksize - chunk_change}')
 					decrease_chunk_size(chunk_change)
 			else:
 				if S.chunksize > S.prior_chunksize:
 					# bigger chunksize decreased speed so decrease the size
-					#DEBUGPRINT('bigger chunksize decreased speed so decrease the size')
-					#DEBUGPRINT(f'chunk {S.chunksize} - {chunk_change} = {S.chunksize - chunk_change}')
+					#PRINT_OFF('bigger chunksize decreased speed so decrease the size')
+					#PRINT_OFF(f'chunk {S.chunksize} - {chunk_change} = {S.chunksize - chunk_change}')
 					decrease_chunk_size(chunk_change)
 				else:
 					# smaller chunksize decreased speed so increase the size
-					#DEBUGPRINT('smaller chunksize decreased speed so increase the size')
-					#DEBUGPRINT(f'chunk {S.chunksize} + {chunk_change} = {S.chunksize + chunk_change}')
+					#PRINT_OFF('smaller chunksize decreased speed so increase the size')
+					#PRINT_OFF(f'chunk {S.chunksize} + {chunk_change} = {S.chunksize + chunk_change}')
 					S.chunksize += chunk_change
 
 		S.prior_period = period
@@ -246,11 +312,11 @@ def format_bytesize(size_in_bytes, strlen=0):
 def BadFile(consignment, nasty, error):
 	source_path = consignment['source_path']
 	bad_file    = consignment['bad_file']
-	# #DEBUGPRINT (f'/nError:{error.errno} "{error.strerror}"')
+	# #PRINT_OFF (f'/nError:{error.errno} "{error.strerror}"')
 	# if os.path.exists(nasty_dest):
 	# 	# remove the failed copy
 	# 	os.remove(nasty_dest)
-	# 	#DEBUGPRINT (f'Removed "{nasty_dest}"')
+	# 	#PRINT_OFF (f'Removed "{nasty_dest}"')
 
 	if not os.path.exists(bad_file):  # if no bad_file write a header to it
 		# so can bee used as an copy.list later
@@ -273,38 +339,42 @@ class Replicator:
 		S.fs_max_file  = consignment['fsmaxfilesize']
 		S.throttle     = Throttle(consignment)
 		S.double_namer = NameConflictSolver()
+		S.last_file_accessed = consignment['last_file_accessed']
 		#S.COPY_CHECK = 89
 
+	def check_destination(S,mission,consignment):
+		#PRINT_OFF(f'check_destination')
+		#PRINT_OFF(f'check: "{mission["destination"]}"')
+		S.check_dir(mission)
+		#PRINT_OFF(f'  dir: "{mission["destination"]}"')
+		#PRINT_OFF(f' last: "{consignment["last_file_accessed"]}"')
+		while os.path.exists(mission["destination"]):
+			#PRINT_OFF(f'exist: "{mission["destination"]}"')
+			#PRINT_OFF(f'same { mission["destination"] == consignment["last_file_accessed"]}')
+			if mission["destination"] == consignment['last_file_accessed']:
+				#PRINT_OFF(f'Trying to remove interupted file.')
+				try:
+					os.remove(mission["destination"])
+					return
+				except OSError as e:
+					print(f'Failed to remove interupted file. {e}')
+					exit_error(e,'check_destination')
+			mission["destination"]=S.double_namer.rename(mission["destination"])
+			#PRINT_OFF(f'renam: "{mission["destination"]}"')
+		# for _ in 1,2:
+		# 	try:
+		# 		with open(mission["destination"], 'w') as test:
+		# 			DEBUGPRINT(f'{test}')
+		# 			return
+		# 	except OSError as e:
+		# 		if e.errno == 22:
+		# 			mission["destination"]=replace_ilegal()
+		# 			continue
+		# print(f'Opening "{mission["destination"]}" Failed exit')
+		# exit(1)
+
 	def check_dir(S,mission):
-
-		def replace_ilegal():
-			path  = mission['destination']
-			match = re.findall(r'[\\:?*<>|]+',path)
-			if not match:
-				return False
-			for character in match:
-				path  = path.replace(character,'X')
-			mission['destination'] = path
-			return True
-
-		def remove_space_slash():
-			path     = mission['destination']
-			found    = False
-			path_len = len(path)
-			while True:
-				space_slash = path.replace(' /','/')
-				slash_space = space_slash.replace('/ ','/')
-				new_len = len(slash_space)
-				DEBUGPRINT(f'{path_len:3} {new_len:3} "{slash_space}"')
-				if not found:
-					found = new_len < path_len
-				if new_len == path_len:
-					mission['destination'] = slash_space
-					return found
-				path     = slash_space
-				path_len = new_len
-
-		while True:
+		for _ in 1,2:
 			dest_path=os.path.dirname(mission['destination'])
 			try:
 				os.makedirs(dest_path, mode=0o777, exist_ok=True)
@@ -312,13 +382,30 @@ class Replicator:
 			except OSError as ed:
 				print(f'os.makedirs("{dest_path}") Failed')
 				print(f'{ed}')
-				if ed.errno == 22 and (replace_ilegal() or remove_space_slash()):
+				if ed.errno == 22:
+					mission['destination']=replace_ilegal(mission['destination'])
+					print(f'new destination = "{mission["destination"]}"')
 					# [Errno 22]Invalid argument:
 					continue
-				exit(ed.errno)
+				else:
+					exit(ed.errno)
+
+	def file_exists(S,destination,file_size):
+		if destination == S.last_file_accessed:
+			try:
+				os.remove(destination)
+				return destination
+			except OSError as e:
+					print(f'Could not remove partly copied file:\n"{destination}"')
+		dup_size=os.path.getsize(destination)
+		if file_size == dup_size:
+			verbose(f'Same size')
+			return destination
+		verbose(f'{file_size=} != {dup_size=} Renaming File')
+		return S.double_namer.rename(destination)
 
 	def write_chunks_to_file(S, mission):
-		S.check_dir(mission) # destination can change if the directory can bee made
+		#S.check_dir(mission) # destination can change if the directory can't bee made
 		source      = mission['source_file']
 		destination = mission['destination']
 		file_size = os.path.getsize(source)
@@ -327,26 +414,13 @@ class Replicator:
 			print(f'{file_size} > {S.fs_max_file} ')
 			return OSError(27, 'Too Big for Filesystem.')
 
-		if os.path.exists(destination):
-			verbose(f'"{source}" and \n"{destination}" existists',end=' ')
-			dup_size=os.path.getsize(destination)
-			if file_size == dup_size:
-				verbose(f'Same size')
-				return 0
-			else:
-				verbose(f'{file_size=} != {dup_size=}')
-				destination= mission['destination'] = S.double_namer.rename(destination)
-				verbose(f'Renamed: "{destination}"')
-
 		verbose(f'filesize:  {str(Suffix(file_size))}')
-
-		#S.check_dir(destination)
 
 		with open(source, 'rb') as sf:
 			chunk_size = S.throttle.start_timer(file_size)
 			to_write=file_size
 			while to_write:
-				verbose(f'chunksize: {str(Suffix(chunk_size))}')
+				#verbose(f'chunksize: {str(Suffix(chunk_size))}')
 				data_chunk = sf.read(chunk_size)
 				if not data_chunk:
 					break
@@ -356,43 +430,39 @@ class Replicator:
 						to_write -= written
 
 				except OSError as e:
+					if e.errno == 22:
+						destination=replace_ilegal(destination)
+						if mission['destination'] != destination:
+							mission['destination'] = destination
+							verbose(f'Renamed: "{destination}"')
+							continue
 					print(f'write {len(data_chunk)} bytes to "{destination}" Failed')
 					print(f'{e}')
 					exit(e.errno)
-
-				os.sync()
+				# os.sync() sync when paused try to let usb devices survive
 				chunk_size = S.throttle.clock_chunk(written)
-			# S.COPY_CHECK-=1
-			# if S.COPY_CHECK <=0:
-			# 	S.COPY_CHECK=23
-			# 	if not duplicates.cmp(source,destination, shallow=False):
-			# 		DEBUGPRINT(f'Copy "{source}"')
-			# 		DEBUGPRINT(f'  to "{destination}"\nFAILED!')
-			# 		DEBUGPRINT(f'{os.stat(source)}')
-			# 		DEBUGPRINT(f'{os.stat(destination)}')
-			# 		exit(258)
 		return 0
 
-def file_check_ok(source, target, l) -> bool:
-	# if the destination of src exists and the
-	# sizes are the same it wil be ok and return is True
-	try:
-		size_src = os.stat(source).st_size
-	except OSError as e:
-		print(f'{e.errno} "{e.strerror}"')
-		exit(e.errno)
-	try:
-		size_dst = os.stat(target).st_size
-	except OSError as e:
-		if e.errno == 2:  # No such file
-			return False
-		print(f'Can\'t stat "{target}"')
-		print(f'{e.errno} "{e.strerror}"')
-		exit(e.errno)
-	if size_src == size_dst:
-		return True
-	os.remove(target)
-	return False
+# def file_check_ok(source, target, l) -> bool:
+# 	# if the destination of src exists and the
+# 	# sizes are the same it wil be ok and return is True
+# 	try:
+# 		size_src = os.stat(source).st_size
+# 	except OSError as e:
+# 		print(f'{e.errno} "{e.strerror}"')
+# 		exit(e.errno)
+# 	try:
+# 		size_dst = os.stat(target).st_size
+# 	except OSError as e:
+# 		if e.errno == 2:  # No such file
+# 			return False
+# 		print(f'Can\'t stat "{target}"')
+# 		print(f'{e.errno} "{e.strerror}"')
+# 		exit(e.errno)
+# 	if size_src == size_dst:
+# 		return True
+# 	os.remove(target)
+# 	return False
 
 def main() -> None:
 	pass
