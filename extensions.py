@@ -5,13 +5,18 @@
 import os.path
 import re
 import subprocess
+from xml.etree.ElementTree import indent
+
+from matplotlib.font_manager import json_dump
+
 import listutils as lu
-import extensionsets
+import json
 from extensionsets import extension_dict
 from listutils import end_slash
 
 DEBUGPRINT=print
 DEBUGEXIT=exit
+
 
 # noinspection SpellCheckingInspection
 # VIDEO_EXT = [
@@ -956,9 +961,15 @@ class MagicMime:
 		print(f'{self.diagnose}: "{os.path.basename(self.path)}"')
 
 if __name__ == '__main__':
+	#print(json.d(extension_dict,indent=4))
 	#tester=SelectOnExtension('mp3','wav','audio',['txt','raster_image'])
-	show_mime_types()
-	show_mime_types(encoding='audio')
+	# show_mime_types()
+	# show_mime_types(encoding='audio')
+	print(f'type dict {type(extension_dict)}')
+	for key in extension_dict:
+		print(f'{key=}')
+	#jdict=json.dumps(extension_dict,indent=4)
+	#print(json.dumps(extension_dict,indent=4))
 	
 
    

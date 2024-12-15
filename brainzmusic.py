@@ -205,6 +205,9 @@ class BrainzMusic(dict):
 			return top
 		
 		def pic_the_top(dct):
+			if not dct:
+				return ''
+			DEBUGPRINT(f'pic_the_top({dct})')
 			lst=[(k,v) for k,v in dct.items()]
 			lst.sort(key = lambda a:-a[1])
 			min = lst[0][1] // 2

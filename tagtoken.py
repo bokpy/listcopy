@@ -607,20 +607,24 @@ class TagToken(dict):
 
 class FileToken(TagToken):
 
-	def __init__(S, category_string: str):
+	def __init__(S, mime_and_ext: str):
+		DEBUGPRINT(f'FileToken({mime_and_ext=})')
 		TagToken.__init__(S)
 		S['token'] = TT_FILE
 		# DEBUGPRINT(f'FileToken {category_string}')
-		S['mime'] = []
-		S['extension'] = []
-		S['next_mime'] = None # Misnomer should bee next_filetoken
-		for item in category_string.split(','):
-			if item.isupper():
-				S['extension'].append(item.lower())
-			else:
-				S['mime'].append(item.lower())
+		#S['mime']       =
+		S['mimes']      = []
+		S['generals']   = []
 
-	def am_I_the_one(S,filedata:dict)->bool:
+		S['extensions'] = []
+		S['next_mime'] = None # Misnomer should bee next_filetoken
+		for item in mime_and_ext.split(','):
+			if item.isupper():
+				S['extensions'].append(item.lower())
+				continue
+			S['generals'].append(item)
+
+	def am_I_the_one(S,exifdata:dict)->bool:
 		"""
 		Check if filedata["FileTypeExtension"] is in S['extension']
 		or
@@ -630,18 +634,19 @@ class FileToken(TagToken):
 		:param filedata: data from metadata "get_mime_etc" (exiftool or file)
 		:return: matches True else False
 		"""
-		if 'default' in S["mime"]:
+		if 'default' in S["mimes"]:
 			return True
-		if ("FileTypeExtension" in filedata) and (filedata["FileTypeExtension"] in S['extension']):
-			return True
-		if S['mime']:
-			if filedata["general"] in S['mime']:
+		if "FileTypeExtension" in exifdata:
+			if exifdata["FileTypeExtension"].lower in S['extensions']:
 				return True
-			find_mime='^'+filedata["mime"]+'.*$'
-			for mime in S['mime']:
-				its_me=re.match(f'^{mime}.*',filedata["mime"])
-				if its_me:
-					return True
+		if S['generals']:
+			if exifdata["general"] in S['generals']:
+				return True
+			# find_mime='^'+filedata["mime"]+'.*$'
+			# for mime in S['mime']:
+			# 	its_me=re.match(f'^{mime}.*',filedata["mime"])
+			# 	if its_me:
+			# 		return True
 		return False
 
 	def __str__(S):

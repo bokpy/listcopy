@@ -90,7 +90,11 @@ class InputFileIterator:
 		for file in saves :
 			try:
 				with open(file, 'w') as f:
-					f.write(f'{self.completed+1}\n{destination_root_path}\n{mission["destination"]}\n')
+					if "Error" in mission:
+						destination = f'Error "{mission["Error"]}" leads to no where.'
+					else:
+						destination = mission["destination"]
+					f.write(f'{self.completed+1}\n{destination_root_path}\n{destination}\n')
 			except OSError as e:
 				print(f'Writing "{self.file}" Failed.')
 				print(f'{e.errno} {e.strerror}')

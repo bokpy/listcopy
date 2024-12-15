@@ -1,14 +1,22 @@
 #!/usr/bin/python3
 import argparse
 import os
+from os import scandir
 import re
 from collections import deque
-from time import sleep
+import time
 
-import listutils as lu
+#from time import sleep
+from listutils import Tumbler,kilo_mega,DATA_BEGIN_MARKER,DATA_END_MARKER
 import extensions as ext
-from metadata import DEBUGPRINT
 
+def silent(*args,**kwargs):
+    pass
+
+verbose=silent
+#verbose=print
+
+DEBUGPRINT=print
 DEBUGEXIT=exit
 FILTEROUT=['/Cookies/','/Microsoft/','/Windows/','/Cache','#.*#$','\.lnk$','\.tmp$','\.log$','\.err$','~$','^~','/AppData/','\.ini$','/NTUSER.DAT','\.thumbnails','^{.*}$','NTUSER\.']
 
@@ -26,7 +34,7 @@ parser.add_argument('scandir',
                     action='store'
                     )
 #x x x x x x x x x x x x x x x x
-ext_str=','.join(ext.extension_dict.keys())
+ext_str=', '.join(ext.extension_dict.keys())
 
 parser.add_argument('-x','--extension',
                     help='select files by extension individual or one of these classes: ' + ext_str,
@@ -68,6 +76,7 @@ parser.add_argument('-S','--skip',
                     help='Paths that contain a part that match with one of these '
                          'regular expressions are skipped.',
 					metavar='',
+                    action='store',
                     )
 #m m m m m m m m m m m m m m m m
 parser.add_argument('-m', '--match',
@@ -91,6 +100,11 @@ parser.add_argument('-s', '--smaller',
                     metavar='',
                     nargs=1
                     )
+#wholesale wholesale wholesale wholesale wholesale wholesale wholesale
+parser.add_argument('-w','--wholesale',
+                    help='List everything like "ls -R" (overrides all other filters).',
+                    action='store_true'
+                    )
 #show-mime show-mime show-mime show-mime
 parser.add_argument('--show-mime',
                     help=f'Show "general" mime types or encodings of given "general mime type" in "{ext.MAGIC_FILE}" ',
@@ -99,7 +113,58 @@ parser.add_argument('--show-mime',
                     action='store',
                     nargs='?'
                     )
-args = parser.parse_args()
+#verbose verbose verbose verbose verbose verbose verbose verbose
+parser.add_argument('-v', '--verbose',
+                    help='Verbose.',
+                    action='store_true',
+                    )
+
+def scandir_iterator(directory):
+    # def unicode_exception(bts, e):
+    #     tries=4
+    #     while True:
+    #         if not ('surrogates not allowed' in e.reason) or ( tries <0 ):
+    #             print (f'UnicodeError "{e.reason}"')
+    #             exit('scandir_iterator unicode_exception can not solve it.')
+    #         tries-=1
+    #         err_pos = e.start
+    #         bts = bts[:err_pos] + '?' + bts[err_pos + 1:]
+    #         try:
+    #             print(f'test unicode error on: {bts}')
+    #             return bts
+    #         except UnicodeError as e:
+    #             print(f'{e.start} {e.reason}')
+    #             DEBUGEXIT(' UnicodeError')
+    #     return bts[:err_pos] + '?' + bts[err_pos + 1:]
+    def unicode_exception(msg, e):
+        return msg.encode('ascii', 'replace').decode('ascii')
+    count = 0
+    dir_stack = deque()
+    dir_stack.append(directory)
+    while dir_stack:
+        scan = dir_stack.pop()
+        try:
+            files = os.scandir(scan)
+        except FileNotFoundError as e:  # [Errno 2] No such file or directory
+            verbose(f'FileNotFoundError: {e}')
+            continue
+        for file in files:
+            if file.is_symlink():
+                verbose(f'symlink: "{file.path}"')
+                continue
+            if file.is_dir():
+                verbose(f'  dir: "{file.path}"')
+                dir_stack.append(file.path)
+                continue
+            try:
+                path = file.path
+                verbose(f'write: {count:05} "{path}"')
+            except UnicodeError as e:
+                # unistr =  unicode_check(file.path) #imported from listutils
+                path = unicode_exception(file.path, e)
+                verbose(f'unicode: "{path=}"')
+            yield path
+            count += 1
 
 class FileListing:
     initiated  = False
@@ -110,7 +175,7 @@ class FileListing:
     bigger     = 1e8
     smaller    = 0
     magic      = None
-    tumble     = lu.Tumbler()
+    tumble     = Tumbler()
     
     def __init__(self,args,directory,output_file):
         """
@@ -128,25 +193,32 @@ class FileListing:
         self.current_entry=None
         self.string_path=None
         self.count = 0
-        self.write(lu.DATA_BEGIN_MARKER)
+        self.write(DATA_BEGIN_MARKER)
         self.write(directory)
         self.walk()
-        self.write(lu.DATA_END_MARKER)
-        print(f'\n{self.count} files written to "{output_file.name}"')
+        self.write(DATA_END_MARKER)
+        print(f'\nDone scanning files written to "{output_file.name}"')
         
-    def write(self,data=None):
-        if not data:
-            data=self.string_path
+    def write(self,data):
+        global verbose
+        # if not data:
+        #     data=self.string_path
         data+='\n'
         try:
             self.outp.write(data)
-            self.tumble.step()
-            
+            if verbose != print:
+                self.tumble.step()
+
         except OSError as e:
             print(f'Writing: "{data}" failed.')
             print(f'errno {e.errno} "{e.strerror}"')
             exit(e.errno)
-    
+        except UnicodeEncodeError as e:
+            # 'utf-8' codec can't encode character '\udcab' in position 68: surrogates not allowed
+            # print(f'Writing: "{data}" failed.')
+            print(f'UnicodeEncodeError {e}')
+            input ('Enter to skip.')
+
     def make_filters(self):
         """
         compose and compile regular expressions to filter path's in or out
@@ -183,20 +255,18 @@ class FileListing:
             
         # if size matters
         if self.args.bigger:
-            self.bigger=lu.kilo_mega(self.args.bigger)
+            self.bigger=kilo_mega(self.args.bigger)
             self.check_size=True
   
         if self.args.smaller:
-            self.smaller=lu.kilo_mega(self.args.smaller)
+            self.smaller=kilo_mega(self.args.smaller)
             self.check_size=True
-        
-    
-    def filter(self)->bool:
+
+    def filter(self,cur)->bool:
         """
         test the entry <DirEntry> against the selection criteria.
         :return: True if all tests are passed with success.
         """
-        cur=self.current_entry
         if self.check_size:
             size=cur.stat().st_size
             if size < self.bigger or size > self.smaller:
@@ -234,32 +304,24 @@ class FileListing:
         return True
     
     def walk(self):
-        dir_stack=deque()
-        push=dir_stack.append
-        pop=dir_stack.pop
-        push(bytes(self.catalog, 'ascii'))
-        def empty():
-            return len(dir_stack) == 0
-        
-        while not empty():
-            cur_dir=pop()
-            try:
-                for entry in os.scandir(cur_dir):
-                    if entry.is_symlink():
-                        continue
-                    if entry.is_dir():
-                        #DEBUGPRINT(f'Push: "{entry.path}"')
-                        push(entry.path)
-                        continue
-                    self.current_entry=entry
-                    if self.filter():
-                        self.write() # writes self.string_path
-                        self.count+=1
-            except PermissionError as e:
-                print (f'"{cur_dir}" {e}')
+        DEBUGTIMEOUT= time.time()+5*60
+        for file in scandir_iterator(self.catalog):
+            if time.time() > DEBUGTIMEOUT:
+                DEBUGEXIT('FileListing,walk timed out.')
+            if self.args.wholesale or self.filter(file):
+                self.write(file) # writes self.string_path
+                continue
+            verbose(f'rejected: "{file}"')
 
- 
 def main() -> None:
+    args = parser.parse_args()
+    print (args)
+
+    global verbose
+    if args.verbose:
+        verbose=print
+        verbose('verbose output set.')
+    #DEBUGEXIT('DEBUG')
     #DEBUGPRINT(f'{args.show_mime=} {args.scandir}')
     if args.show_mime:
         low= args.show_mime.lower()
@@ -269,27 +331,29 @@ def main() -> None:
             ext.show_mime_types( encoding=low)
     elif not args.scandir:
         parser.print_help()
+        print (f'Arguments red: {args}')
         return
      
     output_file=None
     if args.append:
         output_file=args.append
-        print (f'Append: ',end='')
+        verbose(f'Append: ',end='')
         open_mode='a'
     elif args.output:
         output_file=args.output
-        print (f'Write: ',end='')
+        verbose(f'Write: ',end='')
         open_mode='w'
-    
+
     if output_file:
         output_file=os.path.expanduser(output_file)
     for catalogue in args.scandir:
         catalogue=os.path.expanduser(catalogue)
         #print(f'Start scanning: "{catalogue}" ',end='')
-        print (f' "{output_file}"')
+        verbose(f' "{output_file}"')
         with open(output_file,open_mode) as f:
             FileListing(args,catalogue,f)
         open_mode='a'
             
 if __name__ == '__main__':
+
     main()

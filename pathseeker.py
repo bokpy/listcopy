@@ -110,18 +110,18 @@ class PathSeeker:
 			if colonslash < 0:
 				print(f'Error in "{line}"')
 				raise SyntaxError ('Lines need to start with a comma separated list of file mime or extensions ending with :/')
-			mime=line[:colonslash]
+			mime_and_ext=line[:colonslash]
 			tail=line[colonslash+1:]
-			return mime,tail
+			return mime_and_ext,tail
 
 		last_added_filetoken=None
 
 		for line in lines:
 			#DEBUGPRINT(line)
-			mime,tail=collonslash_split(line)
+			mime_and_ext,tail=collonslash_split(line)
 			#DEBUGPRINT(f'{mime=}')
 			#DEBUGPRINT(f'{tail=}')
-			filetoken=FileToken(mime)
+			filetoken=FileToken(mime_and_ext)
 			filetoken['recipe']=tail # debug
 			#DEBUGPRINT(f'{str(filetoken)}')
 			if not self.root:
@@ -141,6 +141,8 @@ class PathSeeker:
 		"""
 		#DEBUGPRINT('-+'*80)
 		S.good_and_evil.reset(mission)
+		if "Error" in mission:
+			return ''
 		path_stack=deque()
 
 		def path_push(fruit):
@@ -184,7 +186,7 @@ class PathSeeker:
 				if good_try(file_branche['mainline']):
 					break
 			file_branche=file_branche['next_mime']
-		mission['mime_stuff']=file_branche['mime']
+		#mission['mime_stuff']=file_branche['mime']
 		#DEBUGPRINT(f'\nPath: ',end='')
 		path=''
 		while path_stack:

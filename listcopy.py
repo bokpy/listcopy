@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import os
 import shutil
-import psutil
+import atexit
 import argparse
 import sys
 import json
@@ -151,6 +151,7 @@ parser.add_argument('--throttle',
                     action='store'
                     )
 args = parser.parse_args()
+
 def print_json(d,title=None):
 	if title:
 		print(f'{title}=')
@@ -231,6 +232,10 @@ def list_to_do():
 		os.renames(ok_file,f'{ok_file}.{int(time.time()) // 60}')
 	return 0
 
+def close_bad(file):
+	print(f'Closing "{file.name}"')
+	file.close()
+
 def process_filelisting(consignment):
 	# consignment['dest_path'] = args.destination
 	# consignment['language']     = args.language
@@ -253,21 +258,32 @@ def process_filelisting(consignment):
 	replicator = Replicator(consignment)
 	osmturbo   = OsmTurbo(consignment)
 	count      = 0
+	bad_file   = consignment['bad_file']
+	try:
+		if os.path.exists(bad_file):
+			consignment['bad_file_handle'] = open(bad_file,'w')
+		else:
+			consignment['bad_file_handle'] = open(bad_file,'a')
+	except OSError as e:
+		exit (f'in process_filelisting.\nfile: "{bad_file}" {e}')
+
+	bad_file_handle= consignment['bad_file_handle']
+	atexit.register(close_bad,bad_file_handle)
+
 	#for src_full,source_path_length in listing:
 	pathseeker = PathSeeker(consignment)
 	for src_full in listing.file_reaper():
-		#time.sleep(1)
-		#os.system('cls||clear')
-		#DEBUGPRINT(chr(27) + "[2J")
 		verbose('<'*35+'-'*40+'>'*35)
-		verbose(f'"{src_full}"')
-		#mission['source_file']=src_full
-		#mission['dest_root_path']=consignment['dest_path']
-		#mission['source_root_path']=src_full[:source_path_length]
-		#DEBUGPRINT(f'{mission=}')
-		#DEBUGEXIT(483)
+		verbose(f' origin: "{src_full}"')
 		pathseeker.compose_path(mission)
-		verbose(f'Dest "{mission["dest_file"]}"')
+		if 'Error' in mission:
+			#JDUMP(mission,'process_files Zero file')
+			bad_file_handle.write(src_full + ' # ' +  mission["Error"] + '\n' )
+			listing.save_processing(consignment['dest_path'],mission,False)
+			verbose(f'Bad file skipped: "{mission["Error"]}".')
+			#input("Zero in mission")
+			continue
+
 		#JDUMP(mission,'mission')
 		if 'dry_run' in consignment:
 			if 'store_labels' in consignment:
@@ -280,6 +296,8 @@ def process_filelisting(consignment):
 		mission['destination'] = os.path.join(consignment['dest_path']+mission["dest_file"])
 		mission['verbose']     = consignment['verbose']
 		replicator.check_destination(mission,consignment)
+		verbose(f'replica: "{mission["destination"]}"')
+
 		listing.save_processing(consignment['dest_path'],mission,False)
 		replicator.write_chunks_to_file(mission)
 		count+=1

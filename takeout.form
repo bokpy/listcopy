@@ -17,9 +17,11 @@ JSON:/literal{"json"}/name:subdir{0};
 
 image:/literal{ôfbyldings}
     (
+    / label{year}_label{monthstr}  / label{addr:city}_label{addr:street}_label{addr:housenumber} |
     / label{year}_label{monthstr}  / label{addr:city}_label{addr:street} |
     / label{year} / label{addr:city}_label{addr:street} |
-    / label{addr:city}_label{addr:street} |
+    / label{addr:city}_label{addr:street} _label{addr:housenumber} |
+    / label{addr:city}_label{addr:street}  |
     / label{year}_label{monthstr} |
     / label{year} |
     literal{""}
@@ -41,15 +43,25 @@ name:literal{""};
 
 audio:/literal{lûd_en_ferskes}
      (
-     / label{Album} literal{" jier "} label{Year} |
-     / label{Album} |
-     / label{Year}  |
-     literal{""}
+     / label{Genre} ( / label{artist} | / label{names} | literal{"ûnbekend") / label{album} |
+     / literal{"ferskate"} ( / label{artist} | / label{names} | literal{"ûnbekend") / label{album} |
+     / label{artist} / label{album} |
+     / literal{"ferskate"} / label{Artist} |
+     / literal{"ferskate"} /  label{Album} |
+     / label{year}_label{monthstr} |
+     / label{year} |
+        literal{""}
      )
      (
-     / name :label{title} |
-     / name:subdir{-1}
-     );
+     / label{title} |
+     / meaning{top,0.6} |
+     / meaning{second} / meaning{first} |
+     / meaning{first} |
+     / label{shortname} |
+     / literal{"moniker"}
+     )
+     name:literal{""}
+     ;
 
 video,MP4:/literal{filmkes}
     (

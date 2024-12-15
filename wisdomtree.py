@@ -25,6 +25,7 @@ camera={
 'DCIM' : ('SMARTPHONE','Android','iOS')
 }
 camera_re=re.compile(r'(IMG|IMG|DSC|CIMG|PXL|VID|IMG_|DCIM).(\d+)' )
+date_time_re=re.compile(r'(\d\d\d\d):(\d\d):(\d\d) ([^+^-]+).*') # match -> ('2011', '07', '12', '15:23:04')
 
 dont_like_re=re.compile(r'download|desktop|temp|backup|Sander|Nieuwe map|new folder|VIDEO TS',flags=re.IGNORECASE)
 
@@ -47,7 +48,7 @@ def guess_meaning(string):
 	"""
 	string_len = len(string)
 	if not string_len:
-		return 0.0,'nada'
+		return 0.0,''
 	run=0
 	alpha_count = 0
 	alpha_run  = []
@@ -150,7 +151,6 @@ def extract_meaning(lines,min=0.8):
 		if low_word in words_with_meaning:
 			ret+=f'{space}{word}'
 			space= ' '
-
 			words_with_meaning.remove(low_word)
 	if ret=='' or ( guess_meaning(ret)[0] < min):
 		#DEBUGPRINT(f'No meaning "{ret}" score {guess_meaning(ret)}')
@@ -230,32 +230,7 @@ def youngest_date(date1,date2):
 
 mime_re=re.compile(r'.*: ([^/]+/)([^;]+); charset=(.*)')
 date_re=re.compile(r'\D*(\d\d\d\d):(\d\d):(\d\d) .*')
-def call_exiftool(filepath):
-	"""
-	Get data with "exiftool" for this file "filepath".
-	:param filepath: full path to file to query for data
-	:return: dictionary with lowercase keys spaces and '/' replaced with an underscore '_'
-	         and striped.
-	         {} if failed.
 
-	"""
-	#early_date=(3000,12,31)
-	lines=service_call('exiftool',filepath)
-	if not lines:
-		return {}
-	ret={}
-	collon=lines[0].find(':')
-	for i in range(0,len(lines)):
-		line=lines[i]
-		key=line[:collon].strip()
-		key=key.replace(' ','_')
-		key=key.replace('/','_')
-		value=line[collon+2:]
-		#GPS Latitude                    : 52 deg 57' 12.54" N
-        #GPS Longitude                   : 5 deg 54' 50.64" E
-        #GPS Position                    : 52 deg 57' 12.54" N, 5 deg 54' 50.64" E
-
-	return ret
 fy_months_long  = [	'jannewaris','febrewaris','maart','april','maaie','juny','july','augustus','septimber','oktober','novimber','desimber']
 class TreeOfKnowledge(dict):
 	# noinspection PyMethodParameters
@@ -288,33 +263,56 @@ class TreeOfKnowledge(dict):
 		S['Tailsplit'] = S['Tailpath'].split('/')
 		S['Extension'] = get_extension(sf)
 		S['Exiftool']  = {}
-		get_mime_etc(sf,S['Exiftool'])
+		get_mime_etc(sf,S['Exiftool']) # runs exiftool -j -all
 		S.Exif=S['Exiftool']
+		#JDUMP(S.Exif)
+		if "Error" in S.Exif:
+			DEBUGPRINT('TreeOfKnowledge.rest ERROR')
+			mission["Error"]=S.Exif["Error"]
+			return
 		S.add_geo_labels_to_exif()
 		S.add_date_labels_to_exif()
 		S.add_duration_tag_to_exif()
 		S.Exif['shortname']=naked_filename(sf)
+		general,special = S.Exif["MIMEType"].split('/')
+		S.Exif['general'] = general
+		S.Exif['special'] = special
 		len_split=len(S['Tailsplit'] )
 		S['Tailsplit'][len_split-1]=S.Exif['shortname']
-		low_exif={}
-		for key,value in S.Exif.items():
-			low_exif[key.lower()]=value
-		S.Exif.update(low_exif)
+		keys=[key for key in S.Exif.keys()]
+		for key in keys:
+			if key.islower():
+				continue
+			low_key=key.lower()
+			S.Exif[low_key]=S.Exif[key]
 
 	def add_date_labels_to_exif(S):
 		# 2024:09:03 10:51:43"
-		date_time=''
+		date_time=None
+		def store_date_time():
+			grp=0
+			for key in 'year','month','day','time':
+				grp+=1
+				if key in S.Exif:
+					continue
+				S.Exif[key]=date_time.group(grp)
+			if  'monthstr' in  S.Exif:
+				return
+			S.Exif['monthstr'] = fy_months_long[int(S.Exif['month'])-1]
+
 		for datelabel in "DateTimeOriginal","CreateDate","CreationDate","TrackCreateDate","VolumeCreateDate","VolumeModifyDate" ,"FileModifyDate":
 			if datelabel in S.Exif:
-				date_time=S.Exif[datelabel]
+				dt=S.Exif[datelabel]
+				if not ( isinstance(dt,str) or isinstance(dt,bytes)):
+					print(f'{type(dt)} "{dt}"')
+					continue
+				date_time=date_time_re.match(dt)
+				if not date_time:
+					continue
+				store_date_time()
 				break
-		if not date_time:
+
 			return
-		S.Exif['year' ] = date_time[:4]
-		S.Exif['month'] = date_time[5:7]
-		S.Exif['monthstr'] = fy_months_long[int(S.Exif['month'])-1]
-		S.Exif['day']   = date_time[8:10]
-		S.Exif['time']  = date_time[-8:]
 
 	def add_geo_labels_to_exif(S):
 		if "GPSLatitude" in S.Exif:
@@ -343,7 +341,7 @@ class TreeOfKnowledge(dict):
 		return S[key]
 
 	def check_extension(S,path):
-		DEBUGPRINT(f'check_extension("{path}")')
+		#DEBUGPRINT(f'check_extension("{path}")')
 		#match = re.match(r'.*(\.\w+)$',path,flags=re.ASCII)
 		match = re.match(r'.*(\.[A-Za-z]+\d*\w*)$',path,flags=re.ASCII)
 		if match:
@@ -354,6 +352,8 @@ class TreeOfKnowledge(dict):
 		extension = S['Extension']
 		if "FileTypeExtension" in S.Exif:
 			extension = S.Exif["FileTypeExtension" ]
+			if not isinstance(extension,str):
+				return path
 		if path[-1] == '.':
 			return path + extension
 		return path + '.' + extension
@@ -415,6 +415,8 @@ class TreeOfKnowledge(dict):
 				if sub_score > best_score:
 					best_score   = sub_score
 					meaning_full = subdir_str
+			if best_score < .7:
+				return None
 			tokkie['payload'] = meaning_full
 			return tokkie['payload']
 
@@ -426,6 +428,8 @@ class TreeOfKnowledge(dict):
 			meaninglist.sort(reverse=True)
 			for meaning in meaninglist:
 				print(f'{meaning[0]:6.2f} "{meaning[1]}"')
+			if meaninglist[1][0] < 0.5:
+				return None
 			tokkie['payload'] = meaninglist[1][1]
 			return tokkie['payload']
 
@@ -474,8 +478,16 @@ class TreeOfKnowledge(dict):
 	def regex_tokkie(S,tokkie):
 		DEBUGPRINT(f'regex_tokkie({tokkie=})')
 		DEBUGPRINT(f'Not implemented yet')
-		tokkie['payload']=''
-		return tokkie['payload']
+		reg=tokkie['regex']
+		match=re.findall(reg,S['Fullpath'])
+		space=''
+		ret=''
+		if match:
+			for item in match:
+				ret+= item + space
+				space=' '
+			tokkie['payload']=ret
+			return tokkie['payload']
 		return None
 
 	def consult_the_serpent(S,tokkie:TagToken):

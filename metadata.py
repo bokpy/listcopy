@@ -15,41 +15,59 @@ def JDUMP(dct,title=''):
 #def run_subprocess(prog,file,args=[]):
 def run_subprocess(prog, file, args):
 	command=[prog]+args+[file]
+
+	def debug_return_error( meta,error=None ):
+		print(f'Error on "{file}"')
+		if error:
+			print(f'{e}')
+		print(f'run_subprocess returncode {meta.returncode}')
+		print(f'"{meta.stdout=}"')
+		print(f'"{meta.stderr=}"')
+		return meta.stdout
+
+	def return_error( meta,error=None ):
+		return meta.stdout
+
 	try:
 		meta = subprocess.run(command,capture_output=True, text=True)
 		if meta.returncode != 0:
-			print(f'run_subprocess returncode {meta.returncode}')
-			print(f'On "{file}"')
-			return False
+			return return_error(meta)
+		return meta.stdout
 	except OSError as e:
-		print(f'run_subprocess Got {e.errno} "{e.strerror}')
-		print(f'On "{file}"')
-		return False
-	return meta.stdout
+		return return_error(meta,e )
 
 def get_mime_etc(file:str,data:dict):
 	metadata = run_subprocess('exiftool', file,['-j','-all'])
-	if metadata:
-		#DEBUGPRINT(f'get_mime -> {metadata}')
-		meta=json.loads(metadata)[0]
-		#JDUMP(meta,'meta=json.dumps(metadata)')
+	# JDUMP(metadata[0],'38 get_mime_etc')
+	if not metadata:
+		return False
+	meta=json.loads(metadata)[0]
+	if 'Error' in meta:
+		data['Error'] = meta['Error']
+		return False
+
+	def MIMEtype(meta):
 		if "MIMEType" in meta:
 			#DEBUGPRINT(f'"MIMEType" in meta!')
 			mime=meta["MIMEType"]
-			meta.pop("MIMEType")
-			meta['mime']=mime
-			meta['general'],meta['special']=mime.split('/')
-			data.update(meta)
+			data['mime'] = mime
+			general,special = mime.split('/')
+			data['general'] = general
+			data['special'] = special
 			return True
+		data["mime"]='unknown/unidentified'
+		data["general"]='unknown'
+		data["special"]='unidentified'
+		return False
 
-	metadata = run_subprocess('file', file,['--brief','--mime-type'])
-	if metadata:
-		mime=metadata[:-1]
-		data["mime"] = mime
-		data["general"],data["special"]=mime.split('/')
-		return True
-	data["mime"],data["general"],data["special"]='unknown/unidentified','unknown','unidentified'
-	return False
+
+	for key in meta:
+		value=meta[key]
+		if isinstance(value,str):
+			data[key]=value.strip()
+			continue
+		data[key]=value
+	return MIMEtype(meta)
 
 def do_exiftool_json(picture_file:str)->dict:
 	metadata = run_subprocess('exiftool', picture_file,['-j','-all'])

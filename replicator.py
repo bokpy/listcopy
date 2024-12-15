@@ -71,7 +71,7 @@ def target_fs_properties(consigment):
 
 	partitions = psutil.disk_partitions()
 	sorted_partitions = sorted(partitions, key=lambda x: len(x.mountpoint),
-	                           reverse=True)
+	                           reverse=True)#!/usr/bin/python3
 
 	for part in sorted_partitions:
 		if part.mountpoint in consigment['dest_path']:
@@ -165,6 +165,7 @@ class Throttle:
 			wakeup -= 1
 		print(' go',end='',flush=True)
 		time.sleep(S.throttle_off - int(S.throttle_off))
+		print('\r'+' '*80,end='')
 
 	def show(S,comment=''):
 		print(f'\nThrottle: {comment}')
