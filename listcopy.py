@@ -7,6 +7,7 @@ import sys
 import json
 import time
 import signal
+import psutil
 import listutils as lu
 
 from geolocate    import OsmNode, OsmTurbo
@@ -14,8 +15,8 @@ from filelistiter import InputFileIterator
 from pathseeker   import PathSeeker
 from replicator   import Replicator
 from pathsyntax   import syntax_text
-from metadata     import JDUMP
-import metadata as meta
+
+from icecream import ic
 
 #DEBUGRETURN=return  return is not a function. This stops the script here.
 DEBUGPRINT=print
@@ -152,7 +153,7 @@ parser.add_argument('--throttle',
                     )
 args = parser.parse_args()
 
-def print_json(d,title=None):
+def JDUMP(d,title=None):
 	if title:
 		print(f'{title}=')
 	print(json.dumps(d,indent=4))
@@ -236,28 +237,61 @@ def close_bad(file):
 	print(f'Closing "{file.name}"')
 	file.close()
 
+def target_fs_properties(consignment: dict):
+	"""
+	Determine the maximum file size and the block size for the
+	filesystem consignment["dest_path"] is on.
+	and set values for:
+		FsMaxFileSize
+		FsBlockSize
+	"""
+	fs_max_file = {
+		'fat16'   : 2 * 1024 ** 3,  # 2 GB in bytes
+		'vfat'    : 4 * 1024 ** 3,  # 4 GB in bytes
+		'fat32'   : 4 * 1024 ** 3,  # 4 GB in bytes
+		'exfat'   : 16 * 1024 ** 6,  # 16 EB in bytes
+		'ntfs'    : 16 * 1024 ** 4,  # 16 TB in bytes
+		'hfs_plus': 8 * 1024 ** 6,  # 8 EB in bytes
+		'apfs'    : 8 * 1024 ** 6,  # 8 EB in bytes
+		'ext4'    : 16 * 1024 ** 4,  # 16 TB in bytes
+		'btrfs'   : 16 * 1024 ** 6,  # 16 EB in bytes
+		'xfs'     : 8 * 1024 ** 6,  # 8 EB in bytes
+		'reiserfs': 8 * 1024 ** 6,  # 8 EB in bytes
+		'jfs'     : 4 * 1024 ** 6,  # 4 EB in bytes
+		'ufs'     : 2 ** 32 - 1,  # 4 GB in bytes (with 32-bit limit)
+		'zfs'     : 16 * 1024 ** 6,  # 16 EB in bytes
+		'f2fs'    : 16 * 1024 ** 4,
+		'udf'     : 16 * 1024 ** 6,
+	}
+
+	partitions = psutil.disk_partitions()
+	sorted_partitions = sorted(partitions, key=lambda x: len(x.mountpoint),
+	                           reverse=True)  # !/usr/bin/python3
+
+	for part in sorted_partitions:
+		if part.mountpoint in consignment['dest_path']:
+			consignment['FsMaxFileSize'] = fs_max_file[part.fstype]
+			st = os.statvfs(part.mountpoint)
+			consignment['FsBlockSize'] = st.f_bsize
+			return
+	raise RuntimeError (f'target_fs_properties failed on "{consignment["dest_path"]}.')
+
+def split_source_path(mission):
+	path = mission["source_full_path"]
+	dir_name = mission["source_dir"]   = os.path.dirname(path)
+	stem_path,ext  = os.path.splitext(path)
+	mission["extension"]    = ext
+	mission["basename"]     = os.path.basename(path)
+	mission["stem_name"]    = stem_path[len(dir_name)+1:]
+
+
 def process_filelisting(consignment):
-	# consignment['dest_path'] = args.destination
-	# consignment['language']     = args.language
-	# consignment['input']        = args.input
-	# if args.postit:
-	# 	consignment['ok_file']  = args.postit+'.ok'
-	# 	consignment['bad_file'] = args.postit+'.bad'
-	# else:
-	# 	consignment['ok_file']  = os.path.expanduser('~/.listcopy.ok')
-	# 	consignment['bad_file'] = os.path.expanduser('~/.listcopy.bad')
-	# if args.gps_info:
-	# 	consignment['gps_info'] = args.gps_info
-	# else:
-	# 	consignment['gps_info'] = os.path.expanduser('~/.osm.data')
-	# consignment['current_file'] = Noneglobal destination_path
 	global verbose,eat
 	verbose    = [eat,print][consignment['verbose']]
-	mission    = {}
-	listing    = InputFileIterator(consignment,mission)
+	listing    = InputFileIterator(consignment)
 	replicator = Replicator(consignment)
 	osmturbo   = OsmTurbo(consignment)
-	count      = 0
+
 	bad_file   = consignment['bad_file']
 	try:
 		if os.path.exists(bad_file):
@@ -267,18 +301,24 @@ def process_filelisting(consignment):
 	except OSError as e:
 		exit (f'in process_filelisting.\nfile: "{bad_file}" {e}')
 
-	bad_file_handle= consignment['bad_file_handle']
+	bad_file_handle = consignment['bad_file_handle']
 	atexit.register(close_bad,bad_file_handle)
 
 	#for src_full,source_path_length in listing:
 	pathseeker = PathSeeker(consignment)
-	for src_full in listing.file_reaper():
+	for mission in listing.file_reaper():
 		verbose('<'*35+'-'*40+'>'*35)
-		verbose(f' origin: "{src_full}"')
+		verbose(f' origin: "{mission["source_full_path"]}"')
+		split_source_path(mission)
+		mission["verbose"]       = consignment['verbose']
+		mission["dest_base_dir"] = consignment["dest_path"]
 		pathseeker.compose_path(mission)
+		mission["target_full_path"] = os.path.join(consignment["dest_path"] + mission["target_path"])
+		replicator.check_destination(mission)
+		verbose(f'replica: "{mission["source_tail_path"]}"')
 		if 'Error' in mission:
 			#JDUMP(mission,'process_files Zero file')
-			bad_file_handle.write(src_full + ' # ' +  mission["Error"] + '\n' )
+			bad_file_handle.write(mission["source_full_path"] + ' # ' +  mission["Error"] + '\n' )
 			listing.save_processing(consignment['dest_path'],mission,False)
 			verbose(f'Bad file skipped: "{mission["Error"]}".')
 			#input("Zero in mission")
@@ -290,18 +330,11 @@ def process_filelisting(consignment):
 				keys=[k for k in pathseeker.knowledege().keys()]
 				#DEBUGPRINT(f'{keys=}')
 				consignment['store_labels']=consignment['store_labels'].union(keys)
-			print_json(mission,title='mission')
-			mission.clear()
+			JDUMP(mission,title='mission')
 			continue
-		mission['destination'] = os.path.join(consignment['dest_path']+mission["dest_file"])
-		mission['verbose']     = consignment['verbose']
-		replicator.check_destination(mission,consignment)
-		verbose(f'replica: "{mission["destination"]}"')
-
-		listing.save_processing(consignment['dest_path'],mission,False)
+		listing.save_processing(mission,False)
 		replicator.write_chunks_to_file(mission)
-		count+=1
-		mission.clear()
+
 
 	if 'store_labels' in consignment:
 		for label in consignment['store_labels']:
@@ -310,7 +343,7 @@ def process_filelisting(consignment):
 	if args.gps_info:
 		listing.dump_info(args.gps_info)
 
-	print(f'Done copying {count} files')
+	print(f'Done copying {mission["completed"]} files')
 	ok = consignment['ok_file']
 	try:
 		os.remove(ok)
@@ -329,7 +362,7 @@ def track_and_trace():
 
 def main() -> None:
 	consignment={}
-	print(f'{args.input=} {args.destination=}')
+	DEBUGPRINT(f'{args=}')
 	
 	if args.usage:
 		print(syntax_text)
@@ -362,11 +395,11 @@ def main() -> None:
 		print(f'Need at least an input file and a destination!')
 		exit(0)
 
-	consignment['verbose']=args.verbose
-
+	consignment['verbose']   = args.verbose
 	consignment['dest_path'] = lu.no_end_slash(args.destination)
-	consignment['language'] = args.language
-	consignment['input'] = args.input
+	consignment['language']  = args.language
+	consignment['input']     = args.input
+
 	good_bad_stem=os.path.expanduser(args.post_it)
 	consignment['ok_file']  = good_bad_stem + '.ok'
 	consignment['bad_file'] = good_bad_stem + '.bad'
@@ -376,17 +409,12 @@ def main() -> None:
 	else:
 		consignment['gps_info'] = os.path.expanduser('~/.osm.data')
 	consignment['current_file'] = None
-	if args.dry_run:
-		consignment['dry_run'] = True
-	# start values for file system parameters
-	consignment['maxchunk']      = 1024*1024*16
-	consignment['fsmaxfilesize'] = 1024*1024
-	consignment['fsblocksize']   = 1024
-	if args.throttle:
-		consignment['throttle']  = args.throttle
-	if args.labels:
-		consignment['store_labels']  = set()
-	# pathseeker=PathSeeker(args.substitute,args.gps_info,args.language)
+
+	if args.dry_run : consignment['dry_run'] = True
+	if args.throttle: consignment['throttle']  = args.throttle
+	if args.labels  : consignment['store_labels']  = set()
+	target_fs_properties(consignment)
+
 	process_filelisting(consignment)
 	
 if __name__ == '__main__':

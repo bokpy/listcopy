@@ -1,3 +1,6 @@
+# BvdBurg.form
+# An example file to use as a parameter of the --substitute -s option of listcopy.
+
 ISO:/literal{"fideo/kompaktdisk"}
     ( / label{VolumeName}|
      literal{""}
@@ -11,35 +14,56 @@ ISO:/literal{"fideo/kompaktdisk"}
     / name:subdir{-1}
     ;
 
-# google takeout handling
-
 JSON:/literal{"json"}/name:subdir{0};
 
-image:/literal{ôfbyldings}/ label{year}
-    (
-    / label{year}_label{monthstr}  / label{addr:city}_label{addr:street}_label{addr:housenumber} |
-    / label{year}_label{monthstr}  / label{addr:city}_label{addr:street} |
-    / label{year} / label{addr:city}_label{addr:street} |
-    / label{addr:city}_label{addr:street} _label{addr:housenumber} |
-    / label{addr:city}_label{addr:street}  |
-    / label{year}_label{monthstr} |
-    / label{year} |
-    / literal{"no year no address"}
-    )
-    (
-    / label{make} literal{" model "} label{Model}
-    | / label{make}
-    | / label{model}
-    | literal{""}
-    )
-(
-  / meaning{top,0.6}
-| / meaning{second} / meaning{first}
-| / meaning{first}
-| / label{shortname}
-| / literal{"moniker"}
+image:/literal{ôfbyldings} ( / label{year} ( _label{monthstr} | literal{""} ) | literal{""} )
+( label{Make} ( { _ label{Model} |  literal{""} ) | literal{"gjin tastel"} )
+/
+(  meaning{top,5.0} |
+   label{ExifImageWidth} literal{x}  label{ExifImageHeight} |
+   literal{"fototsje"}
 )
+
+
+
 name:literal{""};
+
+#image:/literal{ôfbyldings}
+#    (/ label{year} ( _label{monthstr} |
+#                      literal{""} )   |
+#       literal{""}
+#    )
+#    (/ label{addr:city} ( _label{addr:street} ( _label{addr:housenumber} |
+#                                                           literal{""}
+#                                              ) |
+#                         literal{""}
+#                        ) |
+#      literal{""}
+#    )
+#
+#   #/ label{year}_label{monthstr}  / label{addr:city}_label{addr:street} |
+#   #/ label{year} / label{addr:city}_label{addr:street} |
+#   #/ label{addr:city}_label{addr:street} _label{addr:housenumber} |
+#   #/ label{addr:city}_label{addr:street}  |
+#   #/ label{year}_label{monthstr} |
+#   #/ label{year} |
+#   #literal{""}
+#   #)
+#   (/ label{make} ( _label{Model} |
+#                     literal{""}
+#                  ) |
+#   (/ label{model} |
+#     literal{""}
+#   )
+#   )
+#(
+#  / meaning{top,0.6}
+#| / meaning{second} / meaning{first}
+#| / meaning{first}
+#| / label{shortname}
+#| / literal{"moniker"}
+#)
+#name:literal{""};
 
 audio:/literal{lûd_en_ferskes}
      (
@@ -60,7 +84,9 @@ audio:/literal{lûd_en_ferskes}
      / label{shortname} |
      / literal{"moniker"}
      )
-     name:literal{""}
+     /
+
+     name:meaning{all}
      ;
 
 video,MP4:/literal{filmkes}
@@ -96,15 +122,5 @@ _label{durationstr}
 | literal{""}
 )
 name:literal{""};
-
-text:/literal{"skrift"}/
-(  label{year} _ label{mountstr} |
-   label{year} |
-   literal{""}
-)
-name:label{FileName}
-;
-
-text:/literal{"undefined default"}
 
 default:/literal{"undefined default"}/name:subdir{0};

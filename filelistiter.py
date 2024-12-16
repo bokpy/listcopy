@@ -11,18 +11,17 @@ def eat(*args,**kwargs):
 verbose=eat # verbose = print for verbose
 
 class InputFileIterator:
-	def __init__(self, consignment, mission):
+	def __init__(self, consignment):
 		global verbose,eat
-		self.consignment=consignment
+		#self.consignment=consignment
 		verbose=[eat,print][consignment['verbose']]
-		self.mission   = mission
 		self.ok_file   = consignment['ok_file']
 		self.completed = 0
 		self.index     = -1
 		self.read_listing(consignment["input"])
-		self.consignment['last_file_accessed']='diddly_squat'
+		self.last_file_accessed='diddly_squat'
 		self.read_completed()
-		self.root_path=''
+		self.scanned_dir=''
 
 	def read_listing(S,listing):
 		try:
@@ -44,7 +43,7 @@ class InputFileIterator:
 			S.index+=1
 			if S.at_index() == DATA_BEGIN_MARKER:
 				S.index+=1
-				S.root_path=S.at_index()
+				S.scaned_dir=S.at_index()
 				valid=True
 				continue
 			if S.at_index()==DATA_END_MARKER:
@@ -53,14 +52,19 @@ class InputFileIterator:
 			if valid:
 				seen+=1
 				if seen > S.completed:
-					S.mission['source_file']      = S.at_index()
-					S.mission['source_root_path'] = S.root_path
-					yield S.at_index()
+					mission={"source_full_path":S.at_index(),
+					         "source_scanned_dir":S.scaned_dir,
+					         "completed":S.completed
+					         }
+					# S.mission['source_file']      = S.at_index()
+					# S.mission['source_scaned_dir'] = S.scaned_dir
+					#yield S.at_index()
+					yield mission
 					S.completed+=1
 					verbose(f'{S.completed:5}')
 
 	def __str__(self):
-		return self.at_index()[self.root_path_length:]
+		return self.at_index()[self.scaned_dir_length:]
 
 	def random_pic(self, num):
 		start, root_dir = self.find_begin()
@@ -82,7 +86,7 @@ class InputFileIterator:
 	def at_index(self):
 		return self.filelist[self.index]
 
-	def save_processing(self,destination_root_path,mission,interupt=True):
+	def save_processing(self,mission,interupt=True):
 		saves = [self.ok_file]
 		if interupt:
 			saves.append(self.ok_file + '.' + time.ctime())
@@ -93,14 +97,15 @@ class InputFileIterator:
 					if "Error" in mission:
 						destination = f'Error "{mission["Error"]}" leads to no where.'
 					else:
-						destination = mission["destination"]
-					f.write(f'{self.completed+1}\n{destination_root_path}\n{destination}\n')
+						destination = mission["target_full_path"]
+					f.write(f'{self.completed+1}\n{mission["dest_base_dir"]}\n{destination}\n')
 			except OSError as e:
 				print(f'Writing "{self.file}" Failed.')
 				print(f'{e.errno} {e.strerror}')
 				exit(e.errno)
 
 	def read_completed(self)->None:
+		self.last_file_accessed = 'No files accessed just started.'
 		self.completed=0
 		if not os.path.exists(self.ok_file):  # new session start from the beginning
 			return
@@ -114,8 +119,7 @@ class InputFileIterator:
 		self.completed=int(data[0])-1
 		#PRINT_OFF(f'last_file_accessed: "{data[2]}"')
 		#input("Press enter")
-		self.consignment['last_file_accessed'] = data[2]
-
+		self.last_file_accessed = data[2]
 
 	def strip_newline(self):
 		fl = self.filelist

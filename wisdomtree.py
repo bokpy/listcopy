@@ -236,8 +236,8 @@ class TreeOfKnowledge(dict):
 	# noinspection PyMethodParameters
 	def __init__(S,consignment:dict):
 		dict.__init__(S)
-		S.osm=consignment['OsmTurbo']
-		S.lang=consignment['language']
+		S.osm  = consignment['OsmTurbo']
+		S.lang = consignment['language']
 		# S.tokkie_select={
 		# 	'label'   : TreeOfKnowledge.label_tokkie,
 		# 	'subdir'  : TreeOfKnowledge.subdir_tokkie,
@@ -255,30 +255,35 @@ class TreeOfKnowledge(dict):
 				ext = match.group(1).upper()
 			return ext
 
-		sf = mission['source_file']
+		sf = mission["source_full_path"]
 		S['Fullpath'] = sf
-		cut=len(mission['source_root_path'])
-		S['Tailpath']  = sf[cut:]
+		cut=len(mission["source_scanned_dir"])
+		tail = S['Tailpath']  = sf[cut:]
+		mission["source_tail_path"] = tail
 		#DEBUGPRINT(f'TreeOfKnowledge {S["Tailpath"]=} ')
-		S['Tailsplit'] = S['Tailpath'].split('/')
-		S['Extension'] = get_extension(sf)
+		S['Tailsplit'] = tail.split('/')
 		S['Exiftool']  = {}
 		get_mime_etc(sf,S['Exiftool']) # runs exiftool -j -all
 		S.Exif=S['Exiftool']
+		mission["FileTypeExtension"] = S.Exif["FileTypeExtension"]
 		#JDUMP(S.Exif)
 		if "Error" in S.Exif:
-			DEBUGPRINT('TreeOfKnowledge.rest ERROR')
+			DEBUGPRINT('TreeOfKnowledge.reset ERROR')
 			mission["Error"]=S.Exif["Error"]
 			return
 		S.add_geo_labels_to_exif()
 		S.add_date_labels_to_exif()
 		S.add_duration_tag_to_exif()
-		S.Exif['shortname']=naked_filename(sf)
+		if not "MIMEType" in S.Exif:
+			S.Exif["MIMEType"]="unclassified/unclassified"
 		general,special = S.Exif["MIMEType"].split('/')
-		S.Exif['general'] = general
+		S.Exif['general'] = mission["mime_general"] = general
 		S.Exif['special'] = special
-		len_split=len(S['Tailsplit'] )
-		S['Tailsplit'][len_split-1]=S.Exif['shortname']
+
+		# replace the file name with the name without extension
+		S['Tailsplit'].pop()
+		S['Tailsplit'].append(mission["stem_name"])
+
 		keys=[key for key in S.Exif.keys()]
 		for key in keys:
 			if key.islower():
@@ -340,23 +345,16 @@ class TreeOfKnowledge(dict):
 			return None
 		return S[key]
 
-	def check_extension(S,path):
-		#DEBUGPRINT(f'check_extension("{path}")')
-		#match = re.match(r'.*(\.\w+)$',path,flags=re.ASCII)
-		match = re.match(r'.*(\.[A-Za-z]+\d*\w*)$',path,flags=re.ASCII)
-		if match:
-			match_len=len (match.group(1))
-			if match_len > 3:
-				return path
-			path=path[-match_len:]
-		extension = S['Extension']
-		if "FileTypeExtension" in S.Exif:
-			extension = S.Exif["FileTypeExtension" ]
-			if not isinstance(extension,str):
-				return path
-		if path[-1] == '.':
-			return path + extension
-		return path + '.' + extension
+	def check_extension(S,mission):
+		path=mission["target_path"]
+		filefilename, file_extension = os.path.splitext(path)
+		mission["target_dir"]=os.path.dirname(path)
+		if len(file_extension) > 1:
+			return
+		ext = mission["extension"]
+		if len(ext) < 2:
+			ext = mission["FileTypeExtension"]
+		mission["target_path"]=filefilename + '.' + ext
 
 	# def check_evil_chars(S,path):
 	# 	eval_re=re.compile(r[.,check_evil_chars(path)])

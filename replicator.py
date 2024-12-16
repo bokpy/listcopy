@@ -1,14 +1,23 @@
-#!/usr/bin/python3
+
 from collections import deque
 import os
 import time
+import json
 import psutil
 import re
 import duplicates
 
+
 from listutils import DATA_BEGIN_MARKER,Base62,Suffix # DATA_END_MARKER
 DEBUGPRINT = print
 DEBUGEXIT = exit
+
+def JDUMP(d,title=None,pause=None):
+	if title:
+		print(f'{title}=')
+	print(json.dumps(d,indent=4))
+	if pause:
+		input(pause)
 
 def eat(*args,**kwargs):
 	pass
@@ -45,42 +54,7 @@ class NameConflictSolver(Base62):
 # 		return False
 # 	return True
 
-def target_fs_properties(consigment):
-	"""Determine the maximum file size and the block size for the
-	filesystem "path" is on.
-	returns the global FsMaxFileSize,FsBlockSize,
-	FsBlockSize"""
-	fs_max_file = {
-		'fat16'   : 2 * 1024 ** 3,  # 2 GB in bytes
-		'vfat'    : 4 * 1024 ** 3,  # 4 GB in bytes
-		'fat32'   : 4 * 1024 ** 3,  # 4 GB in bytes
-		'exfat'   : 16 * 1024 ** 6,  # 16 EB in bytes
-		'ntfs'    : 16 * 1024 ** 4,  # 16 TB in bytes
-		'hfs_plus': 8 * 1024 ** 6,  # 8 EB in bytes
-		'apfs'    : 8 * 1024 ** 6,  # 8 EB in bytes
-		'ext4'    : 16 * 1024 ** 4,  # 16 TB in bytes
-		'btrfs'   : 16 * 1024 ** 6,  # 16 EB in bytes
-		'xfs'     : 8 * 1024 ** 6,  # 8 EB in bytes
-		'reiserfs': 8 * 1024 ** 6,  # 8 EB in bytes
-		'jfs'     : 4 * 1024 ** 6,  # 4 EB in bytes
-		'ufs'     : 2 ** 32 - 1,  # 4 GB in bytes (with 32-bit limit)
-		'zfs'     : 16 * 1024 ** 6,  # 16 EB in bytes
-		'f2fs'    : 16 * 1024 ** 4,
-		'udf'     : 16 * 1024 ** 6,
-	}
 
-	partitions = psutil.disk_partitions()
-	sorted_partitions = sorted(partitions, key=lambda x: len(x.mountpoint),
-	                           reverse=True)#!/usr/bin/python3
-
-	for part in sorted_partitions:
-		if part.mountpoint in consigment['dest_path']:
-			consigment['fsmaxfilesize'] = fs_max_file[part.fstype]
-			st = os.statvfs(part.mountpoint)
-			consigment['fsblocksize'] = st.f_bsize
-			break
-	# DEBUGPRINT( f'type {part.fstype} {FsMaxFileSize=} {FsBlockSize=}')
-	return consigment['fsmaxfilesize'], consigment['fsblocksize']
 
 def exit_error(e, message=None) -> None:
 	print(f"I/O error ({e.errno}): {e.strerror}")
@@ -127,8 +101,8 @@ class Throttle:
 	               'wor ing','wor  ng','wo   ng','wo    g','w     g','w      ','       ']
 	              )
 
-	def __init__(S,consigment):
-		S.block_size      = consigment['fsblocksize']
+	def __init__(S,consignment):
+		S.block_size      = consignment["FsBlockSize"]
 		S.best             = 16*S.block_size
 		S.prior_period     = 0.0
 		S.prior_clock      = 0
@@ -139,9 +113,9 @@ class Throttle:
 		S.pause_time       = -1.0
 		S.work_clock       =  0.0
 		S.work_clock_interval =  0.2
-		S.last_file_accessed = consigment['last_file_accessed']
-		if 'throttle' in consigment:
-			on,off = consigment['throttle'].split(',')
+
+		if 'throttle' in consignment:
+			on,off = consignment['throttle'].split(',')
 			S.throttle_on  = float(on)
 			S.throttle_off = float(off)
 			S.pause_time   = time.time()
@@ -336,31 +310,30 @@ class Replicator:
 		global verbose,eat
 		verbose=[eat,print][consignment['verbose']]
 		S.consignment  = consignment
-		target_fs_properties(consignment)  # updates S.consigment['fsmaxfilesize'] and S.consigment['fsblocksize']
-		S.fs_max_file  = consignment['fsmaxfilesize']
+		S.fs_max_file  = consignment["FsMaxFileSize"]
 		S.throttle     = Throttle(consignment)
 		S.double_namer = NameConflictSolver()
-		S.last_file_accessed = consignment['last_file_accessed']
+
 		#S.COPY_CHECK = 89
 
-	def check_destination(S,mission,consignment):
+	def check_destination(S,mission):
 		#PRINT_OFF(f'check_destination')
 		#PRINT_OFF(f'check: "{mission["destination"]}"')
 		S.check_dir(mission)
 		#PRINT_OFF(f'  dir: "{mission["destination"]}"')
 		#PRINT_OFF(f' last: "{consignment["last_file_accessed"]}"')
-		while os.path.exists(mission["destination"]):
+		while os.path.exists(mission["target_full_path"]):
 			#PRINT_OFF(f'exist: "{mission["destination"]}"')
 			#PRINT_OFF(f'same { mission["destination"] == consignment["last_file_accessed"]}')
-			if mission["destination"] == consignment['last_file_accessed']:
+			if mission["target_full_path"] == mission['last_file_accessed']:
 				#PRINT_OFF(f'Trying to remove interupted file.')
 				try:
-					os.remove(mission["destination"])
+					os.remove(mission["target_full_path"])
 					return
 				except OSError as e:
 					print(f'Failed to remove interupted file. {e}')
 					exit_error(e,'check_destination')
-			mission["destination"]=S.double_namer.rename(mission["destination"])
+			mission["target_full_path"]=S.double_namer.rename(mission["target_full_path"])
 			#PRINT_OFF(f'renam: "{mission["destination"]}"')
 		# for _ in 1,2:
 		# 	try:
@@ -375,17 +348,21 @@ class Replicator:
 		# exit(1)
 
 	def check_dir(S,mission):
+		dest_full_dir = mission["dest_base_dir"] + mission["target_dir"]
+		mission["dest_full_dir"] = dest_full_dir
+		JDUMP(mission,'mission check_dir','mission end press enter.')
 		for _ in 1,2:
-			dest_path=os.path.dirname(mission['destination'])
+			dest_full_dir = mission["dest_base_dir"] + mission["target_dir"]
+			mission["dest_full_dir"] = dest_full_dir
 			try:
-				os.makedirs(dest_path, mode=0o777, exist_ok=True)
+				os.makedirs(dest_full_dir, mode=0o777, exist_ok=True)
 				return 0
 			except OSError as ed:
-				print(f'os.makedirs("{dest_path}") Failed')
+				print(f'os.makedirs("{dest_full_dir}") Failed')
 				print(f'{ed}')
 				if ed.errno == 22:
-					mission['destination']=replace_ilegal(mission['destination'])
-					print(f'new destination = "{mission["destination"]}"')
+					mission["target_dir"]=replace_ilegal(mission["target_dir"])
+					print(f'new target dir = "{mission["target_dir"]}"')
 					# [Errno 22]Invalid argument:
 					continue
 				else:
@@ -407,8 +384,8 @@ class Replicator:
 
 	def write_chunks_to_file(S, mission):
 		#S.check_dir(mission) # destination can change if the directory can't bee made
-		source      = mission['source_file']
-		destination = mission['destination']
+		source      = mission["source_full_path"]
+		destination = mission["target_full_path"]
 		file_size = os.path.getsize(source)
 		if file_size > S.fs_max_file:
 			print(f'"{source}" too big.')
@@ -433,8 +410,8 @@ class Replicator:
 				except OSError as e:
 					if e.errno == 22:
 						destination=replace_ilegal(destination)
-						if mission['destination'] != destination:
-							mission['destination'] = destination
+						if mission["target_full_path"] != destination:
+							mission["target_full_path"] = destination
 							verbose(f'Renamed: "{destination}"')
 							continue
 					print(f'write {len(data_chunk)} bytes to "{destination}" Failed')

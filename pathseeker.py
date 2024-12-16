@@ -141,8 +141,12 @@ class PathSeeker:
 		"""
 		#DEBUGPRINT('-+'*80)
 		S.good_and_evil.reset(mission)
+		JDUMP(S.good_and_evil.Exif,'S.good_and_evil.Exif')
+		JDUMP(mission,'compose_path after good_and_evil.reset')
+		input("DEBUG")
 		if "Error" in mission:
-			return ''
+			mission["dest_file"]= "Error"
+			return False
 		path_stack=deque()
 
 		def path_push(fruit):
@@ -195,9 +199,10 @@ class PathSeeker:
 			#DEBUGPRINT(f'{fruit}',end='')
 		#DEBUGPRINT()
 		#path=S.good_and_evil.check_evil_chars(path)
-		path = S.good_and_evil.check_extension(path)
-		mission['dest_file']=path
-		return path
+		mission['target_path']=path
+		S.good_and_evil.check_extension(mission)
+		return True
+
 
 def upcase_initial(s):return s[:1].upper()+s[1:]
 

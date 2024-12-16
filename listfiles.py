@@ -16,6 +16,8 @@ def silent(*args,**kwargs):
 verbose=silent
 #verbose=print
 
+logfile = None
+
 DEBUGPRINT=print
 DEBUGEXIT=exit
 FILTEROUT=['/Cookies/','/Microsoft/','/Windows/','/Cache','#.*#$','\.lnk$','\.tmp$','\.log$','\.err$','~$','^~','/AppData/','\.ini$','/NTUSER.DAT','\.thumbnails','^{.*}$','NTUSER\.']
@@ -118,6 +120,20 @@ parser.add_argument('-v', '--verbose',
                     help='Verbose.',
                     action='store_true',
                     )
+#unsuccessful unsuccessful unsuccessful unsuccessful unsuccessful unsuccessful
+parser.add_argument('-U', '--unsuccessful',
+                    help='Unsuccessful files,log file.',
+                    action='store',
+                    metavar='',
+                    nargs=1
+                    )
+
+def log_error(filepath,error):
+    global logfile
+    if not logfile:
+        return
+    logfile.write(f'"{filepath}" # {error}\n')
+    verbose(f'ERROR: "{filepath}" {error}.')
 
 def scandir_iterator(directory):
     # def unicode_exception(bts, e):
@@ -148,6 +164,10 @@ def scandir_iterator(directory):
         except FileNotFoundError as e:  # [Errno 2] No such file or directory
             verbose(f'FileNotFoundError: {e}')
             continue
+        except PermissionError as e:
+            log_error(scan,e)
+            continue
+
         for file in files:
             if file.is_symlink():
                 verbose(f'symlink: "{file.path}"')
@@ -158,7 +178,7 @@ def scandir_iterator(directory):
                 continue
             try:
                 path = file.path
-                verbose(f'write: {count:05} "{path}"')
+                verbose(f'\r{count:05}',end=' -> ')
             except UnicodeError as e:
                 # unistr =  unicode_check(file.path) #imported from listutils
                 path = unicode_exception(file.path, e)
@@ -203,11 +223,12 @@ class FileListing:
         global verbose
         # if not data:
         #     data=self.string_path
-        data+='\n'
         try:
-            self.outp.write(data)
+            self.outp.write(data + '\n')
             if verbose != print:
                 self.tumble.step()
+            else:
+                print( f'Written: "{data}"')
 
         except OSError as e:
             print(f'Writing: "{data}" failed.')
@@ -231,12 +252,16 @@ class FileListing:
         # construct the regular expression that excludes paths
         if self.args.filter: filter_str="|".join(FILTEROUT)
         if self.args.skip:   skip_str  ="|".join(self.args.skip)
+
         if filter_str and skip_str: # concatenate if there a two
             excl_str=skip_str + '|' + filter_str
         else: # one the real one or the empty string goes in excl_str
             excl_str=skip_str + filter_str
         if excl_str:
             self.excl_re=re.compile(excl_str,flags=re.IGNORECASE)
+            # DEBUGPRINT(f'{ext_str}')
+            # DEBUGPRINT(self.excl_re)
+            # input('make filters')
         
         # construct extension checker
         if self.args.extension:
@@ -262,28 +287,28 @@ class FileListing:
             self.smaller=kilo_mega(self.args.smaller)
             self.check_size=True
 
-    def filter(self,cur)->bool:
+    def filter(self,filepath)->bool:
         """
         test the entry <DirEntry> against the selection criteria.
         :return: True if all tests are passed with success.
         """
         if self.check_size:
-            size=cur.stat().st_size
+            size=os.stat(filepath).st_size
             if size < self.bigger or size > self.smaller:
                 return False
-        if isinstance(cur.path,bytes):
+
+        path=filepath
+        if isinstance(filepath,bytes):
             try:
-                path = cur.path.decode(encoding ='utf-8', errors = 'ignore')
+                path = filepath.decode(encoding ='utf-8', errors = 'ignore')
             except UnicodeDecodeError as e:
                 print(f'UnicodeDecodeError {e}')
                 print(f'Maybe "unicode_broom.py" can solve the problem.')
                 print(f'Bee careful with your data always backup in time.')
                 exit(1)
-        else:
-            path=cur.path
-           
+
         if self.excl_re:
-            if self.excl_re.search(path):
+            if self.excl_re.findall(path):
                 #DEBUGPRINT(f'excl_re fired: "{path}"')
                 return False
    
@@ -307,15 +332,27 @@ class FileListing:
         DEBUGTIMEOUT= time.time()+5*60
         for file in scandir_iterator(self.catalog):
             if time.time() > DEBUGTIMEOUT:
-                DEBUGEXIT('FileListing,walk timed out.')
-            if self.args.wholesale or self.filter(file):
-                self.write(file) # writes self.string_path
+                DEBUGEXIT('\nFileListing,walk timed out.')
+            try:
+                #DEBUGPRINT(f'{self.args.wholesale=} or {self.filter(file)=}')
+                if self.args.wholesale or self.filter(file):
+                    self.write(file) # writes self.string_path
                 continue
-            verbose(f'rejected: "{file}"')
+                verbose(f'rejected: "{file}"')
+            except OSError as e:
+                if logfile:
+                    logfile.write(f'"{file}" # {e}')
+                verbose(f'ERROR: "{file}" {e} ')
 
 def main() -> None:
     args = parser.parse_args()
     print (args)
+    if args.unsuccessful :
+        global logfile
+        try:
+           logfile=open(args.unsuccessful[0],'w')
+        except OSError as e:
+            exit(f'Open "{args.unsuccessful[0]}" {e}')
 
     global verbose
     if args.verbose:
@@ -353,7 +390,8 @@ def main() -> None:
         with open(output_file,open_mode) as f:
             FileListing(args,catalogue,f)
         open_mode='a'
-            
+    print (args)
+
 if __name__ == '__main__':
 
     main()
