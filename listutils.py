@@ -4,11 +4,14 @@ import datetime as dt # datetime.datetime gives problems
 import random
 from collections import deque
 import os
+import json
 from icecream import ic
 import sys
 import re
 import traceback
 from time import sleep
+
+from scipy.stats import randint
 
 DATA_BEGIN_MARKER='-------->Data_Begin_Marker-------->'
 DATA_END_MARKER='<--------Data_End_Marker<--------'
@@ -106,11 +109,13 @@ def no_end_slash(directory:str)->str:
 	
 # "2024:09:03 10:51:43+02:00" -> epoch time
 TIMESTAMP_RE=re.compile(r'(\d+):(\d+):(\d+) (\d+):(\d+):(\d+).*')
-def timestamp2epouch(tmstmp):
+def timestamp2epoch(tmstmp):
 	ts=TIMESTAMP_RE.match(tmstmp)
 	if not ts:
-		return 0.0
+		return -1.0
 	tsg=ts.group
+	if int(tsg(1)) < 1970:
+		return -1.0
 	dat = dt.datetime(int(tsg(1)),int(tsg(2)),int(tsg(3)),int(tsg(4)),int(tsg(5)))
 	return time.mktime(dat.timetuple())
 
@@ -378,6 +383,10 @@ class Base62:
 	def __int__(S):
 		return S.number
 
+	def set(S,value:int)->str:
+		S.number=value
+		return str(S)
+
 	def plus(S,step=1):
 		S.number+=step
 
@@ -388,6 +397,14 @@ class Base62:
 			ret=S.digits[value % S.digs]+ret
 			value //= S.digs
 		return ret
+
+def test_base62():
+	for deca in 1,10,100,1000,10000,100000:
+		start=deca
+		if deca > 100:
+			start=deca + random.randint(0,50)
+			for i in range(start,start+20):
+				print(f'{i:05} [{str(Base62(i))}]')
 
 class Suffix:
 	#suffix=['B','KB','MB','GB','TB']
@@ -413,9 +430,30 @@ class Suffix:
 	def __str__(self):
 		return self.valuestr
 
-def main():
-	test_meters_per_degree()
+def JDUMP(d,title=None,pause=None):
+	if title:
+		print(f'{title}')
+	print(json.dumps(d,indent=4))
+	if pause:
+		input(pause)
 
+def dict_dump(dct:dict,title=None,pause=None):
+	if title:
+		print(f'{title}')
+	keys=dct.keys()
+	long_key=0
+	for k in keys:
+		l=len(k)
+		if l > long_key:
+			long_key=l
+	for key in keys:
+		print(f'{key.rjust(long_key)}: {dct[key]}')
+	if pause:
+		input(pause)
+
+def main():
+	#test_meters_per_degree()
+	test_base62()
 if __name__ == '__main__':
 	main()
 # maandag	moandei

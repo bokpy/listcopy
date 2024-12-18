@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+from os.path import basename
+
 from listutils import DATA_BEGIN_MARKER, DATA_END_MARKER, CONTINUE
 import random
 import os
@@ -36,6 +38,29 @@ class InputFileIterator:
 		S.filelist_len = len(S.filelist)-1
 
 	def file_reaper(S):
+		def split_path():
+			# "/home/bob/usb/Media/foto/Foto 2 1999/Familie/Lalbiharie/Alle drie 651.jpg"
+			# source_full_path = source_scanned_dir + source_dir + stem_name + extension
+			# source_path      =                      source_dir + stem_name + extension
+			# basename         =                                   stem_name + extension
+			path        = S.at_index()
+			scandir     = S.scaned_dir
+			source_path = path[len(scandir):]
+			basename    = os.path.basename(source_path)
+			stem_name,extension = os.path.splitext(basename)
+			source_dir = os.path.dirname(source_path)
+			return {
+				"source_full_path":path,
+				"source_scanned_dir":scandir,
+				"source_path":source_path,
+				"basename":basename,
+				"stem_name":stem_name,
+				"extension":extension,
+				"source_dir":source_dir,
+				"last_file_accessed":S.last_file_accessed,
+			    "completed":S.completed
+				}
+
 		valid=False
 		seen=0
 		verbose(f'Resume at list item {S.completed:5}')
@@ -52,16 +77,9 @@ class InputFileIterator:
 			if valid:
 				seen+=1
 				if seen > S.completed:
-					mission={"source_full_path":S.at_index(),
-					         "source_scanned_dir":S.scaned_dir,
-					         "completed":S.completed
-					         }
-					# S.mission['source_file']      = S.at_index()
-					# S.mission['source_scaned_dir'] = S.scaned_dir
-					#yield S.at_index()
-					yield mission
+					yield split_path()
+					S.last_file_accessed=S.at_index()
 					S.completed+=1
-					verbose(f'{S.completed:5}')
 
 	def __str__(self):
 		return self.at_index()[self.scaned_dir_length:]

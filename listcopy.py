@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 import os
+from os import scandir
 import shutil
 import atexit
 import argparse
@@ -9,6 +10,7 @@ import time
 import signal
 import psutil
 import listutils as lu
+from listutils import JDUMP
 
 from geolocate    import OsmNode, OsmTurbo
 from filelistiter import InputFileIterator
@@ -153,11 +155,6 @@ parser.add_argument('--throttle',
                     )
 args = parser.parse_args()
 
-def JDUMP(d,title=None):
-	if title:
-		print(f'{title}=')
-	print(json.dumps(d,indent=4))
-
 def explain()->None:
 	with open('README','r') as rm:
 		print (rm.read())
@@ -276,15 +273,6 @@ def target_fs_properties(consignment: dict):
 			return
 	raise RuntimeError (f'target_fs_properties failed on "{consignment["dest_path"]}.')
 
-def split_source_path(mission):
-	path = mission["source_full_path"]
-	dir_name = mission["source_dir"]   = os.path.dirname(path)
-	stem_path,ext  = os.path.splitext(path)
-	mission["extension"]    = ext
-	mission["basename"]     = os.path.basename(path)
-	mission["stem_name"]    = stem_path[len(dir_name)+1:]
-
-
 def process_filelisting(consignment):
 	global verbose,eat
 	verbose    = [eat,print][consignment['verbose']]
@@ -307,22 +295,21 @@ def process_filelisting(consignment):
 	#for src_full,source_path_length in listing:
 	pathseeker = PathSeeker(consignment)
 	for mission in listing.file_reaper():
+		#JDUMP(mission,"mission <- listing.file_reaper()",'298')
 		verbose('<'*35+'-'*40+'>'*35)
 		verbose(f' origin: "{mission["source_full_path"]}"')
-		split_source_path(mission)
 		mission["verbose"]       = consignment['verbose']
 		mission["dest_base_dir"] = consignment["dest_path"]
 		pathseeker.compose_path(mission)
-		mission["target_full_path"] = os.path.join(consignment["dest_path"] + mission["target_path"])
-		replicator.check_destination(mission)
-		verbose(f'replica: "{mission["source_tail_path"]}"')
+		#JDUMP(mission,"mission <- pathseeker.compose_path",305)
 		if 'Error' in mission:
 			#JDUMP(mission,'process_files Zero file')
 			bad_file_handle.write(mission["source_full_path"] + ' # ' +  mission["Error"] + '\n' )
-			listing.save_processing(consignment['dest_path'],mission,False)
+			listing.save_processing(mission,False)
 			verbose(f'Bad file skipped: "{mission["Error"]}".')
 			#input("Zero in mission")
 			continue
+		mission["target_full_path"] = os.path.join(consignment["dest_path"] + mission["target_path"])
 
 		#JDUMP(mission,'mission')
 		if 'dry_run' in consignment:
@@ -330,11 +317,19 @@ def process_filelisting(consignment):
 				keys=[k for k in pathseeker.knowledege().keys()]
 				#DEBUGPRINT(f'{keys=}')
 				consignment['store_labels']=consignment['store_labels'].union(keys)
-			JDUMP(mission,title='mission')
+			#JDUMP(mission,title='mission')
 			continue
+		replicator.check_destination(mission)
+		verbose(f'replica: "{mission["target_full_path"]}"')
 		listing.save_processing(mission,False)
-		replicator.write_chunks_to_file(mission)
-
+		if not replicator.write_chunks_to_file(mission):
+			if 'Error' in mission:
+				bad_file_handle.write(mission["source_full_path"] + ' # ' +  mission["Error"] + '\n' )
+				listing.save_processing(mission,False)
+				verbose(f'Bad file skipped: "{mission["Error"]}".')
+				continue
+		verbose(f'file size: {mission["FileSize"]}')
+		verbose(f'{mission["completed"]:04} files completed.')
 
 	if 'store_labels' in consignment:
 		for label in consignment['store_labels']:

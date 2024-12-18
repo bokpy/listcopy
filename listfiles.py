@@ -135,25 +135,10 @@ def log_error(filepath,error):
     logfile.write(f'"{filepath}" # {error}\n')
     verbose(f'ERROR: "{filepath}" {error}.')
 
+def unicode_exception(badline):
+    return badline.encode('ascii', 'replace').decode('ascii')
+
 def scandir_iterator(directory):
-    # def unicode_exception(bts, e):
-    #     tries=4
-    #     while True:
-    #         if not ('surrogates not allowed' in e.reason) or ( tries <0 ):
-    #             print (f'UnicodeError "{e.reason}"')
-    #             exit('scandir_iterator unicode_exception can not solve it.')
-    #         tries-=1
-    #         err_pos = e.start
-    #         bts = bts[:err_pos] + '?' + bts[err_pos + 1:]
-    #         try:
-    #             print(f'test unicode error on: {bts}')
-    #             return bts
-    #         except UnicodeError as e:
-    #             print(f'{e.start} {e.reason}')
-    #             DEBUGEXIT(' UnicodeError')
-    #     return bts[:err_pos] + '?' + bts[err_pos + 1:]
-    def unicode_exception(msg, e):
-        return msg.encode('ascii', 'replace').decode('ascii')
     count = 0
     dir_stack = deque()
     dir_stack.append(directory)
@@ -169,21 +154,19 @@ def scandir_iterator(directory):
             continue
 
         for file in files:
+            save_path=unicode_exception(file.path)
             if file.is_symlink():
-                verbose(f'symlink: "{file.path}"')
+                verbose(f'symlink: "{save_path}"')
                 continue
             if file.is_dir():
-                verbose(f'  dir: "{file.path}"')
-                dir_stack.append(file.path)
+                try:
+                    verbose(f'  dir: "{save_path}"')
+                except UnicodeError as e:
+                    print('scandir_iterator: {e}')
+                dir_stack.append(save_path)
                 continue
-            try:
-                path = file.path
-                verbose(f'\r{count:05}',end=' -> ')
-            except UnicodeError as e:
-                # unistr =  unicode_check(file.path) #imported from listutils
-                path = unicode_exception(file.path, e)
-                verbose(f'unicode: "{path=}"')
-            yield path
+            verbose(f'\r{count:05}',end=' -> ')
+            yield save_path
             count += 1
 
 class FileListing:

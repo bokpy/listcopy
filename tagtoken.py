@@ -24,7 +24,7 @@ def center_char(mid, length, fill=' '):
 
 label_re = r'((?:label|subdir|literal|replace|meaning|regex){[^}]+})'
 bind_re = r'\+"([^"]+)"\+'
-slash_re = r'([_/])'
+slash_re = r'([_/]|"[^"]*")'
 fork_re = r'(\()'
 split_re = r'(\|)'
 tie_re = r'(\))'
@@ -84,12 +84,16 @@ TagTokenId = -1
 TagTokenList = []
 
 
+# def clean_tagtokens():
+# 	global TagTokenList, TagTokenGist
+# 	for tokkie in TagTokenList:
+# 		if TagTokenGist[tokkie['token']][3]:  # 3 clean field bool
+# 			tokkie.clean()
+
 def clean_tagtokens():
 	global TagTokenList, TagTokenGist
 	for tokkie in TagTokenList:
-		if TagTokenGist[tokkie['token']][3]:  # 3 clean field bool
-			tokkie.clean()
-
+		tokkie.pop('payload', None)
 
 slice_re = re.compile(r'([^\[]*)(\[[^\]]+\]).*')
 class TagToken(dict):
@@ -167,7 +171,11 @@ class TagToken(dict):
 
 	def init_slash(S, value):
 		if value == '_':
-			value = ' '
+			S['fixed'] = ' '
+			return
+		if len(value) >1 :
+			S['fixed']=value[1:-1]
+			return
 		S['fixed'] = value
 
 	def init_fork(S, value):
@@ -608,40 +616,37 @@ class TagToken(dict):
 class FileToken(TagToken):
 
 	def __init__(S, mime_and_ext: str):
-		DEBUGPRINT(f'FileToken({mime_and_ext=})')
 		TagToken.__init__(S)
+		#DEBUGPRINT(f'FileToken({mime_and_ext=})')
 		S['token'] = TT_FILE
 		# DEBUGPRINT(f'FileToken {category_string}')
 		#S['mime']       =
-		S['mimes']      = []
+		#S['mimes']      = []
 		S['generals']   = []
-
 		S['extensions'] = []
-		S['next_mime'] = None # Misnomer should bee next_filetoken
+		S['next_filetoken'] = None
 		for item in mime_and_ext.split(','):
 			if item.isupper():
-				S['extensions'].append(item.lower())
+				S['extensions'].append('.'+item.lower())
 				continue
 			S['generals'].append(item)
 
-	def am_I_the_one(S,exifdata:dict)->bool:
+	def i_am_the_one(S,mission:dict)->bool:
 		"""
-		Check if filedata["FileTypeExtension"] is in S['extension']
+		Check if filedata["FileTypeExtension"] is in S['extensions']
 		or
-		if filedata["general"] is in S['mime']
-		or
-		if filedata["mime"] fits leftside in a S['mime'] item
-		:param filedata: data from metadata "get_mime_etc" (exiftool or file)
+		if filedata["general"] is in S['generals']
+		:param mission:
 		:return: matches True else False
 		"""
-		if 'default' in S["mimes"]:
+		if mission["mime_general"] in S['generals']:
 			return True
-		if "FileTypeExtension" in exifdata:
-			if exifdata["FileTypeExtension"].lower in S['extensions']:
-				return True
-		if S['generals']:
-			if exifdata["general"] in S['generals']:
-				return True
+		if mission["FileTypeExtension"] in S['extensions']:
+			return True
+		if mission["extension"].lower() in S['extensions']:
+			return True
+		if 'default' in S["generals"]:
+			return True
 			# find_mime='^'+filedata["mime"]+'.*$'
 			# for mime in S['mime']:
 			# 	its_me=re.match(f'^{mime}.*',filedata["mime"])
@@ -650,26 +655,27 @@ class FileToken(TagToken):
 		return False
 
 	def __str__(S):
-		mime_str = ''
-		if S['mime']:
-			mime_str = ''
+		general_str = ''
+		if S['generals']:
+			general_str = ''
 			comma = ''
-			for mime in S['mime']:
-				mime_str += comma + mime
+			for general in S['generals']:
+				general_str += comma + general
 				comma = ','
 		ext_str = ''
-		if S['extension']:
+		if S['extensions']:
 			ext_str = ''
 			comma = ''
-			for ext in S['extension']:
+			for ext in S['extensions']:
 				ext_str += comma + ext.lower()
 				comma = ','
 		keys = ''
 		comma = ''
-		for key in S.keys():
-			keys += f'{comma}"{key}"'
-			comma = ','
-		return f'FileToken( mime[{mime_str}] ext[{ext_str}] keys[{keys}])'
+		# for key in S.keys():
+		# 	keys += f'{comma}"{key}"'
+		# 	comma = ','
+		# return f'FileToken( generals[{general_str}] ext[{ext_str}] keys[{keys}])'
+		return f'FileToken( generals[{general_str}] extensions[{ext_str}]'
 
 
 # TagTokenGist

@@ -1,8 +1,6 @@
 #!/usr/bin/python3
 
 import os
-from pyexpat.errors import messages
-
 import requests
 import subprocess
 import json

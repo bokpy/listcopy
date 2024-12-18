@@ -11,11 +11,11 @@ from extensionsets import extension_dict
 from tagtoken import TagToken,FileToken,clean_tagtokens
 from wisdomtree import TreeOfKnowledge
 #from listcopy import prev_copy_speed
-from listutils import LocalTimeString,get_extension,center_string,get_cursor_position
+from listutils import dict_dump
 #from brainzmusic import BrainzMusic
 from garlic import *
 #import inspect
-from icecream import ic
+from icecream import ic as DEBUGCREAM
 
 ext_re=re.compile(r'[^.]*\.([^/]+)$')
 class PathSeeker:
@@ -47,7 +47,8 @@ class PathSeeker:
 	def read_format(self,format):
 		try_file=os.path.expanduser(format)
 		if os.path.exists(try_file):
-			if get_extension(try_file) == 'JSON':
+			tail,ext=os.path.splitext(try_file)
+			if ext.upper() == '.JSON':
 				with open(try_file,'r') as f:
 					self.parse_dict=json.load(f)
 					return None
@@ -99,7 +100,7 @@ class PathSeeker:
 		# input('remove whitespace 97')
 		return lines
 
-	def grow_tree(self,lines:list)->list:
+	def grow_tree(self,lines:list):
 		"""
 		For every filetype that is characterized make a branche of TagTokens.
 		:param lines: by "PathSeeker.remove_whitespace" prepairded lines
@@ -128,29 +129,40 @@ class PathSeeker:
 				self.root=filetoken
 				last_added_filetoken=filetoken
 			else:
-				last_added_filetoken['next_mime']=filetoken
+				last_added_filetoken["next_filetoken"]=filetoken
 				last_added_filetoken=filetoken
 			filetoken.do_shunting(tail)
+
+# path construction
+	def matching_file_tokens(S,mission):
+		#DEBUG
+		# file_branche=S.root
+		# while file_branche:
+		# 	DEBUGPRINT(f' file_branche: {str(file_branche)}')
+		# 	file_branche=file_branche["next_filetoken"]
+		#DEBUG end
+		file_branche=S.root
+		clean_tagtokens()
+		while file_branche:
+			#DEBUGCREAM(str(file_branche))
+			if file_branche.i_am_the_one(mission):
+				yield file_branche
+			file_branche=file_branche["next_filetoken"]
 
 	def compose_path(S,mission:dict):
 		"""
 		Assemble an substitution path based on from "path_format" compiled tree.
-		:param source_file: full path to the source file
-		:param source_dir: base directory of the source file
+		:param mission: see: "mission.py"
 		:return: a substitute destination path
 		"""
 		#DEBUGPRINT('-+'*80)
 		S.good_and_evil.reset(mission)
-		JDUMP(S.good_and_evil.Exif,'S.good_and_evil.Exif')
-		JDUMP(mission,'compose_path after good_and_evil.reset')
-		input("DEBUG")
+
 		if "Error" in mission:
 			mission["dest_file"]= "Error"
 			return False
-		path_stack=deque()
 
-		def path_push(fruit):
-			path_stack.append(fruit)
+		path_stack=deque()
 
 		def bares_fruit(tokkie):
 			apple=tokkie.produce()
@@ -161,44 +173,42 @@ class PathSeeker:
 			S.good_and_evil.consult_the_serpent(tokkie)
 			return tokkie.produce()
 
-		def good_try(tokkie):
-			#DEBUGPRINT(f'good_try({str(tokkie)} ',end='')
+		def is_valid_path(tokkie:TagToken)->bool:
+			"""
+			Recurse into the TagToken tree to find a valid destination path
+			:param tokkie: TagToken to evaluate
+			:return: True a valid path is discovered else False
+			"""
+			# apple: the TagToken["payload"] addition to the destination path
 			if not tokkie:
-				#DEBUGPRINT(f'None tokkie')
+				# end of the line no success
 				return False
-			apple=bares_fruit(tokkie)
-			#DEBUGPRINT(f'{apple=}')
+			apple = bares_fruit(tokkie)
 			if apple == None:
 				return False
-			path_push(apple)
+			path_stack.append(apple)
 			if tokkie.is_name():
+				# a good filename is reached job done
 				return True
-			mainline=good_try(tokkie['mainline'])
+			mainline=is_valid_path(tokkie['mainline'])
+			# follow the "mainline" because it is preferred.
 			if mainline:
 				return True
+			# Else try second best "diverge".
 			if 'diverge' in tokkie:
-				#DEBUGPRINT(f'Diverge {str(tokkie["diverge"])}')
-				return good_try(tokkie['diverge'])
+				return is_valid_path(tokkie['diverge'])
 			path_stack.pop()
 			return False
 
-		file_branche=S.root
-		clean_tagtokens()
-		while file_branche:
-			if S.good_and_evil.pick_me(file_branche):
-				path_stack.clear()
-				if good_try(file_branche['mainline']):
-					break
-			file_branche=file_branche['next_mime']
-		#mission['mime_stuff']=file_branche['mime']
-		#DEBUGPRINT(f'\nPath: ',end='')
+		for file_token in S.matching_file_tokens(mission):
+			path_stack.clear()
+			if is_valid_path(file_token):
+				break
+
 		path=''
 		while path_stack:
 			fruit=path_stack.popleft()
 			path+=fruit
-			#DEBUGPRINT(f'{fruit}',end='')
-		#DEBUGPRINT()
-		#path=S.good_and_evil.check_evil_chars(path)
 		mission['target_path']=path
 		S.good_and_evil.check_extension(mission)
 		return True

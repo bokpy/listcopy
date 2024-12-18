@@ -2,8 +2,7 @@
 
 def main() -> None:
 	pass
-"""#!/usr/bin/p
-
+"""
 consignment={
 
 # values set in listcopy.py main
@@ -31,16 +30,19 @@ consignment={
 mission={
 
 # initiated by filelistiter.py InputFileIterator.file_reaper
-    "source_full_path"   : " full path to source file", 
+
+# source_full_path = source_scanned_dir + source_dir + stem_name + extension
+# source_path      =                      source_dir + stem_name + extension
+# basename         =                                   stem_name + extension
+    "source_full_path"   : " full path to source file"
+    "source_path"        : " source_dir + stem_name + extension"
     "source_scanned_dir" : " root path which was scanned by "listfiles.py",
-    "completed"          : " file count  file_reaper did yield",
-    "last_file_accessed" : 
-   	
- # initiated by listcopy.py process_filelisting(consignment) -> split_source_path(mission)
     "source_dir"
-	"extension"
 	"basename"
 	"stem_name"
+	"extension"
+    "last_file_accessed" : 
+    "completed"          : " file count  file_reaper did yield",
 	
  # initiated by listcopy.py process_filelisting(consignment) 
     "verbose"            : " copy of consignment["verbose"] = args.verbose" ,3
@@ -54,12 +56,15 @@ mission={
     "FileTypeExtension"  : "extension as reported by "exiftool"."
     
 # values set in PathSeeker.compose_path -> TreeOfKnowledge.check_extension
+
+"target_full_path" = "target_dir" + "target_path"
+    
     "target_path"        : "Path above "dest_base_dir" to the copy target." 
     
 # initiated by listcopy.py process_filelisting(consignment)     
     "target_full_path"   : os.path.join("target_dir","target_path")  
-    
     "target_dir"         : "Target directory"
+    
      
 }
 

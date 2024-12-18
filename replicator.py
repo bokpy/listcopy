@@ -3,7 +3,7 @@ from collections import deque
 import os
 import time
 import json
-import psutil
+from icecream import ic as DEBUGCREAM
 import re
 import duplicates
 
@@ -24,37 +24,31 @@ def eat(*args,**kwargs):
 verbose=eat # verbose = print for verbose
 
 name_seed=None
-class NameConflictSolver(Base62):
 
-	def __init__(S):
-		global  name_seed
-		if not name_seed:
-			name_seed=int (time.time()) % 100
-		Base62.__init__(S,name_seed)
+def conflict_renamer(mission):
+	filepath=mission["target_full_path"]
+	number62=int(mission["completed"])
+	b62='['+ str(Base62(number62)) +']'
+	if b62 in filepath:
+		DEBUGPRINT(f'code {b62} in "{mission["target_full_path"]}"')
+		try:
+			os.remove(filepath)
+			return
+		except OSError as e:
+			print(f'conflict_renamer could not previous renamed file.')
+			print(f'"{filepath}"')
+			filepath=filepath.replace(b62,'')
+			b62='[+'+ str(Base62(number62)) +']'
+			input('reply conflict_renamer 42')
+	base,ext=os.path.splitext(filepath)
+	mission["target_full_path"] = f'{base} {b62}{ext}'
 
-	def rename(S,file):
-		point = file.rfind('.')
-		slash = file.rfind('/')
-		if slash > point:
-			ext  = ''
-			path = file
-		else:
-			ext  = file[point:]
-			path = file[:point]
-		while True:
-			S.plus()
-			count=str(S)
-			try_name = f'{path}({count}){ext}'
-			if not os.path.exists(try_name):
-				return try_name
 
 # def duplicate(fa,fb):
 # 	DEBUGPRINT(f'A {os.path.getsize(fa)} B {os.path.getsize(fb)}')
 # 	if os.path.getsize(fa) != os.path.getsize(fb):
 # 		return False
 # 	return True
-
-
 
 def exit_error(e, message=None) -> None:
 	print(f"I/O error ({e.errno}): {e.strerror}")
@@ -68,22 +62,28 @@ def exit_error(e, message=None) -> None:
 		      'medium')
 	exit(1)
 
-def replace_ilegal(path ):
-	if not isinstance(path,str):
-		print(f'Got {path} of type({type(path)}')
-		print(f"can't handle this return "'hopeless')
-		return 'hopeless'
-		#path=path.decode(encoding ='utf-8', errors = 'ignore')
-
-	match = re.findall(r'([\\:?*<>|]| / | /|/ )+',path)
-	if not match:
-		return path
-	for chars in match:
-		if '/' in chars:
-			path = path.replace(chars, '/')
-			continue
-		path = path.replace(chars, '-')
-	return path
+def replace_ilegal(mission):
+	#JDUMP(mission,' replace_ilegal',66)
+	target_path=mission["target_path"]
+	while True:
+		match = re.findall(r'[\\:?*<>|]| / | /|/ ',target_path)
+		if match:
+			for bad in match:
+				replacer='-'
+				if '/' in bad:
+					replacer='/'
+				target_path=target_path.replace(bad,replacer)
+		else:
+			break
+	# if not isinstance(path,str):
+	# 	print(f'Got {path} of type({type(path)}')
+	# 	print(f"can't handle this return "'hopeless')
+	# 	return 'hopeless'
+	# 	#path=path.decode(encoding ='utf-8', errors = 'ignore')
+	mission["target_path"]=target_path
+	mission["target_dir"]=os.path.dirname(target_path)
+	mission["target_full_path"]=mission["dest_base_dir"]+target_path
+	mission["target_full_dir"] = os.path.dirname(mission["target_full_path"])
 
 # chunk size optimising
 def least_sig(f,intdigits=3,deci_digits=3):
@@ -312,19 +312,14 @@ class Replicator:
 		S.consignment  = consignment
 		S.fs_max_file  = consignment["FsMaxFileSize"]
 		S.throttle     = Throttle(consignment)
-		S.double_namer = NameConflictSolver()
-
-		#S.COPY_CHECK = 89
 
 	def check_destination(S,mission):
-		#PRINT_OFF(f'check_destination')
-		#PRINT_OFF(f'check: "{mission["destination"]}"')
 		S.check_dir(mission)
-		#PRINT_OFF(f'  dir: "{mission["destination"]}"')
-		#PRINT_OFF(f' last: "{consignment["last_file_accessed"]}"')
+		count_renames=0
 		while os.path.exists(mission["target_full_path"]):
-			#PRINT_OFF(f'exist: "{mission["destination"]}"')
-			#PRINT_OFF(f'same { mission["destination"] == consignment["last_file_accessed"]}')
+			if count_renames > 1:
+				DEBUGPRINT(f'rename {count_renames} "{mission["target_full_path"]}"')
+				input ('check_destination 315')
 			if mission["target_full_path"] == mission['last_file_accessed']:
 				#PRINT_OFF(f'Trying to remove interupted file.')
 				try:
@@ -333,68 +328,50 @@ class Replicator:
 				except OSError as e:
 					print(f'Failed to remove interupted file. {e}')
 					exit_error(e,'check_destination')
-			mission["target_full_path"]=S.double_namer.rename(mission["target_full_path"])
-			#PRINT_OFF(f'renam: "{mission["destination"]}"')
-		# for _ in 1,2:
-		# 	try:
-		# 		with open(mission["destination"], 'w') as test:
-		# 			DEBUGPRINT(f'{test}')
-		# 			return
-		# 	except OSError as e:
-		# 		if e.errno == 22:
-		# 			mission["destination"]=replace_ilegal()
-		# 			continue
-		# print(f'Opening "{mission["destination"]}" Failed exit')
-		# exit(1)
+			count_renames+=1
+			conflict_renamer(mission)
 
 	def check_dir(S,mission):
-		dest_full_dir = mission["dest_base_dir"] + mission["target_dir"]
-		mission["dest_full_dir"] = dest_full_dir
-		JDUMP(mission,'mission check_dir','mission end press enter.')
+		target_full_dir = mission["dest_base_dir"] + mission["target_dir"]
+		mission["target_full_dir"] = target_full_dir
+		#JDUMP(mission,'mission check_dir','mission end press enter.')
 		for _ in 1,2:
-			dest_full_dir = mission["dest_base_dir"] + mission["target_dir"]
-			mission["dest_full_dir"] = dest_full_dir
+			target_full_dir = mission["dest_base_dir"] + mission["target_dir"]
+			mission["target_full_dir"] = target_full_dir
 			try:
-				os.makedirs(dest_full_dir, mode=0o777, exist_ok=True)
+				os.makedirs(target_full_dir, mode=0o777, exist_ok=True)
 				return 0
 			except OSError as ed:
-				print(f'os.makedirs("{dest_full_dir}") Failed')
+				DEBUGCREAM(ed)
+				print(f'os.makedirs("{target_full_dir}") Failed')
 				print(f'{ed}')
 				if ed.errno == 22:
-					mission["target_dir"]=replace_ilegal(mission["target_dir"])
+					replace_ilegal(mission)
 					print(f'new target dir = "{mission["target_dir"]}"')
 					# [Errno 22]Invalid argument:
 					continue
 				else:
 					exit(ed.errno)
 
-	def file_exists(S,destination,file_size):
-		if destination == S.last_file_accessed:
-			try:
-				os.remove(destination)
-				return destination
-			except OSError as e:
-					print(f'Could not remove partly copied file:\n"{destination}"')
-		dup_size=os.path.getsize(destination)
-		if file_size == dup_size:
-			verbose(f'Same size')
-			return destination
-		verbose(f'{file_size=} != {dup_size=} Renaming File')
-		return S.double_namer.rename(destination)
-
 	def write_chunks_to_file(S, mission):
 		#S.check_dir(mission) # destination can change if the directory can't bee made
 		source      = mission["source_full_path"]
 		destination = mission["target_full_path"]
-		file_size = os.path.getsize(source)
-		if file_size > S.fs_max_file:
-			print(f'"{source}" too big.')
-			print(f'{file_size} > {S.fs_max_file} ')
-			return OSError(27, 'Too Big for Filesystem.')
+		try:
+			file_size   = os.path.getsize(source)
+		except OSError as e:
+			mission["Error"]=f'{e}'
+			return False
 
-		verbose(f'filesize:  {str(Suffix(file_size))}')
+		if not "FileSize" in mission:
+			mission["FileSize"]=file_size
+
+		if file_size > S.fs_max_file:
+			mission["Error"]=f'{file_size} Too Big for Filesystem.'
+			return False
 
 		with open(source, 'rb') as sf:
+			mission["last_file_accessed"] = destination
 			chunk_size = S.throttle.start_timer(file_size)
 			to_write=file_size
 			while to_write:
@@ -409,38 +386,17 @@ class Replicator:
 
 				except OSError as e:
 					if e.errno == 22:
-						destination=replace_ilegal(destination)
+						replace_ilegal(mission)
 						if mission["target_full_path"] != destination:
-							mission["target_full_path"] = destination
+							destination=mission["target_full_path"]
 							verbose(f'Renamed: "{destination}"')
 							continue
 					print(f'write {len(data_chunk)} bytes to "{destination}" Failed')
-					print(f'{e}')
-					exit(e.errno)
+					mission["Error"]=f'{e}'
+					return False
 				# os.sync() sync when paused try to let usb devices survive
 				chunk_size = S.throttle.clock_chunk(written)
-		return 0
-
-# def file_check_ok(source, target, l) -> bool:
-# 	# if the destination of src exists and the
-# 	# sizes are the same it wil be ok and return is True
-# 	try:
-# 		size_src = os.stat(source).st_size
-# 	except OSError as e:
-# 		print(f'{e.errno} "{e.strerror}"')
-# 		exit(e.errno)
-# 	try:
-# 		size_dst = os.stat(target).st_size
-# 	except OSError as e:
-# 		if e.errno == 2:  # No such file
-# 			return False
-# 		print(f'Can\'t stat "{target}"')
-# 		print(f'{e.errno} "{e.strerror}"')
-# 		exit(e.errno)
-# 	if size_src == size_dst:
-# 		return True
-# 	os.remove(target)
-# 	return False
+		return True
 
 def main() -> None:
 	pass

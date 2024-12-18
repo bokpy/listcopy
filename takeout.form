@@ -15,16 +15,17 @@ ISO:/literal{"fideo/kompaktdisk"}
 
 JSON:/literal{"json"}/name:subdir{0};
 
-image:/literal{ôfbyldings}/ label{year}
+image,PSD:/"ôfbyldings"/
+
     (
-    / label{year}_label{monthstr}  / label{addr:city}_label{addr:street}_label{addr:housenumber} |
-    / label{year}_label{monthstr}  / label{addr:city}_label{addr:street} |
-    / label{year} / label{addr:city}_label{addr:street} |
-    / label{addr:city}_label{addr:street} _label{addr:housenumber} |
-    / label{addr:city}_label{addr:street}  |
-    / label{year}_label{monthstr} |
-    / label{year} |
-    / literal{"no year no address"}
+     label{year}_label{monthstr}  / label{addr:city}_label{addr:street}_label{addr:housenumber} |
+     label{year}_label{monthstr}  / label{addr:city}_label{addr:street} |
+     label{year} / label{addr:city}_label{addr:street} |
+     label{addr:city}_label{addr:street} _label{addr:housenumber} |
+     label{addr:city}_label{addr:street}  |
+     label{year}_label{monthstr} |
+     label{year} |
+     literal{"no year no address"}
     )
     (
     / label{make} literal{" model "} label{Model}
@@ -41,43 +42,71 @@ image:/literal{ôfbyldings}/ label{year}
 )
 name:literal{""};
 
+###################################################################################################
+#                                                                                                 #
+# lûd en ferskes <--> lûd en ferskes <--> lûd en ferskes <--> lûd en ferskes <--> lûd en ferskes  #
+#                                                                                                 #
+###################################################################################################
+
 audio:/literal{lûd_en_ferskes}
      (
-     / label{Genre} ( / label{artist} | / label{names} | literal{"ûnbekend") / label{album} |
-     / literal{"ferskate"} ( / label{artist} | / label{names} | literal{"ûnbekend") / label{album} |
-     / label{artist} / label{album} |
-     / literal{"ferskate"} / label{Artist} |
-     / literal{"ferskate"} /  label{Album} |
-     / label{year}_label{monthstr} |
+     / label{Genre}  |
+     / label{ProviderStyle} |
      / label{year} |
-        literal{""}
+     / "samar wat"
      )
      (
-     / label{title} |
-     / meaning{top,0.6} |
-     / meaning{second} / meaning{first} |
-     / meaning{first} |
-     / label{shortname} |
-     / literal{"moniker"}
+     / label{artist} |
+     / label{AlbumArtist} |
+     / "gearstaller " label{Composer}  " skriuwer " label{Author} |
+     / "gearstaller " label{Composer}  |
+     / "skriuwer " label{Author} |
+     / label{names} |
+     / "ûnbekend"
+     )
+     (
+     / label{album} |
+     / label{AlbumTitle} |
+     / label{Composer} |
+     / "ferskate"
+     )
+     /
+     (
+     "-" label{TrackNumber} "-" |
+     ""
+     )
+     (
+     label{title} |
+     meaning{top,0.6} |
+     meaning{second} _ meaning{first} |
+     meaning{first} |
+     label{shortname} |
+     literal{"moniker"}
      )
      name:literal{""}
      ;
 
+######################################################################################################
+#                                                                                                    #
+#  ---<  videol >-----<  videol >-----<  videol >-----<  videol >-----<  videol >-----<  videol >--  #
+#                                                                                                    #
+######################################################################################################
+
 video,MP4:/literal{filmkes}
     (
- #   / label{year} _ label{month} / label{addr:city} _ label{addr:street} _ label{addr:housenumber}
- # | / label{year} _ label{month} / label{addr:city} _ label{addr:street}
- # | / label{year} _ label{month} / label{addr:city} _ label{addr:street}
+ #   / label{year} _ label{monthstr} / label{addr:city} _ label{addr:street} _ label{addr:housenumber}
+ # | / label{year} _ label{monthstr} / label{addr:city} _ label{addr:street}
+ # | / label{year} _ label{monthstr} / label{addr:city} _ label{addr:street}
  # | / label{addr:city} _ label{addr:street}
- # | / label{year} _ label{month} _ label{day}
+ # | / label{year} _ label{monthstr} _ label{day}
  # | / regex{"r'dit is een regular expression'"}
-    / label{year} _ label{month}
+    / label{year} _ label{monthstr}
     | / label{Year}
     | replace{"test"}
     | literal{""}
     )
     (
-      / label{make} literal{" model "} label{Model}
+      / label{make} " " label{Model}
     | / label{make}
     | / label{model}
     | literal{""}
