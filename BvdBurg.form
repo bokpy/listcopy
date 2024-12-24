@@ -17,7 +17,7 @@ ISO:/literal{"fideo/kompaktdisk"}
 JSON:/literal{"json"}/name:subdir{0};
 
 image:/literal{ôfbyldings} ( / label{year} ( _label{monthstr} | literal{""} ) | literal{""} )
-( label{Make} ( { _ label{Model} |  literal{""} ) | literal{"gjin tastel"} )
+( label{Make} (  _ label{Model} |  literal{""} ) | literal{"gjin tastel"} )
 /
 (  meaning{top,5.0} |
    label{ExifImageWidth} literal{x}  label{ExifImageHeight} |
@@ -67,8 +67,8 @@ name:literal{""};
 
 audio:/literal{lûd_en_ferskes}
      (
-     / label{Genre} ( / label{artist} | / label{names} | literal{"ûnbekend") / label{album} |
-     / literal{"ferskate"} ( / label{artist} | / label{names} | literal{"ûnbekend") / label{album} |
+     / label{Genre} ( / label{artist} | / label{names} | literal{"ûnbekend"}) / label{album} |
+     / literal{"ferskate"} ( / label{artist} | / label{names} | literal{"ûnbekend"} ) / label{album} |
      / label{artist} / label{album} |
      / literal{"ferskate"} / label{Artist} |
      / literal{"ferskate"} /  label{Album} |

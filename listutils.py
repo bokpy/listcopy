@@ -24,6 +24,41 @@ DEBUGPRINT=print
 # 		return f'{month} ? {lang}'
 # 	months = LANGUAGES[lang][1]
 # 	return months[table
+control_chars_str = [
+	"NUL",  # Null character (0)
+	"SOH",  # Start of Header (1)
+	"STX",  # Start of Text (2)
+	"ETX",  # End of Text (3)
+	"EOT",  # End of Transmission (4)
+	"ENQ",  # Enquiry (5)
+	"ACK",  # Acknowledge (6)
+	"BEL",  # Bell (7)
+	"BS",   # Backspace (8)
+	"HT",   # Horizontal Tab (9)
+	"LF",   # Line Feed (10)
+	"VT",   # Vertical Tab (11)
+	"FF",   # Form Feed (12)
+	"CR",   # Carriage Return (13)
+	"SO",   # Shift Out (14)
+	"SI",   # Shift In (15)
+	"DLE",  # Data Link Escape (16)
+	"DC1",  # Device Control 1 (17)
+	"DC2",  # Device Control 2 (18)
+	"DC3",  # Device Control 3 (19)
+	"DC4",  # Device Control 4 (20)
+	"NAK",  # Negative Acknowledge (21)
+	"SYN",  # Synchronous Idle (22)
+	"ETB",  # End of Transmission Block (23)
+	"CAN",  # Cancel (24)
+	"EM",   # End of Medium (25)
+	"SUB",  # Substitute (26)
+	"ESC",  # Escape (27)
+	"FS",   # File Separator (28)
+	"GS",   # Group Separator (29)
+	"RS",   # Record Separator (30)
+	"US"    # Unit Separator (31)
+]
+
 
 class LocalTimeString:
 	

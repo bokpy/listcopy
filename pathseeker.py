@@ -55,46 +55,104 @@ class PathSeeker:
 			with open(try_file,'r') as f:
 			#DEBUGPRINT(f'read file "{try_file=}"')
 				format=f.read()
-		return self.remove_whitespace(format)
+		return self.strip_and_balance_check(format)
 
-	def remove_whitespace(self,format:str)->list:
+	def strip_and_balance_check(self, format: str) -> list:
 		"""
 		Removes all characters ord() < 33 from format except between " or '.
 		split lines on ';' and remove it.
 		:param format:
 		:return: list of strings
 		"""
-		format+='\n'
-		#DEBUGPRINT(f'remove_whitespace {format} type({type(format)})')
-		head=-1
-		quote=''
-		end=len(format)-1
-		lines=[]
-		line=''
+		format += '\n'
+		# DEBUGPRINT(f'strip_and_balance_check {format} type({type(format)})')
+		def raise_no_match(token,line,position):
+			raise SyntaxError(f'No matching {token} at {line}:{position}')
+
+		head = -1
+		quote = ''
+		quotes      = deque() # " or '
+		braces      = deque() # { }
+		parentheses = deque() # ( )
+		brackets    = deque() # [ ]
+		tags        = deque() # < >
+		end = len(format) - 1
+		lines = []
+		line = ''
+		line_count=1
+		line_pos=0
 		while head < end:
-			#DEBUGPRINT(f'{line=}')
-			head+=1
-			if not quote and ((format[head]=="'") or (format[head]=='"')):
-				quote = format[head]
-				line+=format[head]
+			# DEBUGPRINT(f'{line=}')
+			head     += 1
+			line_pos += 1
+			cur_char = format[head]
+			if cur_char == '\n':
+				line_count += 1
+				line_pos    = 0
 				continue
-			if quote == format[head]:
+			# quoted starts with " or ' and everything is simply copied
+			# until the opening quote character is meth.
+			if not quote and ((cur_char == "'") or (cur_char == '"')):
+				# start of quoted part
+				quotes.appendleft((line_pos,line_pos))
+				quote = cur_char
+				line += cur_char
+				continue
+			if quote == cur_char:
+				#end of quoted part
+				quotes.pop()
 				quote = ''
-				line+=format[head]
+				line += cur_char
 				continue
 			if quote:
-				line+=format[head]
+				# quoted just copy
+				line += cur_char
 				continue
-			if format[head]=='#':
-				while format[head]!='\n':
-					head+=1
-			if ord(format[head]) < 33:
+			if cur_char == '#':
+				# scip comment
+				while cur_char != '\n':
+					head += 1
+				head -=1
 				continue
-			if format[head]==';':
+			if ord(cur_char) < 33:
+				# scip control characters
+				continue
+			if cur_char == '{':
+				braces.appendleft((line_count,line_pos))
+				line += cur_char
+				continue
+			if cur_char == '}':
+				if not braces:
+					raise_no_match('{',line_count,line_pos)
+				braces.pop()
+				line += cur_char
+				continue
+			if cur_char == '(':
+				if braces:
+					raise_no_match('}',*braces.pop())
+					raise
+				parentheses.appendleft((line_count,line_pos))
+				line += cur_char
+				continue
+			if cur_char == ')':
+				if not parentheses:
+					raise_no_match(')',line_count,line_pos)
+				parentheses.pop()
+				line += cur_char
+				continue
+
+			if cur_char == ';':
+				# end of sentence
+				if quote:
+					raise_no_match(quote,*quotes.pop())
+				if parentheses:
+					raise_no_match(')',*parentheses.pop())
+				if braces:
+					raise_no_match('}',*braces.pop())
 				lines.append(line)
-				line=''
+				line = ''
 				continue
-			line+=format[head]
+			line += cur_char
 		# for line in lines:
 		# 	DEBUGPRINT(line)
 		# input('remove whitespace 97')
@@ -103,7 +161,7 @@ class PathSeeker:
 	def grow_tree(self,lines:list):
 		"""
 		For every filetype that is characterized make a branche of TagTokens.
-		:param lines: by "PathSeeker.remove_whitespace" prepairded lines
+		:param lines: by "PathSeeker.strip_and_balance_check" prepairded lines
 		:return: list of TagToken tree's
 		"""
 		def collonslash_split(line):
