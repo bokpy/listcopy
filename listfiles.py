@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import argparse
 import os
+import sys
 from os import scandir
 import re
 from collections import deque
@@ -166,7 +167,9 @@ def scandir_iterator(directory):
                 dir_stack.append(save_path)
                 continue
             verbose(f'\r{count:05}',end=' -> ')
-            yield save_path
+            #yield save_path
+            #DEBUGPRINT
+            yield file.path
             count += 1
 
 class FileListing:
@@ -196,32 +199,37 @@ class FileListing:
         self.current_entry=None
         self.string_path=None
         self.count = 0
+        self.write(' '.join(sys.argv))
         self.write(DATA_BEGIN_MARKER)
         self.write(directory)
         self.walk()
         self.write(DATA_END_MARKER)
+        self.write(' '.join(sys.argv))
         print(f'\nDone scanning files written to "{output_file.name}"')
         
     def write(self,data):
         global verbose
+        if isinstance(data,str):
+            data+='\n'
         # if not data:
         #     data=self.string_path
+        byte_data=data.encode('UTF-8',errors='ignore')
         try:
-            self.outp.write(data + '\n')
-            if verbose != print:
-                self.tumble.step()
-            else:
-                print( f'Written: "{data}"')
-
+            self.outp.write(byte_data)
         except OSError as e:
-            print(f'Writing: "{data}" failed.')
+            print(f'Listing: "{unicode_exception(data)}" failed.')
             print(f'errno {e.errno} "{e.strerror}"')
             exit(e.errno)
-        except UnicodeEncodeError as e:
-            # 'utf-8' codec can't encode character '\udcab' in position 68: surrogates not allowed
-            # print(f'Writing: "{data}" failed.')
-            print(f'UnicodeEncodeError {e}')
-            input ('Enter to skip.')
+        if verbose != print:
+            self.tumble.step()
+        else:
+            try:
+                print( f'Listed: "{data}"')
+            except UnicodeEncodeError as e:
+                # 'utf-8' codec can't encode character '\udcab' in position 68: surrogates not allowed
+                # print(f'Writing: "{data}" failed.')
+                print(f'UnicodeEncodeError {e}')
+                print(f'In file: "{unicode_exception(data)}".')
 
     def make_filters(self):
         """
@@ -358,11 +366,11 @@ def main() -> None:
     if args.append:
         output_file=args.append
         verbose(f'Append: ',end='')
-        open_mode='a'
+        open_mode='ab'
     elif args.output:
         output_file=args.output
         verbose(f'Write: ',end='')
-        open_mode='w'
+        open_mode='wb'
 
     if output_file:
         output_file=os.path.expanduser(output_file)
@@ -372,7 +380,7 @@ def main() -> None:
         verbose(f' "{output_file}"')
         with open(output_file,open_mode) as f:
             FileListing(args,catalogue,f)
-        open_mode='a'
+        open_mode='ab'
     print (args)
 
 if __name__ == '__main__':

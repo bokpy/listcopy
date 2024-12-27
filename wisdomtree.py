@@ -5,7 +5,7 @@ import os
 import time
 import json
 
-from brainzmusic import BrainzMusic, DEBUGPRINT
+from brainzmusic import BrainzMusic
 from geolocate import OsmTurbo, gps_alpha_to_float
 from collections import deque
 import math
@@ -16,6 +16,7 @@ from tagtoken import TagToken
 from listutils import timestamp2epoch, JDUMP, dict_dump
 
 DEBUGINPUT = input
+DEBUGPRINT = print
 
 camera = {
 	'IMG' : ('Apple iPhone', 'Samsung Galaxy', 'Google Pixel'),
@@ -36,7 +37,6 @@ def WAIT(text='Enter'):
 
 def asymptotic_function(x, k=1.0):
 	return 1 - math.exp(-k * x)
-
 
 def remove_double_spaces(line):
 	match = re.findall(r'(  +)', line)
@@ -110,7 +110,6 @@ def guess_meaning(string):
 		dont_like_factor = 0.2
 	return alpha_factor * word_length_factor * dont_like_factor * length_factor, string
 
-
 def naked_filename(path):
 	slash = path.rfind('/')
 	name = path
@@ -120,7 +119,6 @@ def naked_filename(path):
 	if dot < 0:
 		return name
 	return name[:dot]
-
 
 def extract_meaning(lines, min=0.8):
 	"""
@@ -161,11 +159,12 @@ def extract_meaning(lines, min=0.8):
 			ret += f'{space}{word}'
 			space = ' '
 			words_with_meaning.remove(low_word)
+	guessed=guess_meaning(ret)[0]
+	DEBUGPRINT(f'{guessed=} {min=}')
 	if ret == '' or (guess_meaning(ret)[0] < min):
 		# DEBUGPRINT(f'No meaning "{ret}" score {guess_meaning(ret)}')
 		return None
 	return ret
-
 
 def duration_str(duration):
 	# "Duration": "0:21:06",
@@ -188,7 +187,6 @@ def duration_str(duration):
 		zero = False
 		ret += f'{it:02}{hms[i]}'
 	return ret
-
 
 def exiftool_tags_write(filepath, tags_dict):
 	"""
@@ -213,7 +211,6 @@ def exiftool_tags_write(filepath, tags_dict):
 		print("ExifTool Output:", result.stdout)
 	except subprocess.CalledProcessError as e:
 		print("exiftool_tags_write Error:", e.stderr)
-
 
 def service_call(*args, splitlines=True):
 	try:
@@ -275,9 +272,10 @@ class TreeOfKnowledge(dict):
 
 		S["exiftool_data"] = {}
 		# JDUMP(S["exiftool_data"] ,'reset start S["exiftool_data"]',261 )
-		S.exiftool_data = S["exiftool_data"]
-		get_mime_etc(
-			S["source_full_path"], S["exiftool_data"])  # runs exiftool -j -all
+		S.exiftool_data = S["exiftool_data"] # kind off shorthand
+		if not get_mime_etc(S["source_full_path"], S["exiftool_data"]): # runs exiftool -j -all
+			DEBUGPRINT(f'{type(S["source_full_path"])} "{["source_full_path"]}"')
+			raise RuntimeError ('get_mime_etc(..) Failed.')
 		if "Error" in S.exiftool_data:
 			#DEBUGPRINT('TreeOfKnowledge.reset ERROR')
 			mission["Error"] = S.exiftool_data["Error"]
@@ -469,8 +467,8 @@ class TreeOfKnowledge(dict):
 				tokkie['payload'] = None
 				return tokkie['payload']
 			meaninglist.sort(reverse=True)
-			for meaning in meaninglist:
-				print(f'{meaning[0]:6.2f} "{meaning[1]}"')
+			# for meaning in meaninglist:
+			# 	DEBUGPRINT(f'{meaning[0]:6.2f} "{meaning[1]}"')
 			if meaninglist[1][0] < low_limit:
 				return None
 			tokkie['payload'] = meaninglist[1][1]
@@ -482,6 +480,15 @@ class TreeOfKnowledge(dict):
 			# DEBUGPRINT(f'{extracted =}')
 			tokkie['payload'] = extracted
 			return tokkie['payload']
+
+		if 'filename' in meaning:
+			DEBUGPRINT(f'filename meaning "{S["stem_name"]}"')
+			score,text = guess_meaning(S["stem_name"])
+			if score > low_limit:
+				DEBUGPRINT(f'filename meaning: {score=:6.2f} "{text}"')
+				tokkie['payload'] = text
+				return tokkie['payload']
+			return None
 		return None
 
 	def replace_tokkie(S, tokkie):
@@ -502,23 +509,17 @@ class TreeOfKnowledge(dict):
 
 	def audio_tokkie(S, tokkie):
 		# for audio "MusicBrainz" could possibly supply the wanted data
-		if not 'brainz' in S:
-			S['brainz'] = BrainzMusic(S['source_full_path'])
-			for key in S['brainz']:
-				if not isinstance(S['brainz'][key],str):
-					S['brainz'][key]=str(S['brainz'][key])
-					# DEBUGPRINT(f'{key} value {S["brainz"][key]} is no str.')
-					# WAIT()
-			#OFF_JDUMP(S['brainz'],"S['brainz']",500)
-		label = tokkie['label']
-		if label in S['brainz']:
-			#OFF_DEBUG(f' Found "{S["brainz"][label]}"',end='')
-			#WAIT(' Happy?')
-			value = S['brainz'][label]
-			tokkie['payload'] = value
-			return value
-		#OFF_DEBUG( 'No Luck.')
-		return None
+		if not 'Brainz' in S:
+			S['Brainz'] = BrainzMusic(S['source_full_path'])
+		splt=tokkie['label'].split(',')
+		label=splt[0]
+		max=1
+		if len(splt)==2:
+			max=int(splt[1])
+		sb=S['Brainz']
+		value=sb.lookup_label(label,max)
+		tokkie['payload'] = value
+		return value
 
 	def regex_tokkie(S, tokkie):
 		#OFF_DEBUG(f'regex_tokkie({tokkie=})')
@@ -584,9 +585,12 @@ class TreeOfKnowledge(dict):
 
 
 def main() -> None:
-	test = {'Test': 'test data', 'BOB': ' van der BURG'}
-	exiftool_tags_write('/home/bob/temp/RoosFoto/46981.jpg', test)
-	pass
+	line="S28 april 2008 Spreekwoorden"
+	extracted = guess_meaning(line)
+	print(f'"{extracted}"')
+	# test = {'Test': 'test data', 'BOB': ' van der BURG'}
+	# exiftool_tags_write('/home/bob/temp/RoosFoto/46981.jpg', test)
+	# pass
 
 
 if __name__ == '__main__':

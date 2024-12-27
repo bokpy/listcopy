@@ -4,7 +4,7 @@ import os
 import json
 from collections import deque
 
-from brainzmusic import DEBUGPRINT
+DEBUGPRINT = print
 
 
 def try_int(val):

@@ -6,9 +6,9 @@ import time
 import re
 from collections import deque
 import metadata as meta
-#import extensions as ext
 from extensionsets import extension_dict
 from tagtoken import TagToken,FileToken,clean_tagtokens
+from rulesreader import strip_and_balance_check
 from wisdomtree import TreeOfKnowledge
 #from listcopy import prev_copy_speed
 from listutils import dict_dump
@@ -25,8 +25,10 @@ class PathSeeker:
 		self.consignment=consignment
 		self.root=None
 		self.good_and_evil=TreeOfKnowledge(consignment)
-		path_format=consignment['substitution']
-		lines=self.read_format(path_format)
+		lines=self.read_rules(consignment['substitution'])
+		# for line in lines:
+		# 	DEBUGPRINT(f'line: "{line}"')
+		# DEBUGEXIT(31)
 		#DEBUGPRINT(f'{lines=}')
 		if lines:
 			self.grow_tree(lines)
@@ -44,119 +46,13 @@ class PathSeeker:
 			for tokkie,pos in branche.walk():
 				print(f'{pos:3} {str(tokkie)}')
 
-	def read_format(self,format):
-		try_file=os.path.expanduser(format)
-		if os.path.exists(try_file):
-			tail,ext=os.path.splitext(try_file)
-			if ext.upper() == '.JSON':
-				with open(try_file,'r') as f:
-					self.parse_dict=json.load(f)
-					return None
-			with open(try_file,'r') as f:
+	def read_rules(self,path_rules):
+		rules_file=os.path.expanduser(path_rules)
+		if os.path.exists(rules_file):
+			with open(rules_file,'r') as f:
 			#DEBUGPRINT(f'read file "{try_file=}"')
-				format=f.read()
-		return self.strip_and_balance_check(format)
-
-	def strip_and_balance_check(self, format: str) -> list:
-		"""
-		Removes all characters ord() < 33 from format except between " or '.
-		split lines on ';' and remove it.
-		:param format:
-		:return: list of strings
-		"""
-		format += '\n'
-		# DEBUGPRINT(f'strip_and_balance_check {format} type({type(format)})')
-		def raise_no_match(token,line,position):
-			raise SyntaxError(f'No matching {token} at {line}:{position}')
-
-		head = -1
-		quote = ''
-		quotes      = deque() # " or '
-		braces      = deque() # { }
-		parentheses = deque() # ( )
-		brackets    = deque() # [ ]
-		tags        = deque() # < >
-		end = len(format) - 1
-		lines = []
-		line = ''
-		line_count=1
-		line_pos=0
-		while head < end:
-			# DEBUGPRINT(f'{line=}')
-			head     += 1
-			line_pos += 1
-			cur_char = format[head]
-			if cur_char == '\n':
-				line_count += 1
-				line_pos    = 0
-				continue
-			# quoted starts with " or ' and everything is simply copied
-			# until the opening quote character is meth.
-			if not quote and ((cur_char == "'") or (cur_char == '"')):
-				# start of quoted part
-				quotes.appendleft((line_pos,line_pos))
-				quote = cur_char
-				line += cur_char
-				continue
-			if quote == cur_char:
-				#end of quoted part
-				quotes.pop()
-				quote = ''
-				line += cur_char
-				continue
-			if quote:
-				# quoted just copy
-				line += cur_char
-				continue
-			if cur_char == '#':
-				# scip comment
-				while cur_char != '\n':
-					head += 1
-				head -=1
-				continue
-			if ord(cur_char) < 33:
-				# scip control characters
-				continue
-			if cur_char == '{':
-				braces.appendleft((line_count,line_pos))
-				line += cur_char
-				continue
-			if cur_char == '}':
-				if not braces:
-					raise_no_match('{',line_count,line_pos)
-				braces.pop()
-				line += cur_char
-				continue
-			if cur_char == '(':
-				if braces:
-					raise_no_match('}',*braces.pop())
-					raise
-				parentheses.appendleft((line_count,line_pos))
-				line += cur_char
-				continue
-			if cur_char == ')':
-				if not parentheses:
-					raise_no_match(')',line_count,line_pos)
-				parentheses.pop()
-				line += cur_char
-				continue
-
-			if cur_char == ';':
-				# end of sentence
-				if quote:
-					raise_no_match(quote,*quotes.pop())
-				if parentheses:
-					raise_no_match(')',*parentheses.pop())
-				if braces:
-					raise_no_match('}',*braces.pop())
-				lines.append(line)
-				line = ''
-				continue
-			line += cur_char
-		# for line in lines:
-		# 	DEBUGPRINT(line)
-		# input('remove whitespace 97')
-		return lines
+				path_rules=f.read()
+		return strip_and_balance_check(path_rules)
 
 	def grow_tree(self,lines:list):
 		"""
@@ -267,6 +163,10 @@ class PathSeeker:
 		while path_stack:
 			fruit=path_stack.popleft()
 			path+=fruit
+			# DEBUGPRINT(f'"{fruit}"')
+			# DEBUGPRINT(f'"{path}"')
+		if not path:
+			raise ('No Path')
 		mission['target_path']=path
 		S.good_and_evil.check_extension(mission)
 		return True
@@ -315,7 +215,11 @@ def testcompile():
 	print('*'*80)
 
 def test_compose():
-	ps=PathSeeker("syntax.test")
+	consignment={'substitution':'~/python/listcopy/BvdBurg.form'
+	             ,'OsmTurbo':None
+	             ,'language':'fr'
+	             }
+	ps=PathSeeker(consignment)
 	it = iter(testdata)
 	source_path = next(it)
 	for source in it:

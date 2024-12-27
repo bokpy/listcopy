@@ -1,101 +1,10 @@
 #!/usr/bin/python3
 from collections import deque
 
-DEBUGPRINT = print
+from filelistiter import DEBUGPRINT
 
-class Rules:
 
-	def __init__(S, rules):
-		S.quote = ''
-		S.quotes = deque()  # " or '
-		S.braces = deque()  # { }
-		S.parentheses = deque()  # ( )
-		S.brackets = deque()  # [ ]
-		S.tags = deque()  # < >
-		S.rules = rules
-		S.actions = {
-			'\n' : S.newline
-			, '"': S.double_quote
-			, "'": S.singele_quote
-			, "{": S.brace_open
-			, "}": S.brace_close
-			, "(": S.parenthese_open
-			, ")": S.parenthese_close
-			, "[": S.bracket_open
-			, "]": S.bracket_close
-			, "<": S.tag_open
-			, ";": S.semicolon
-		}
-
-		S.head = -1
-		S.quote = ''
-		S.end = len(S.rules) - 1
-		S.lines = []
-		S.line = ''
-		S.line_count = 1
-		S.line_pos = 0
-
-	def push_pos(S,stack):
-		stack.append(S.line_count,S.line_pos)
-
-	def parse(S):
-		for rune in S.rules:
-			if S.quote:
-				S.line += rune
-				rune
-			if rune in S.actions:
-				if S.actions[rune]():
-					S.line += rune
-					continue
-				S.line += rune
-			print(f'{rune}',end='')
-
-	def newline(S):
-		S.line_count += 1
-		print("newline")
-		pass
-
-	def double_quote(S):
-		if not S.quote:
-			S.push_pos(S.quotes)
-			S.quote='"'
-			return
-		if S.quote != '"':
-			return
-		S.quotes.popleft()
-		S.quote=''
-		print("double_quote")
-		pass
-
-	def singele_quote(S):
-		pass
-
-	def brace_open(S):
-		pass
-
-	def brace_close(S):
-		pass
-
-	def parenthese_open(S):
-		pass
-
-	def parenthese_close(S):
-		pass
-
-	def bracket_open(S):
-		pass
-
-	def bracket_close(S):
-		pass
-
-	def tag_open(S):
-		pass
-
-	def tag_close(S):
-		pass
-
-	def semicolon(S):
-		pass
+#BUG_OFF = print
 
 def strip_and_balance_check(rules: str) -> list:
 	"""
@@ -105,13 +14,11 @@ def strip_and_balance_check(rules: str) -> list:
 	:return: list of strings
 	"""
 	rules += '\n'
-
-	# DEBUGPRINT(f'strip_and_balance_check {rules} type({type(rules)})')
-	def raise_no_match(token, line, position):
-		raise SyntaxError(f'No matching {token} at {line}:{position}')
-
-	head = -1
-	quote = ''
+	line_count = 1
+	line_pos   = 0
+	head       = -1
+	input_line_start=head
+	quote      = ''
 	quotes = deque()  # " or '
 	braces = deque()  # { }
 	parentheses = deque()  # ( )
@@ -120,94 +27,152 @@ def strip_and_balance_check(rules: str) -> list:
 	end = len(rules) - 1
 	lines = []
 	line = ''
-	line_count = 1
-	line_pos = 0
-	while head < end:
-		# DEBUGPRINT(f'{line=}')
+	sample=None
+
+	# def #STACK(#STACK):
+	# 	nonlocal tags,brackets,parentheses,braces,quotes
+	# 	print(f'{#STACK}:')
+	# 	for line,pos in eval(#STACK):
+	# 		print(f'{line:02}:{pos:02}')
+
+	def error_notice(error_txt,line=-1,pos=-1):
+		nonlocal line_count,line_pos
+		print("\nsyntax error notice:")
+		if line < 0:
+			line = line_count
+			pos  = line_pos
+		print(f'{error_txt} at {line}:{pos}')
+		line_end = rules.find('\n',input_line_start)
+		line=rules[input_line_start:line_end]
+		print(line)
+		print(' '*(pos-2)+'/^\\')
+		#print(' '*(pos-1)+'|')
+
+	def new_line():
+		nonlocal line_count,line_pos,input_line_start
+		line_count += 1
+		line_pos = 0
+		input_line_start = head+1
+
+	def push_pos(stack):
+		nonlocal line_count,line_pos
+		stack.append((line_count,line_pos))
+
+	def store_and_sample_next():
+		nonlocal line,head,sample,line_pos
+		line += rules[head]
 		head += 1
+		sample = rules[head]
 		line_pos += 1
-		cur_char = rules[head]
-		DEBUGPRINT(cur_char, end='')
-		if cur_char == '\n':
-			line_count += 1
-			line_pos = 0
-			continue
+
+	def next_sample():
+		nonlocal head,sample,line_pos
+		head += 1
+		sample = rules[head]
+		line_pos += 1
+
+	def read_quoted():
+		nonlocal quote,quotes,sample,head,end
+		push_pos(quotes)
+		#BUG_OFF("\nQuoted: >",end='')
+		while head < end:
+			#BUG_OFF(sample,end='')
+			store_and_sample_next()
+			if sample == quote:
+				#BUG_OFF(sample,end='')
+				store_and_sample_next()
+				#BUG_OFF('<',end='')
+				break
+			if ord(sample) < 32:
+				error_notice(f"Quote Not Closed Before a Control Character ascii({ord(sample)}).",*quotes.pop())
+				exit(1)
+		if head>=end:
+			error_notice(f'No matching {quote} found before the EOF.',*quotes.pop())
+			exit('Rules Syntax Error')
+		quotes.pop()
+		quote = ''
+
+	def skip_comment():
+		#BUG_OFF('\nComment >',end='')
+		while sample != '\n':
+			#BUG_OFF(sample,end='')
+			next_sample()
+		#BUG_OFF(f'[{ord(sample)}]<',end='')
+		new_line()
+
+	def open_brace(): # {
+		nonlocal braces
+		if braces:
+			error_notice("{ can't bee nested",*braces.pop())
+			exit(1)
+		push_pos(braces)
+
+	def close_brace(): # }
+		if not braces:
+			error_notice("} found before an {")
+			exit(1)
+		braces.pop()
+
+	def open_parenthesis(): # (
+		if braces: # {
+			error_notice("( | ) can't bee inside {...}",*braces.pop())
+			exit(1)
+		push_pos(parentheses)
+
+	def close_parenthesis(): # )
+		if not parentheses:
+			error_notice('")" before an opening "(".')
+			exit(1)
+		parentheses.pop()
+
+	def semicolon():
+		nonlocal line,lines
+		error=False
+		if quote:
+			error=True
+			#STACK("quotes")
+			error_notice(f"No matching {quote} found before ;",*quotes.pop())
+		elif parentheses:
+			#STACK("parentheses")
+			error=True
+			error_notice('No closing )  found before ;', *parentheses.pop())
+		elif braces:
+			#STACK("braces")
+			error=True
+			error_notice('No closing } found before ;', *braces.pop())
+		if error: exit(1)
+		line+=';'
+		lines.append(line)
+		#BUG_OFF(f'\nAppend line: "{line}"')
+		line = ''
+
+	while head < end:
+		# #BUG_OFF(f'{line=}')
+		next_sample()
+		##BUG_OFF(sample, end='')
+		if sample == '\n': new_line() ; continue
 		# quoted starts with " or ' and everything is simply copied
 		# until the opening quote character is meth.
-		if not quote and ((cur_char == "'") or (cur_char == '"')):
-			# start of quoted part
-			quotes.appendleft((line_pos, line_pos))
-			quote = cur_char
-			line += cur_char
-			continue
-		if quote == cur_char:
-			# end of quoted part
-			quotes.pop()
-			quote = ''
-			line += cur_char
-			continue
-		if quote:
-			# quoted just copy
-			line += cur_char
-			continue
-		if cur_char == '#':
-			# skip comment
-			while rules[head] != '\n':
-				head += 1
-			head -= 1
-			continue
-		if ord(cur_char) < 33:
-			# scip control characters
-			continue
-		if cur_char == '{':
-			braces.appendleft((line_count, line_pos))
-			line += cur_char
-			continue
-		if cur_char == '}':
-			if not braces:
-				raise_no_match('{', line_count, line_pos)
-			braces.pop()
-			line += cur_char
-			continue
-		if cur_char == '(':
-			if braces:
-				raise_no_match('}', *braces.pop())
-				raise
-			parentheses.appendleft((line_count, line_pos))
-			line += cur_char
-			continue
-		if cur_char == ')':
-			if not parentheses:
-				raise_no_match(')', line_count, line_pos)
-			parentheses.pop()
-			line += cur_char
-			continue
+		if not quote and ((sample == "'") or (sample == '"')):
+			quote=sample
+			read_quoted()
+		if sample == '#':     skip_comment() ; continue
+		if ord(sample) < 33:  continue
+		if sample == '{':      open_brace()
+		if sample == '}':     close_brace()
 
-		if cur_char == ';':
-			# end of sentence
-			if quote:
-				raise_no_match(quote, *quotes.pop())
-			if parentheses:
-				raise_no_match(')', *parentheses.pop())
-			if braces:
-				raise_no_match('}', *braces.pop())
-			lines.append(line)
-			line = ''
-			continue
-		line += cur_char
+		if sample == '(': open_parenthesis()
+		if sample == ')':close_parenthesis()
 
-	# for line in lines:
-	# 	DEBUGPRINT(line)
-	# input('remove whitespace 97')
+		if sample == ';':        semicolon() ; continue
+		line += sample
 	return lines
 
-
 def main() -> None:
-	with open("BvdBurg.form", 'r') as f:
+	with open("takeout.form", 'r') as f:
 		lines = f.read()
 	strip_and_balance_check(lines)
-	rule = Rules(lines)
-	rule.parse()
+	pass
 
 
 if __name__ == '__main__':

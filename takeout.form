@@ -28,7 +28,7 @@ image,PSD:/"ôfbyldings"/
      literal{"no year no address"}
     )
     (
-    / label{make} literal{" model "} label{Model}
+    / label{make} " model " label{Model}
     | / label{make}
     | / label{model}
     | literal{""}
@@ -50,13 +50,13 @@ name:literal{""};
 
 audio:/literal{lûd_en_ferskes}
      (
-     / label{Genre}  |
+     / label{Genres}  |
      / label{ProviderStyle} |
      / label{year} |
      / "samar wat"
      )
      (
-     / label{artist} |
+     / label{artists,2} |
      / label{AlbumArtist} |
      / "gearstaller " label{Composer}  " skriuwer " label{Author} |
      / "gearstaller " label{Composer}  |
@@ -65,7 +65,8 @@ audio:/literal{lûd_en_ferskes}
      / "ûnbekend"
      )
      (
-     / label{album} |
+     / label{albums,1} |
+     / label{cover,1} |
      / label{AlbumTitle} |
      / label{Composer} |
      / "ferskate"
@@ -76,7 +77,7 @@ audio:/literal{lûd_en_ferskes}
      ""
      )
      (
-     label{title} |
+     label{titles,1} |
      meaning{top,0.6} |
      meaning{second} _ meaning{first} |
      meaning{first} |
@@ -115,7 +116,9 @@ video,MP4:/literal{filmkes}
     / meaning{second}
     | literal{""}
     )
-( / meaning{top,0.54}
+(
+  / meaning{filename,0.5}
+| / meaning{top,0.54}
 | / meaning{best}
 | / subdir{-2}
 | / label{FileName}

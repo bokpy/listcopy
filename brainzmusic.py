@@ -8,10 +8,86 @@ import datetime
 import time
 import re
 from icecream import ic
-from scipy.odr import Output
-
+from collections import deque
 ACOUSTID_URL = "https://api.acoustid.org/v2/lookup"
 USER_AGENT_STRING = "listcop.py/0.0.1 ( Bok.at.Git@gmail.com )"
+import re
+
+def JDUMP(dct,title=''):
+	jd=json.dumps(dct,indent=4)
+	if(title): print(title)
+	print(f'{jd}')
+
+def clean_string(text):
+  """Strips, lowercases, and removes non-alphanumeric characters from a string.
+  Args:
+    text: The string to clean.
+  Returns:
+    The cleaned string.
+  """
+  text = text.lower()  # Convert to lowercase
+  text = re.sub(r'\([^\)]+\)','',text) # remove what is beween parentheses (..)
+  text = re.sub(r'[^a-z0-9 ]', '', text)  # Remove non-alphanumeric characters
+  text = re.sub(r'\s+'," ",text)
+  #text = re.sub(r'feat[uring]*','',text)  # feat
+  text = text.strip()  # Remove leading and trailing whitespace
+  return text
+
+def label_brush(labels,return_scores=False,return_labels=True,return_clean_names=False)->list:
+	#DEBUGPRINT('\nLabel Brush')
+	label_bank={}
+	for label in labels:
+		clean = clean_string(label)
+		if clean == "various artists":
+			continue
+		if not clean in label_bank:
+			label_bank[clean]={"real_label":label,"count":1}
+			continue
+		label_bank[clean]["count"]+=1
+		if len(label) < len(label_bank[clean]['real_label']):
+			label_bank[clean]['real_label']=label
+	scored_labels=[ (label_bank[key]['count'],label_bank[key]['real_label'],key) for key in label_bank ]
+	scored_labels.sort(reverse=True)
+
+	result=[]
+	for count,label,key in scored_labels:
+		#BUG_OFF(f'{count=} {label=} {key=}')
+		entry=[]
+		if return_scores:      entry.append(count)
+		if return_labels:      entry.append(label)
+		if return_clean_names: entry.append(key)
+		result.append(entry)
+	return (result)
+
+def label_brush_with_word_count(labels,return_scores=False,return_labels=True,return_clean_names=False)->list:
+	brushed=label_brush(labels,True,True,True)
+	# remove things between parentheses (..)
+	score_per_label = []
+	score_per_word  = {}
+	for count,label,clean in brushed:
+		for word in clean.split(' '):
+			if word in score_per_word:
+				score_per_word[word]+=count
+				continue
+			score_per_word[word]=count
+	#NO_DUMP(score_per_word,"Scored Words")
+
+	for count,label,clean in brushed:
+		score=0
+		splt = clean.split(' ')
+		for word in splt:
+			score+=score_per_word[word]
+		score_per_label.append((score/(len(splt)+2),label,clean))
+	score_per_label.sort(reverse=True)
+	result=[]
+	for score,label,clean in score_per_label:
+		#BUG_OFF(f'{score:6.2f} "{label}" "{clean}"')
+		entry=[]
+		if return_scores:      entry.append(score)
+		if return_labels:      entry.append(label)
+		if return_clean_names: entry.append(clean)
+		result.append(entry)
+	return (result)
 
 def init_client():
 	acoustid_client_file = os.path.expanduser('~/.local/listcopy/AcoustID.key')
@@ -21,15 +97,9 @@ def init_client():
 	ic()
 	print(f'Possibly you need a AcoustID from {ACOUSTID_URL}.')
 ACOUSTID_CLIENT = init_client()
-DEBUGPRINT = print
 
-def JDUMP(dct,title=''):
-	jd=json.dumps(dct,indent=4)
-	if(title): print(title)
-	print(f'{jd}')
 
 LatestBrainCall=time.time()
-
 EXIFTOOL_EXTENSIONS = {
 		"3FR", "3G2", "3GP", "A", "AA", "AAX", "ACR", "AFM", "AI", "AIFF", "APE",
 		"ARW", "ASF",
@@ -120,28 +190,36 @@ def musicbrainz_request(fingerprint,duration,meta=['releases', 'recordings', 'tr
 			print(f"{requests.status_codes._codes[status]}")
 			print(f'{query}')
 			return None
-		#DEBUGPRINT(f'{response.text}')
+		##BUG_OFF(f'{response.text}')
 		ret=json.loads(response.text)
 		return ret
 
 class BrainzMusic(dict):
-	
-	# def __init__(S,filepath,save_request=None):
-	# 	global ACOUSTID_CLIENT
-	# 	#DEBUGPRINT(f'BrainzMusic("{filepath}")')
-	# 	dict.__init__(S)
-	# 	if isinstance(filepath,dict): #debug/test
-	# 		request=filepath
-	# 	else:
-	# 		S.init_client()
-	# 		request=S.fingerprint_request(filepath)
-	# 		if save_request:
-	# 			with open(save_request,'w') as f:
-	# 				json.dump(request,f,indent=1)
-	# 			print(f' BrainzMusic request saved to "{save_request}"')
-	# 			exit(0)
 
-	def __init__(S,filepath,save_request=None):
+	'''
+	* *Basic Tags*:
+	  * title <--
+	  * artist <--
+	  * year
+	  * filename
+	  * album <--
+	  * cover <--
+	  * MBIDs (MusicBrainz Identifiers)
+	* *Track-level tags*:
+	  * performer <--
+	  * track relationships
+	  * genres <--
+	* *Release-level tags*:
+	  * artist <--
+	  * album <--
+	  * release relationships
+	  * genres <--
+	* *Other tags*:
+	  * musicbrainz_artistid
+	  * musicbrainz_albumid
+	  * musicbrainz_releasegroupid
+	'''
+	def __init__(S,filepath):
 		global ACOUSTID_CLIENT
 		dict.__init__(S)
 		chiffer=exec_fpcalc(filepath)
@@ -150,12 +228,14 @@ class BrainzMusic(dict):
 		all_data=musicbrainz_request(chiffer['fingerprint'],chiffer['duration'])
 		if not all_data:
 			return
-		S.winnow(all_data)
-		S.show("init succeded")
+		#JDUMP(all_data,"BrainzMusic raw")
+		#S.winnow(all_data)
+		S.comb(all_data)
+		#S.show("init succeded")
 
 	def _get_tag(S,tag):
-		for key in S.keys():
-			DEBUGPRINT(f'{key:>12}:{S[key]:<12}')
+		#for key in S.keys():
+			#BUG_OFF(f'{key:>12}:{S[key]:<12}')
 		tag=tag.lower()
 		if tag in S:
 			return S[tag]
@@ -181,9 +261,9 @@ class BrainzMusic(dict):
 			ic(harvest,"no harvest in BrainzMusic")
 			return None
 
-		#DEBUGPRINT(f'{json.dumps(harvest,indent=4)}')
+		##BUG_OFF(f'{json.dumps(harvest,indent=4)}')
 		if not 'results' in harvest:
-			#DEBUGPRINT(f'BranzMusic.winnow_request got an empty harvest.')
+			##BUG_OFF(f'BranzMusic.winnow_request got an empty harvest.')
 			return {}
 		names={}
 		titles={}
@@ -205,7 +285,7 @@ class BrainzMusic(dict):
 		def pic_the_top(dct):
 			if not dct:
 				return ''
-			DEBUGPRINT(f'pic_the_top({dct})')
+			#BUG_OFF(f'pic_the_top({dct})')
 			lst=[(k,v) for k,v in dct.items()]
 			lst.sort(key = lambda a:-a[1])
 			min = lst[0][1] // 2
@@ -219,7 +299,7 @@ class BrainzMusic(dict):
 			dct[key]=1
 			
 		def store_artists(artists):
-			#DEBUGPRINT(f'store_artists')
+			##BUG_OFF(f'store_artists')
 			for artist in artists:
 				name=artist['name']
 				if name.upper() == "VARIOUS ARTISTS":
@@ -236,14 +316,14 @@ class BrainzMusic(dict):
 				return
 			ftime = time_float(date['year'],date['month'],date['day'])
 			if ftime < early:
-				#DEBUGPRINT(f'EARLY -> {date}')
+				##BUG_OFF(f'EARLY -> {date}')
 				early = ftime
 			
 		def store_sources(sources):
-			pass #DEBUGPRINT(f'store_sources')
+			pass ##BUG_OFF(f'store_sources')
 			
 		def store_releases(releases):
-			#DEBUGPRINT(f'store_releases')
+			##BUG_OFF(f'store_releases')
 			for release in releases:
 				for key in release:
 					release_actions[key](release[key])
@@ -253,36 +333,36 @@ class BrainzMusic(dict):
 			duration[1]+=1
 			
 		def store_id(id):
-			pass #DEBUGPRINT(f'store_id')
+			pass ##BUG_OFF(f'store_id')
 			
 		def release_artists(artists):
 			for artist in artists:
 				cick_or_make(release_names, artist['name'])
 			
 		def release_country(country     ):
-			pass #DEBUGPRINT(f' "country"     ')
+			pass ##BUG_OFF(f' "country"     ')
 			
 		# def release_date(date        ):
-		# 	DEBUGPRINT(f' "date"        ')
+		# 	#BUG_OFF(f' "date"        ')
 			
 		def release_id (id          ):
-			pass #DEBUGPRINT(f' "id"          ')
+			pass ##BUG_OFF(f' "id"          ')
 			
 		def release_medium_count(medium_count):
-			pass #DEBUGPRINT(f' "medium_count"')
+			pass ##BUG_OFF(f' "medium_count"')
 			
 		def release_mediums (mediums     ):
-			pass #DEBUGPRINT(f' "mediums"     ')
+			pass ##BUG_OFF(f' "mediums"     ')
 			
 		def release_releaseevents(releaseevents):
-			pass #DEBUGPRINT(f'releaseevents')
+			pass ##BUG_OFF(f'releaseevents')
 			
 		def release_title (title       ):
 			cick_or_make(release_titles,title)
-			#DEBUGPRINT(f' "title"       ')
+			##BUG_OFF(f' "title"       ')
 			
 		def release_track_count(track_count ):
-			pass #DEBUGPRINT(f' "track_count" ')
+			pass ##BUG_OFF(f' "track_count" ')
 
 		action={"id"       :store_id,
 				  "artists"  :store_artists,
@@ -310,11 +390,11 @@ class BrainzMusic(dict):
 				for key in recording:
 					action[key](recording[key])
 
-		# DEBUGPRINT(f'names:\n{json.dumps(names,indent=4)}')
-		# DEBUGPRINT(f'titles:\n{json.dumps(titles, indent=4)}')
-		# DEBUGPRINT(f'release_titles:\n{json.dumps(release_titles, indent=4)}')
-		# DEBUGPRINT(f'release_names:\n{json.dumps(release_names, indent=4)}')
-		# DEBUGPRINT(f'early: {time.ctime(early)}')
+		# #BUG_OFF(f'names:\n{json.dumps(names,indent=4)}')
+		# #BUG_OFF(f'titles:\n{json.dumps(titles, indent=4)}')
+		# #BUG_OFF(f'release_titles:\n{json.dumps(release_titles, indent=4)}')
+		# #BUG_OFF(f'release_names:\n{json.dumps(release_names, indent=4)}')
+		# #BUG_OFF(f'early: {time.ctime(early)}')
 		
 		S['names']   = pic_the_top(names)
 		S['title']   = pic_the_winner(titles)
@@ -326,7 +406,144 @@ class BrainzMusic(dict):
 			dur/=duration[1]
 		S['duration']=dur
 
-'''
+	def comb(S,brainz):
+		# *title
+		# *artist
+		# *year
+		# *filename
+		# *album
+		# *cover
+		key_set=set()
+		youngest_date={'year':9999,'month':99,'day':99}
+		artist_tags    =deque()
+		title_tags     =deque()
+		album_tags     =deque()
+		genre_tags     =deque()
+		performer_tags =deque()
+		cover_tags     =deque()
+		duration=[0,1]
+
+		def add_duration(val):
+			if duration[0] == 0 and duration[1]==1:
+				duration[0]=val
+				return
+			duration[0]+=val
+			duration[1]+=1
+
+		def add_title(title):
+			title_tags.append(title)
+
+		def add_artists(cast):
+			for artist in cast:
+				name = artist['name']
+				# if "joinphrase" in artist:
+				# 	name = artist["joinphrase"] + name
+				artist_tags.append(name.strip())
+
+		def add_album(album):
+			album_tags.append(album)
+
+		def add_genre(genre):
+			genre_tags.append(genre)
+
+		def add_cover(cover):
+			cover_tags.append(cover)
+
+		def add_performer(performer):
+			performer_tags.append(performer)
+
+		def early_date(date):
+			if not youngest_date:
+				youngest_date.update(date)
+				return
+			for key in 'year','month','day':
+				if date.get(key,3000) < youngest_date.get(key,0):
+					youngest_date.update(date)
+					return
+
+		def _comb(lobe):
+			for key in lobe:
+				if key == 'date':
+					early_date(lobe['date'])
+					continue
+				if key == "artists":
+					add_artists(lobe[key])
+					continue
+				if key == "title":
+					add_title(lobe[key])
+					continue
+				if key == "duration":
+					add_duration(lobe[key])
+					continue
+				if key == "album":
+					add_album(lobe[key])
+					continue
+				if key == "genre":
+					add_genre(lobe[key])
+					continue
+				if key == "cover":
+					add_cover(lobe[key])
+					continue
+				if key == "performer":
+					add_performer(lobe[key])
+					continue
+				##BUG_OFF(f'{key=}')
+				key_set.add(key)
+				if isinstance(lobe[key],dict):
+					_comb(lobe[key])
+				elif isinstance(lobe[key],list):
+					for item in lobe[key]:
+						if isinstance(item,dict):
+							_comb(item)
+							continue
+						#BUG_OFF(f'{key=} {item=}')
+		_comb(brainz)
+		S['artists']=label_brush(artist_tags,return_scores=True,return_labels=True)
+		S['titles']=label_brush_with_word_count(title_tags,True,True,True)
+		label_brush(album_tags     )
+		if genre_tags:
+			if len(genre_tags)==1:
+				S['genre']=genre_tags.pop()
+			else:
+				genre=label_brush(genre_tags,return_labels=True)[0]
+				S['genre']=genre
+		S['performers']=label_brush_with_word_count(title_tags,True,True,True)
+		S['covers']=label_brush(cover_tags,return_labels=True)
+		S['duration'] = duration[0] / duration[1]
+		S['day']=youngest_date['day']
+		S['month']=youngest_date['month']
+		S['year']=youngest_date['year']
+		#NO_DUMP(S,"BrainzMusic;")
+
+	def lookup_label(S,label,max=1):
+		def lookup_items(label,max):
+			if not label in S:
+				return None
+			items=[]
+			for item in S[label]:
+				items.append(item[1])
+				max-=1
+				if max < 1:
+					break
+			return ', '.join(items)
+
+		if label == 'day'     : return S.get(label,None)
+		if label == 'month'   : return S.get(label,None)
+		if label == 'year'    : return S.get(label,None)
+		if label == 'duration': return S.get(label,None)
+		if label == 'date'    :
+			date=''
+			delim=''
+			for d in 'day','month','year':
+				add = S.get(d,None)
+				if add:
+					date=delim+str(add)
+					delim='-'
+			return date
+		for key in 'artists','titles','albums','covers','performers','genres':
+			if label == key : return lookup_items(label,max)
+		return None
+		'''
 eg conversion aac to wav  ffmpeg -i *.aac *.wav
 
 Yes, there are several alternative libraries available for audio fingerprinting in Python:
@@ -378,30 +595,8 @@ def main() -> None:
 	song1 = '/home/bob/temp/Users/Sander/Dune  - Are You Ready To Fly (16-9) HQ.mp3'
 	song2 = '/home/bob/temp/Users/Sander/AppData/Roaming/Microsoft/Word/~WRA0000.asd'
 	nosong = "/home/bob/temp/Users/Sander/Desktop/Foto's/2015.wav"
-	# testdictfile='testrequest.json'
-	# #mb = BrainzMusic(song,'testrequest.json')
-	# if os.path.exists(testdictfile):
-	# 	print(f'load "{testdictfile}"')
-	# 	with open(testdictfile,'r') as f:
-	# 		testdict=json.load(f)
-	# 		print(f'{json.dumps(testdict)}')
-	# 		mb = BrainzMusic(testdict)
-	# 		album=mb.get_tag('album')
-	# 		print(f'{album=}')
-	# 		# ballum=mb.get_tag('ballum')
-	# 		# print(f'{ballum=}')
-	# for song in song1: # ,song2:
-	# 	finger = exec_fpcalc(song)
-	# mb = BrainzMusic(song )
-	#
-	# JDUMP(mb)
-		# mb.winnow_request(info)
-		# mb = BrainzMusic(song)
-	# finger=mb.exec_fpcalc(nosong)
-	# print(f'{mbzngs.set_useragent("listcopy.py",version="0.0.1",contact="Bok.at.Git@gmail.com")}')
-	
+
 if __name__ == '__main__':
-	for file in testdata:
-		BrainzMusic(file)
-	#JDUMP(mb)
+	mb=BrainzMusic("/home/bob/usb/Media/G.S. Labiharie/Mijn muziek/Muziek Sjoukje/ALBUMS/Justin Timberlake/Lovestoned/04 Nummer 4.wma")
+	JDUMP(mb)
 	#main()

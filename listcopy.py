@@ -294,6 +294,7 @@ def process_filelisting(consignment):
 
 	#for src_full,source_path_length in listing:
 	pathseeker = PathSeeker(consignment)
+
 	for mission in listing.file_reaper():
 		#JDUMP(mission,"mission <- listing.file_reaper()",'298')
 		verbose('<'*35+'-'*40+'>'*35)
@@ -310,6 +311,8 @@ def process_filelisting(consignment):
 			#input("Zero in mission")
 			continue
 		mission["target_full_path"] = os.path.join(consignment["dest_path"] + mission["target_path"])
+		DEBUGPRINT(f'TARGET = "{mission["target_full_path"]}')
+		#input("Line 315")
 
 		#JDUMP(mission,'mission')
 		if 'dry_run' in consignment:

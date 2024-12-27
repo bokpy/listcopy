@@ -121,7 +121,6 @@ class Throttle:
 			S.pause_time   = time.time()
 
 	def verbose_sleep(S):
-		S.throttle_off
 		print(f'\rsleep {S.throttle_off:5.3f} secs ',end='',flush=True)
 		secs=int(S.throttle_off)
 		wakeup=0
@@ -147,7 +146,8 @@ class Throttle:
 		print(f'chunk {S.chunksize}')
 
 	def pause(S,now):
-		global verbose
+		verbose = eat
+		#global verbose
 		if S.pause_time < 0:
 			S.pause_time = now + S.throttle_on
 			return now

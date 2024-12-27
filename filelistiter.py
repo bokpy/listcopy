@@ -33,6 +33,8 @@ class InputFileIterator:
 			print(f'InputFileIterator could not open "{listing}"')
 			print(f'error {e.errno} "{e.strerr}"')
 			exit(e.errno)
+		for i in range(0,6):
+			DEBUGPRINT(f'{type(S.filelist[i])} "{S.filelist[i]}"')
 		S.strip_newline()
 		S.filelist.append('\n')
 		S.filelist_len = len(S.filelist)-1

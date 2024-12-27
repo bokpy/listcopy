@@ -1,0 +1,5 @@
+
+syntax error notice:
+")" before an opening "(". at 16:24
+JSON:/literal{"json"}/n)ame:subdir{0};
+                      /^\
