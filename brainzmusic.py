@@ -9,6 +9,10 @@ import time
 import re
 from icecream import ic
 from collections import deque
+
+from filelistiter import DEBUGPRINT
+from listutils import clean_string
+
 ACOUSTID_URL = "https://api.acoustid.org/v2/lookup"
 USER_AGENT_STRING = "listcop.py/0.0.1 ( Bok.at.Git@gmail.com )"
 import re
@@ -18,74 +22,41 @@ def JDUMP(dct,title=''):
 	if(title): print(title)
 	print(f'{jd}')
 
-def clean_string(text):
-  """Strips, lowercases, and removes non-alphanumeric characters from a string.
-  Args:
-    text: The string to clean.
-  Returns:
-    The cleaned string.
-  """
-  text = text.lower()  # Convert to lowercase
-  text = re.sub(r'\([^\)]+\)','',text) # remove what is beween parentheses (..)
-  text = re.sub(r'[^a-z0-9 ]', '', text)  # Remove non-alphanumeric characters
-  text = re.sub(r'\s+'," ",text)
-  #text = re.sub(r'feat[uring]*','',text)  # feat
-  text = text.strip()  # Remove leading and trailing whitespace
-  return text
+def brush_tag(tag):
+	#BUG_OFF(f'brush_tag: "{tag}"')
+	tag = re.sub(r'(?i)\s*( and |&)\s*',r'&',tag)
+	tag = re.sub(r':\s*.*','',tag)
+	tag = re.sub(r'\s*\([^\)]+\)\s*','',tag) # remove what is beween parentheses (..)
+	tag = re.sub(r'\s*\[[^\]]+\]\s*','',tag) # remove what is beween brackets [..]
+	tag = re.sub(r'^\W+|\W+$','',tag)
+	tag = re.sub(r'/','-',tag)
+	#BUG_OFF(f'   return: "{tag.title()}"')
+	return tag.title()
 
-def label_brush(labels,return_scores=False,return_labels=True,return_clean_names=False)->list:
-	#DEBUGPRINT('\nLabel Brush')
-	label_bank={}
+
+def label_brush(labels,return_scores=False,return_labels=True)->list:
+	#DEBUGPRINT(f'\nLabel Brush: {labels} 24')
+	label_store={}
 	for label in labels:
-		clean = clean_string(label)
-		if clean == "various artists":
+		#BUG_OFF(f'{label=}')
+		if not label: # empty labels where do they come from?
 			continue
-		if not clean in label_bank:
-			label_bank[clean]={"real_label":label,"count":1}
+		if label == "Various Artists":
 			continue
-		label_bank[clean]["count"]+=1
-		if len(label) < len(label_bank[clean]['real_label']):
-			label_bank[clean]['real_label']=label
-	scored_labels=[ (label_bank[key]['count'],label_bank[key]['real_label'],key) for key in label_bank ]
+		if not label in label_store:
+			label_store[label]=1
+			continue
+		label_store[label]+=1
+
+	scored_labels=[ (label_store[key],key) for key in label_store ]
 	scored_labels.sort(reverse=True)
 
 	result=[]
-	for count,label,key in scored_labels:
+	for count,label in scored_labels:
 		#BUG_OFF(f'{count=} {label=} {key=}')
 		entry=[]
 		if return_scores:      entry.append(count)
 		if return_labels:      entry.append(label)
-		if return_clean_names: entry.append(key)
-		result.append(entry)
-	return (result)
-
-def label_brush_with_word_count(labels,return_scores=False,return_labels=True,return_clean_names=False)->list:
-	brushed=label_brush(labels,True,True,True)
-	# remove things between parentheses (..)
-	score_per_label = []
-	score_per_word  = {}
-	for count,label,clean in brushed:
-		for word in clean.split(' '):
-			if word in score_per_word:
-				score_per_word[word]+=count
-				continue
-			score_per_word[word]=count
-	#NO_DUMP(score_per_word,"Scored Words")
-
-	for count,label,clean in brushed:
-		score=0
-		splt = clean.split(' ')
-		for word in splt:
-			score+=score_per_word[word]
-		score_per_label.append((score/(len(splt)+2),label,clean))
-	score_per_label.sort(reverse=True)
-	result=[]
-	for score,label,clean in score_per_label:
-		#BUG_OFF(f'{score:6.2f} "{label}" "{clean}"')
-		entry=[]
-		if return_scores:      entry.append(score)
-		if return_labels:      entry.append(label)
-		if return_clean_names: entry.append(clean)
 		result.append(entry)
 	return (result)
 
@@ -96,9 +67,8 @@ def init_client():
 			return f.readline()[:-1]
 	ic()
 	print(f'Possibly you need a AcoustID from {ACOUSTID_URL}.')
+
 ACOUSTID_CLIENT = init_client()
-
-
 LatestBrainCall=time.time()
 EXIFTOOL_EXTENSIONS = {
 		"3FR", "3G2", "3GP", "A", "AA", "AAX", "ACR", "AFM", "AI", "AIFF", "APE",
@@ -247,164 +217,6 @@ class BrainzMusic(dict):
 		print(f'{title}:')
 		print(f'{json.dumps(S,indent=4)}')
 			
-	def winnow(S, harvest)->dict:
-		"""
-		Try to separate the wheat from the chaff.
-	 	on the guess:
-			most seen artists name and title wins except "Various Artists"
-			earilest date met wins.
-	  	:param harvest: the dictionairy returned by "fingerprint_request"
-		:return: the wheat as dict
-		"""
-		if not harvest:
-			ic()
-			ic(harvest,"no harvest in BrainzMusic")
-			return None
-
-		##BUG_OFF(f'{json.dumps(harvest,indent=4)}')
-		if not 'results' in harvest:
-			##BUG_OFF(f'BranzMusic.winnow_request got an empty harvest.')
-			return {}
-		names={}
-		titles={}
-		release_titles={}
-		release_names={}
-		early=time_float(3000,12,31)
-		duration=[0,0]
-		
-		def pic_the_winner(dct):
-			top=''
-			top_count=0
-			for key in dct:
-				count = dct[key]
-				if count > top_count:
-					top_count=count
-					top=key
-			return top
-		
-		def pic_the_top(dct):
-			if not dct:
-				return ''
-			#BUG_OFF(f'pic_the_top({dct})')
-			lst=[(k,v) for k,v in dct.items()]
-			lst.sort(key = lambda a:-a[1])
-			min = lst[0][1] // 2
-			toplst=[x[0] for x in lst if x[1] >= min]
-			return ",".join(toplst)
-		
-		def cick_or_make(dct,key):
-			if key in dct:
-				dct[key]+=1
-				return
-			dct[key]=1
-			
-		def store_artists(artists):
-			##BUG_OFF(f'store_artists')
-			for artist in artists:
-				name=artist['name']
-				if name.upper() == "VARIOUS ARTISTS":
-					continue
-				cick_or_make(names,name)
-				
-		def store_title(title):
-			nonlocal titles
-			cick_or_make(titles,title)
-			
-		def store_date(date):
-			nonlocal early
-			if not(('year' in date) and ('month' in date) and ('day' in date)):
-				return
-			ftime = time_float(date['year'],date['month'],date['day'])
-			if ftime < early:
-				##BUG_OFF(f'EARLY -> {date}')
-				early = ftime
-			
-		def store_sources(sources):
-			pass ##BUG_OFF(f'store_sources')
-			
-		def store_releases(releases):
-			##BUG_OFF(f'store_releases')
-			for release in releases:
-				for key in release:
-					release_actions[key](release[key])
-			
-		def store_duration(_duration):
-			duration[0]+=_duration
-			duration[1]+=1
-			
-		def store_id(id):
-			pass ##BUG_OFF(f'store_id')
-			
-		def release_artists(artists):
-			for artist in artists:
-				cick_or_make(release_names, artist['name'])
-			
-		def release_country(country     ):
-			pass ##BUG_OFF(f' "country"     ')
-			
-		# def release_date(date        ):
-		# 	#BUG_OFF(f' "date"        ')
-			
-		def release_id (id          ):
-			pass ##BUG_OFF(f' "id"          ')
-			
-		def release_medium_count(medium_count):
-			pass ##BUG_OFF(f' "medium_count"')
-			
-		def release_mediums (mediums     ):
-			pass ##BUG_OFF(f' "mediums"     ')
-			
-		def release_releaseevents(releaseevents):
-			pass ##BUG_OFF(f'releaseevents')
-			
-		def release_title (title       ):
-			cick_or_make(release_titles,title)
-			##BUG_OFF(f' "title"       ')
-			
-		def release_track_count(track_count ):
-			pass ##BUG_OFF(f' "track_count" ')
-
-		action={"id"       :store_id,
-				  "artists"  :store_artists,
-				  "date"     :store_date,
-				  "title"    :store_title,
-				  "sources"  :store_sources,
-				  "releases" :store_releases,
-				  'duration' :store_duration
-				  }
-		release_actions={
-			"artists"      :release_artists,
-			"country"      :release_country,
-			"date"         :store_date,
-			"id"           :release_id,
-			"medium_count" :release_medium_count,
-			"mediums"      :release_mediums,
-			"releaseevents":release_releaseevents,
-			"title"        :release_title,
-			"track_count"  :release_track_count
-			}
-		for result in harvest['results']:
-			if not "recordings" in result:
-				continue
-			for recording in result["recordings"]:
-				for key in recording:
-					action[key](recording[key])
-
-		# #BUG_OFF(f'names:\n{json.dumps(names,indent=4)}')
-		# #BUG_OFF(f'titles:\n{json.dumps(titles, indent=4)}')
-		# #BUG_OFF(f'release_titles:\n{json.dumps(release_titles, indent=4)}')
-		# #BUG_OFF(f'release_names:\n{json.dumps(release_names, indent=4)}')
-		# #BUG_OFF(f'early: {time.ctime(early)}')
-		
-		S['names']   = pic_the_top(names)
-		S['title']   = pic_the_winner(titles)
-		S['album']   = pic_the_winner(release_titles)
-		S['release'] = pic_the_winner(release_names)
-		S['year'],S['month'],S['day'],S['weekday']=time2date(early)
-		dur=duration[0]
-		if dur:
-			dur/=duration[1]
-		S['duration']=dur
 
 	def comb(S,brainz):
 		# *title
@@ -430,27 +242,30 @@ class BrainzMusic(dict):
 			duration[0]+=val
 			duration[1]+=1
 
-		def add_title(title):
-			title_tags.append(title)
+		def add_title(tag):
+			title_tags.append(brush_tag(tag))
 
 		def add_artists(cast):
+			#BUG_OFF(f'440: {cast=}')
 			for artist in cast:
-				name = artist['name']
-				# if "joinphrase" in artist:
-				# 	name = artist["joinphrase"] + name
-				artist_tags.append(name.strip())
+				if isinstance(artist,str):
+					artist_tags.append(brush_tag(artist))
+					continue
+				#BUG_OFF(f'440: {artist=}')
+				if isinstance(artist,dict) and "name" in artist:
+					artist_tags.append(brush_tag(artist["name"]))
 
-		def add_album(album):
-			album_tags.append(album)
+		def add_album(tag):
+			album_tags.append(brush_tag(tag))
 
-		def add_genre(genre):
-			genre_tags.append(genre)
+		def add_genre(tag):
+			genre_tags.append(brush_tag(tag))
 
-		def add_cover(cover):
-			cover_tags.append(cover)
+		def add_cover(tag):
+			cover_tags.append(brush_tag(tag))
 
-		def add_performer(performer):
-			performer_tags.append(performer)
+		def add_performer(tag):
+			performer_tags.append(brush_tag(tag))
 
 		def early_date(date):
 			if not youngest_date:
@@ -498,27 +313,42 @@ class BrainzMusic(dict):
 							continue
 						#BUG_OFF(f'{key=} {item=}')
 		_comb(brainz)
-		S['artists']=label_brush(artist_tags,return_scores=True,return_labels=True)
-		S['titles']=label_brush_with_word_count(title_tags,True,True,True)
-		label_brush(album_tags     )
+		if artist_tags:
+			S['artists']=label_brush(artist_tags,return_scores=True,return_labels=True)
+		if title_tags:
+			S['titles']=label_brush(title_tags,True,True)
+		if album_tags:
+			S['albums']=label_brush(album_tags)
 		if genre_tags:
 			if len(genre_tags)==1:
 				S['genre']=genre_tags.pop()
 			else:
 				genre=label_brush(genre_tags,return_labels=True)[0]
 				S['genre']=genre
-		S['performers']=label_brush_with_word_count(title_tags,True,True,True)
-		S['covers']=label_brush(cover_tags,return_labels=True)
+		if performer_tags:
+			S['performers']=label_brush(title_tags,True,True)
+		if cover_tags:
+			S['covers']=label_brush(cover_tags,return_labels=True)
+
 		S['duration'] = duration[0] / duration[1]
 		S['day']=youngest_date['day']
 		S['month']=youngest_date['month']
 		S['year']=youngest_date['year']
-		#NO_DUMP(S,"BrainzMusic;")
+		binder=''
+		S['release_date']=''
+		for key in 'day','month','year':
+			S['release_date']+=binder+str(youngest_date[key])
+			binder='-'
 
 	def lookup_label(S,label,max=1):
+		label=label.lower()
 		def lookup_items(label,max):
 			if not label in S:
+				#BUG_OFF(f'BrainzMusic No label "{label}"')
 				return None
+			if not S[label]:
+				#BUG_OFF(f'BrainzMusic No "{label}" found.')
+				return  None
 			items=[]
 			for item in S[label]:
 				items.append(item[1])
@@ -541,7 +371,15 @@ class BrainzMusic(dict):
 					delim='-'
 			return date
 		for key in 'artists','titles','albums','covers','performers','genres':
-			if label == key : return lookup_items(label,max)
+			if label == key :
+				if max > 0:
+					return lookup_items(label,max)
+				else:
+					index=-max
+					if label in S:
+						if len(S[label]) > index:
+							return S[label][index][1]
+		#BUG_OFF(f'BrainzMusic Unkown label "{label}"')
 		return None
 		'''
 eg conversion aac to wav  ffmpeg -i *.aac *.wav

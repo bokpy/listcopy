@@ -50,6 +50,7 @@ name:literal{""};
 
 audio:/literal{lûd_en_ferskes}
      (
+     / label{Genre} |
      / label{Genres}  |
      / label{ProviderStyle} |
      / label{year} |
@@ -62,22 +63,26 @@ audio:/literal{lûd_en_ferskes}
      / "gearstaller " label{Composer}  |
      / "skriuwer " label{Author} |
      / label{names} |
-     / "ûnbekend"
+     lieteral{"ûnklear"}
      )
      (
      / label{albums,1} |
-     / label{cover,1} |
+     / label{covers,1} |
      / label{AlbumTitle} |
      / label{Composer} |
+     / label{Publisher} |
+     / label{titles,-2} |
+     / label{titles,-1} |
      / "ferskate"
      )
      /
      (
-     "-" label{TrackNumber} "-" |
+     "-" label{TrackNumber} "- " |
      ""
      )
      (
-     label{titles,1} |
+     label{Titles,1} |
+     label{title,1} |
      meaning{top,0.6} |
      meaning{second} _ meaning{first} |
      meaning{first} |
@@ -137,6 +142,5 @@ text:/literal{"skrift"}/
 name:label{FileName}
 ;
 
-text:/literal{"undefined default"}
-
 default:/literal{"undefined default"}/name:subdir{0};
+

@@ -1,9 +1,7 @@
 #!/usr/bin/python3
 from collections import deque
 
-from filelistiter import DEBUGPRINT
-
-
+DEBUGPRINT = print
 #BUG_OFF = print
 
 def strip_and_balance_check(rules: str) -> list:

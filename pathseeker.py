@@ -4,16 +4,17 @@ import os.path
 import subprocess
 import time
 import re
-from collections import deque
+from collections import deque,Counter
 import metadata as meta
 from extensionsets import extension_dict
 from tagtoken import TagToken,FileToken,clean_tagtokens
 from rulesreader import strip_and_balance_check
 from wisdomtree import TreeOfKnowledge
 #from listcopy import prev_copy_speed
-from listutils import dict_dump
+#from listutils import wipe_parentheses
 #from brainzmusic import BrainzMusic
 from garlic import *
+
 #import inspect
 from icecream import ic as DEBUGCREAM
 
@@ -72,10 +73,10 @@ class PathSeeker:
 		last_added_filetoken=None
 
 		for line in lines:
-			#DEBUGPRINT(line)
+			#BUG_OFF(line)
 			mime_and_ext,tail=collonslash_split(line)
-			#DEBUGPRINT(f'{mime=}')
-			#DEBUGPRINT(f'{tail=}')
+			#BUG_OFF(f'{mime_and_ext=}')
+			#BUG_OFF(f'{tail=}')
 			filetoken=FileToken(mime_and_ext)
 			filetoken['recipe']=tail # debug
 			#DEBUGPRINT(f'{str(filetoken)}')
@@ -109,9 +110,14 @@ class PathSeeker:
 		:param mission: see: "mission.py"
 		:return: a substitute destination path
 		"""
+		if not isinstance(mission,dict):
+			DEBUGPRINT(f'{mission}')
+			raise ValueError ('PathSeeker.compose_path')
 		#DEBUGPRINT('-+'*80)
 		S.good_and_evil.reset(mission)
-
+		if not isinstance(mission,dict):
+			DEBUGPRINT(f'{mission}')
+			raise ValueError ('PathSeeker.compose_path')
 		if "Error" in mission:
 			mission["dest_file"]= "Error"
 			return False
@@ -154,25 +160,50 @@ class PathSeeker:
 			path_stack.pop()
 			return False
 
+		found=False
 		for file_token in S.matching_file_tokens(mission):
 			path_stack.clear()
-			if is_valid_path(file_token):
+			if found:=is_valid_path(file_token):
 				break
 
+		if not found:
+			raise RuntimeError ('No valid path found.')
+
+		if not path_stack:
+			JDUMP(mission,"PathSeeker 174")
+			raise RuntimeError ('No Path')
 		path=''
 		while path_stack:
 			fruit=path_stack.popleft()
-			path+=fruit
+			path+=str(fruit)
 			# DEBUGPRINT(f'"{fruit}"')
 			# DEBUGPRINT(f'"{path}"')
-		if not path:
-			raise ('No Path')
+		# DEBUGPRINT(f'No Polish: "{path}"')
+		# path=polish(path)
 		mission['target_path']=path
 		S.good_and_evil.check_extension(mission)
 		return True
 
+# def polish(path):
+# 	match=re.findall(r'[A-Za-z][_\-:;][A-Za-z]',path)
+# 	for inject in match:
+# 		injection=inject[0]+' '+inject[2]
+# 		path=re.sub(inject,injection,path)
+# 	path=re.sub(r'/[^:]+:','/',path)
+#
+# 	# match=re.findall(r'(\d+|[A-Za-z]+)',path)
+# 	# counts = Counter(match)
+# 	# for item, count in counts.items():
+# 	# 	if count > 1:
+# 	# 		rem=' '+item
+# 	# 		path=re.sub(rem,' ',path)
+# 	path=re.sub(r'[\s\W]+/','/',path)
+# 	path=re.sub(r'\s+',' ',path)
+# 	path.strip()
+# 	return path
 
-def upcase_initial(s):return s[:1].upper()+s[1:]
+
+#def upcase_initial(s):return s[:1].upper()+s[1:]
 
 # testdata=[
 # '/home/bob/temp/Users/',
@@ -221,11 +252,12 @@ def test_compose():
 	             }
 	ps=PathSeeker(consignment)
 	it = iter(testdata)
-	source_path = next(it)
+	source_tail_char = next(it)
 	for source in it:
-		path=ps.compose_path(source,source_path)
+		path=ps.compose_path(source,source_tail_char)
 		print(path)
 	#ps.show()
+
 
 def main() -> None:
 	#testcompile()

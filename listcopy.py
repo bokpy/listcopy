@@ -10,7 +10,7 @@ import time
 import signal
 import psutil
 import listutils as lu
-from listutils import JDUMP
+from listutils import JDUMP,Suffix
 
 from geolocate    import OsmNode, OsmTurbo
 from filelistiter import InputFileIterator
@@ -292,29 +292,27 @@ def process_filelisting(consignment):
 	bad_file_handle = consignment['bad_file_handle']
 	atexit.register(close_bad,bad_file_handle)
 
-	#for src_full,source_path_length in listing:
+	#for src_full,source_tail_char_length in listing:
 	pathseeker = PathSeeker(consignment)
 
+	mission=None
 	for mission in listing.file_reaper():
 		#JDUMP(mission,"mission <- listing.file_reaper()",'298')
-		verbose('<'*35+'-'*40+'>'*35)
-		verbose(f' origin: "{mission["source_full_path"]}"')
+		done=mission["completed"]
+		verbose(f'{"<"*20}  {"-"*20} -> {done} <- {"-"*20} {">"*20}')
+		verbose(f' origin: "{mission["source_file_bytes"].decode("utf-8",errors="ignore")}"')
 		mission["verbose"]       = consignment['verbose']
 		mission["dest_base_dir"] = consignment["dest_path"]
 		pathseeker.compose_path(mission)
 		#JDUMP(mission,"mission <- pathseeker.compose_path",305)
 		if 'Error' in mission:
 			#JDUMP(mission,'process_files Zero file')
-			bad_file_handle.write(mission["source_full_path"] + ' # ' +  mission["Error"] + '\n' )
+			bad_file_handle.write(mission["source_file_char"] + ' # ' +  mission["Error"] + '\n' )
 			listing.save_processing(mission,False)
 			verbose(f'Bad file skipped: "{mission["Error"]}".')
 			#input("Zero in mission")
 			continue
 		mission["target_full_path"] = os.path.join(consignment["dest_path"] + mission["target_path"])
-		DEBUGPRINT(f'TARGET = "{mission["target_full_path"]}')
-		#input("Line 315")
-
-		#JDUMP(mission,'mission')
 		if 'dry_run' in consignment:
 			if 'store_labels' in consignment:
 				keys=[k for k in pathseeker.knowledege().keys()]
@@ -327,12 +325,12 @@ def process_filelisting(consignment):
 		listing.save_processing(mission,False)
 		if not replicator.write_chunks_to_file(mission):
 			if 'Error' in mission:
-				bad_file_handle.write(mission["source_full_path"] + ' # ' +  mission["Error"] + '\n' )
+				bad_file_handle.write(mission["source_file_char"] + ' # ' +  mission["Error"] + '\n' )
 				listing.save_processing(mission,False)
 				verbose(f'Bad file skipped: "{mission["Error"]}".')
 				continue
-		verbose(f'file size: {mission["FileSize"]}')
-		verbose(f'{mission["completed"]:04} files completed.')
+		filesize=str(Suffix(mission["FileSize"]))
+		verbose(f'file size: {filesize}')
 
 	if 'store_labels' in consignment:
 		for label in consignment['store_labels']:
@@ -340,6 +338,9 @@ def process_filelisting(consignment):
 
 	if args.gps_info:
 		listing.dump_info(args.gps_info)
+
+	if not mission:
+		raise RuntimeError ("Nothing Happened.")
 
 	print(f'Done copying {mission["completed"]} files')
 	ok = consignment['ok_file']

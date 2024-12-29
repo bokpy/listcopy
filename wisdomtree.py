@@ -13,7 +13,7 @@ from icecream import ic as DEBUGCREAM
 
 from metadata import get_mime_etc
 from tagtoken import TagToken
-from listutils import timestamp2epoch, JDUMP, dict_dump
+from listutils import timestamp2epoch, JDUMP, dict_dump,clean_path
 
 DEBUGINPUT = input
 DEBUGPRINT = print
@@ -259,33 +259,28 @@ class TreeOfKnowledge(dict):
 	# }
 
 	def reset(S, mission: dict):
-		# if 'Brainz' in S:
-		# 	JDUMP(S['Brainz'], 'Before Knowlege reset', 250)
+		# clear old files data
 		for key in "exiftool_data", 'Brainz':
 			S.pop(key, None)
-		# if 'Brainz' in S:
-		# 	JDUMP(S['Brainz'], 'Knowlege reset', 254)
 		S |= mission
-		S['Tailsplit'] = S["source_dir"].split('/')
-		S['Tailsplit'].append(S["stem_name"])
-		# JDUMP(S,'S after tailsplit','*')
-
+		S['split_tail_path']  = S["source_tail_char"].split('/')
 		S["exiftool_data"] = {}
 		# JDUMP(S["exiftool_data"] ,'reset start S["exiftool_data"]',261 )
 		S.exiftool_data = S["exiftool_data"] # kind off shorthand
-		if not get_mime_etc(S["source_full_path"], S["exiftool_data"]): # runs exiftool -j -all
-			DEBUGPRINT(f'{type(S["source_full_path"])} "{["source_full_path"]}"')
-			raise RuntimeError ('get_mime_etc(..) Failed.')
+		if not get_mime_etc(S["source_file_bytes"], S["exiftool_data"]): # runs exiftool -j -all
+			#DEBUGPRINT(f'{type(S["source_file_bytes"])} "{S["source_file_bytes"]}"')
+			mission["Error"] = "Can't open file to get exiftool data"
+			return
 		if "Error" in S.exiftool_data:
 			#DEBUGPRINT('TreeOfKnowledge.reset ERROR')
 			mission["Error"] = S.exiftool_data["Error"]
 			return
-		mission["FileTypeExtension"] = ''
+
 		if "FileTypeExtension" in S.exiftool_data:
-			mission["FileTypeExtension"] = '.' + S.exiftool_data[
-				"FileTypeExtension"]
-		if "FileSize" in S.exiftool_data:
-			mission["FileSize"] = S.exiftool_data["FileSize"]
+			mission["extension"] = '.' + S.exiftool_data["FileTypeExtension"]
+		else:
+			root_path,mission["extension"]=os.path.splitext( S["source_tail_char"])
+		mission["extension"] = mission["extension"].lower()
 		S.add_geo_labels_to_exif()
 		S.add_date_labels_to_exif()
 		S.add_duration_tag_to_exif()
@@ -381,8 +376,8 @@ class TreeOfKnowledge(dict):
 
 	def check_extension(S, mission):
 		path = mission["target_path"]
-		filefilename, file_extension = os.path.splitext(path)
-		filefilename=filefilename.replace('.','-')
+		filename, file_extension = os.path.splitext(path)
+		filename = filename.replace('.','-')
 		# DEBUGPRINT(f'check_extension "{path}" { file_extension=}')
 		mission["target_dir"] = os.path.dirname(path)
 		if len(file_extension) > 1:
@@ -390,7 +385,7 @@ class TreeOfKnowledge(dict):
 		ext = mission["extension"]
 		if len(ext) < 2:
 			ext = mission["FileTypeExtension"]
-		mission["target_path"] = filefilename + ext
+		mission["target_path"] = filename + ext
 
 	# def check_evil_chars(S,path):
 	# 	eval_re=re.compile(r[.,check_evil_chars(path)])
@@ -398,9 +393,9 @@ class TreeOfKnowledge(dict):
 	def subdir_tokkie(S, tokkie):
 		i = int(tokkie['subdir'])
 		if i == 0:  # full original path above the source path
-			tokkie['payload'] = S["Tailpath"]
+			tokkie['payload'] = S["source_tail_char"]
 			return tokkie['payload']
-		tsp = S['Tailsplit']
+		tsp = S['split_tail_path']
 		tail_len = len(tsp)
 		if abs(i) > tail_len:  # no subdir is in reach
 			return None
@@ -443,14 +438,14 @@ class TreeOfKnowledge(dict):
 		# DEBUGPRINT(f'meaning_tokkie {low_limit=} {repr(tokkie)}')
 		# input('*')
 		if meaning == 'all':
-			# DEBUGPRINT(f'meaning == "all" {S["Tailsplit"]}')
-			extracted = extract_meaning(S['Tailsplit'])
+			# DEBUGPRINT(f'meaning == "all" {S["split_tail_path"]}')
+			extracted = extract_meaning(S['split_tail_path'])
 			# DEBUGPRINT(f'{extracted =}')
 			tokkie['payload'] = extracted
 			return tokkie['payload']
 
 		if meaning == 'best' or meaning == 'first':
-			for subdir in S['Tailsplit']:
+			for subdir in S['split_tail_path']:
 				sub_score, subdir_str = guess_meaning(subdir)
 				# DEBUGPRINT(f'{sub_score:6.3f} "{subdir}"')
 				if sub_score > best_score:
@@ -462,7 +457,7 @@ class TreeOfKnowledge(dict):
 			return tokkie['payload']
 
 		if meaning == 'second':
-			meaninglist = [(guess_meaning(subdir)) for subdir in S['Tailsplit']]
+			meaninglist = [(guess_meaning(subdir)) for subdir in S['split_tail_path']]
 			if len(meaninglist) < 2:
 				tokkie['payload'] = None
 				return tokkie['payload']
@@ -476,16 +471,16 @@ class TreeOfKnowledge(dict):
 
 		if 'top' in meaning:
 			# DEBUGPRINT(f'meaning == "top {level=}"')
-			extracted = extract_meaning(S['Tailsplit'], low_limit)
+			extracted = extract_meaning(S['split_tail_path'], low_limit)
 			# DEBUGPRINT(f'{extracted =}')
 			tokkie['payload'] = extracted
 			return tokkie['payload']
 
 		if 'filename' in meaning:
-			DEBUGPRINT(f'filename meaning "{S["stem_name"]}"')
+			#BUG_OFF(f'filename meaning "{S["stem_name"]}"')
 			score,text = guess_meaning(S["stem_name"])
 			if score > low_limit:
-				DEBUGPRINT(f'filename meaning: {score=:6.2f} "{text}"')
+				#BUG_OFF(f'filename meaning: {score=:6.2f} "{text}"')
 				tokkie['payload'] = text
 				return tokkie['payload']
 			return None
@@ -510,8 +505,10 @@ class TreeOfKnowledge(dict):
 	def audio_tokkie(S, tokkie):
 		# for audio "MusicBrainz" could possibly supply the wanted data
 		if not 'Brainz' in S:
-			S['Brainz'] = BrainzMusic(S['source_full_path'])
+			S['Brainz'] = BrainzMusic(S['source_file_bytes'])
 		splt=tokkie['label'].split(',')
+		# JDUMP(S['Brainz'],'517 knowlege Brainz')
+		# JDUMP(S.exiftool_data,'exiftool data')
 		label=splt[0]
 		max=1
 		if len(splt)==2:

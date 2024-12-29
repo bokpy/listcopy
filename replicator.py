@@ -6,8 +6,6 @@ import json
 from icecream import ic as DEBUGCREAM
 import re
 import duplicates
-
-
 from listutils import DATA_BEGIN_MARKER,Base62,Suffix # DATA_END_MARKER
 DEBUGPRINT = print
 DEBUGEXIT = exit
@@ -64,23 +62,10 @@ def exit_error(e, message=None) -> None:
 
 def replace_ilegal(mission):
 	#JDUMP(mission,' replace_ilegal',66)
-	target_path=mission["target_path"]
-	while True:
-		match = re.findall(r'[\\:?*<>|]| / | /|/ ',target_path)
-		if match:
-			for bad in match:
-				replacer='-'
-				if '/' in bad:
-					replacer='/'
-				target_path=target_path.replace(bad,replacer)
-		else:
-			break
-	# if not isinstance(path,str):
-	# 	print(f'Got {path} of type({type(path)}')
-	# 	print(f"can't handle this return "'hopeless')
-	# 	return 'hopeless'
-	# 	#path=path.decode(encoding ='utf-8', errors = 'ignore')
-	mission["target_path"]=target_path
+	target=mission["target_full_path"]
+	target=re.sub(r'[\\:?*<>|]','',target)
+	target=re.sub(r'| / | /|/ ','/',target)
+	mission["target_path_"]=target_path
 	mission["target_dir"]=os.path.dirname(target_path)
 	mission["target_full_path"]=mission["dest_base_dir"]+target_path
 	mission["target_full_dir"] = os.path.dirname(mission["target_full_path"])
@@ -171,6 +156,7 @@ class Throttle:
 		return now
 
 	def start_timer(S,file_size):
+		#DEBUGPRINT(f'start_timer type chunk {type(S.chunksize)} file {type(file_size)}')
 		S.prior_clock      = time.time()
 		S.prior_period     = -1.0
 		S.prior_chunksize  = 0
@@ -183,6 +169,7 @@ class Throttle:
 		return S.chunksize
 
 	def clock_chunk(S,bytes_copied):
+		verbose=eat
 		def decrease_chunk_size(chunk_change):
 			if (S.chunksize - chunk_change) < S.block_size:
 				S.chunksize = S.block_size
@@ -252,15 +239,6 @@ class Throttle:
 
 		S.prior_period = period
 		S.prior_clock  = now
-		# # round_chunksize = int(S.chunksize + S.block_size//2 )
-		# # round_chunksize = round_chunksize - round_chunksize % S.block_size
-		# # S.chunksize     = round_chunksize
-		# # round_chunks = int (S.chunksize / S.block_size) * S.block_size
-		# S.chunksize  = int ((S.chunksize / S.block_size) + 1 ) * S.block_size
-		# if S.chunksize <  S.block_size:
-		# 	DEBUGPRINT(f'{S.chunksize= } < {S.block_size=}')
-		# 	S.show('Too small chunk.')
-		# 	DEBUGEXIT(1)
 		S.prior_chunksize  = S.chunksize
 		return S.chunksize
 
@@ -285,7 +263,7 @@ def format_bytesize(size_in_bytes, strlen=0):
 # end chunk size optimising
 
 def BadFile(consignment, nasty, error):
-	source_path = consignment['source_path']
+	source_tail_char = consignment['source_tail_char']
 	bad_file    = consignment['bad_file']
 	# #PRINT_OFF (f'/nError:{error.errno} "{error.strerror}"')
 	# if os.path.exists(nasty_dest):
@@ -297,7 +275,7 @@ def BadFile(consignment, nasty, error):
 		# so can bee used as an copy.list later
 		with open(bad_file, 'w') as bad:
 			bad.write(DATA_BEGIN_MARKER + '\n')
-			bad.write(source_path + '\n')
+			bad.write(source_tail_char + '\n')
 
 	with open(bad_file, 'a') as bad:
 		bad.write(nasty + '\n')
@@ -318,7 +296,7 @@ class Replicator:
 		count_renames=0
 		while os.path.exists(mission["target_full_path"]):
 			if count_renames > 1:
-				DEBUGPRINT(f'rename {count_renames} "{mission["target_full_path"]}"')
+				#BUG_OFF(f'rename {count_renames} "{mission["target_full_path"]}"')
 				input ('check_destination 315')
 			if mission["target_full_path"] == mission['last_file_accessed']:
 				#PRINT_OFF(f'Trying to remove interupted file.')
@@ -332,18 +310,16 @@ class Replicator:
 			conflict_renamer(mission)
 
 	def check_dir(S,mission):
-		target_full_dir = mission["dest_base_dir"] + mission["target_dir"]
-		mission["target_full_dir"] = target_full_dir
+		target_dir = os.path.dirname(mission["target_full_path"])
 		#JDUMP(mission,'mission check_dir','mission end press enter.')
 		for _ in 1,2:
-			target_full_dir = mission["dest_base_dir"] + mission["target_dir"]
-			mission["target_full_dir"] = target_full_dir
+			#BUG_OFF(f'Replicator mkdir: "{target_dir}"')
 			try:
-				os.makedirs(target_full_dir, mode=0o777, exist_ok=True)
-				return 0
+				os.makedirs(target_dir, mode=0o777, exist_ok=True)
+				return True
 			except OSError as ed:
 				DEBUGCREAM(ed)
-				print(f'os.makedirs("{target_full_dir}") Failed')
+				print(f'os.makedirs("{target_dir}") Failed')
 				print(f'{ed}')
 				if ed.errno == 22:
 					replace_ilegal(mission)
@@ -353,25 +329,35 @@ class Replicator:
 				else:
 					exit(ed.errno)
 
-	def write_chunks_to_file(S, mission):
-		#S.check_dir(mission) # destination can change if the directory can't bee made
-		source      = mission["source_full_path"]
-		destination = mission["target_full_path"]
+	def check_size(S,mission):
 		try:
-			file_size   = os.path.getsize(source)
+			file_size   = os.path.getsize(mission["source_file_bytes"])
 		except OSError as e:
 			mission["Error"]=f'{e}'
 			return False
-
-		if not "FileSize" in mission:
-			mission["FileSize"]=file_size
-
+		#BUG_OFF(f'352 {type(file_size)} {file_size=}')
+		mission["FileSize"] = file_size
 		if file_size > S.fs_max_file:
 			mission["Error"]=f'{file_size} Too Big for Filesystem.'
 			return False
+		return True
 
+	# def check_dir(S,destination):
+	# 	dir = os.path.dirname(destination)
+	# 	try:
+	# 		os.makedirs(dir,0o777,True)
+	# 		return True
+	# 	except OSError as e:
+	# 		raise
+
+	def write_chunks_to_file(S, mission):
+		S.check_dir(mission) # destination can change if the directory can't bee made
+		source      = mission["source_file_bytes"]
+		destination = mission["target_full_path"]
+		if not S.check_size(mission)     : return
 		with open(source, 'rb') as sf:
 			mission["last_file_accessed"] = destination
+			file_size = mission["FileSize"]
 			chunk_size = S.throttle.start_timer(file_size)
 			to_write=file_size
 			while to_write:
@@ -383,16 +369,17 @@ class Replicator:
 					with open(destination, 'ab') as destf:
 						written=destf.write(data_chunk)
 						to_write -= written
-
 				except OSError as e:
 					if e.errno == 22:
 						replace_ilegal(mission)
 						if mission["target_full_path"] != destination:
 							destination=mission["target_full_path"]
 							verbose(f'Renamed: "{destination}"')
+
 							continue
 					print(f'write {len(data_chunk)} bytes to "{destination}" Failed')
 					mission["Error"]=f'{e}'
+					raise
 					return False
 				# os.sync() sync when paused try to let usb devices survive
 				chunk_size = S.throttle.clock_chunk(written)

@@ -1,7 +1,8 @@
 #!/usr/bin/python3
+import os
 import subprocess
 import json
-import time
+from brainzmusic import brush_tag
 from icecream import ic
 #from collections import deque
 
@@ -14,6 +15,9 @@ def JDUMP(dct,title=''):
 
 #def run_subprocess(prog,file,args=[]):
 def run_subprocess(prog, file, args):
+	#BUG_OFF(f'run_subprocess: {type(file)} "{file}"')
+	# if not os.path.exists(file):
+	# 	DEBUGPRINT(f'Os can not detect file')
 	command=[prog]+args+[file]
 
 	def debug_return_error( meta,error=None ):
@@ -31,10 +35,10 @@ def run_subprocess(prog, file, args):
 	try:
 		meta = subprocess.run(command,capture_output=True, text=True)
 		if meta.returncode != 0:
-			return return_error(meta)
+			return debug_return_error(meta)
 		return meta.stdout
 	except OSError as e:
-		return return_error(meta,e )
+		return debug_return_error(meta,e )
 
 def get_mime_etc(file:str,data:dict):
 	metadata = run_subprocess('exiftool', file,['-j','-all'])
@@ -46,12 +50,24 @@ def get_mime_etc(file:str,data:dict):
 		data['Error'] = meta['Error']
 		return False
 
+	def brush_values(meta):
+		for key in meta:
+			value=meta[key]
+			if isinstance(value,str):
+				#data[key]='META_'+brush_tag(value)
+				data[key] = brush_tag(value)
+				#data[key]=value.strip()
+				continue
+			data[key]=value
+
 	def MIMEtype(meta):
 		if "MIMEType" in meta:
+			save_mime=meta["MIMEType"]
 			#DEBUGPRINT(f'"MIMEType" in meta!')
-			mime=meta["MIMEType"]
-			data['mime'] = mime
-			general,special = mime.split('/')
+			brush_values(meta)
+			data["MIMEType"]=save_mime
+			data['mime'] = save_mime
+			general,special = save_mime.split('/')
 			data['general'] = general
 			data['special'] = special
 			return True
@@ -60,13 +76,6 @@ def get_mime_etc(file:str,data:dict):
 		data["special"]='unidentified'
 		return False
 
-
-	for key in meta:
-		value=meta[key]
-		if isinstance(value,str):
-			data[key]=value.strip()
-			continue
-		data[key]=value
 	return MIMEtype(meta)
 
 def do_exiftool_json(picture_file:str)->dict:

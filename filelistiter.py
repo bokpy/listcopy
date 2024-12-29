@@ -1,16 +1,25 @@
 #!/usr/bin/python3
 from os.path import basename
 
-from listutils import DATA_BEGIN_MARKER, DATA_END_MARKER, CONTINUE
+
+from listutils import DATA_BEGIN_MARKER, DATA_END_MARKER, CONTINUE, clean_path, JDUMP
 import random
 import os
 import time
+import json
 from icecream import ic
 
 DEBUGPRINT = print
 def eat(*args,**kwargs):
 	pass
 verbose=eat # verbose = print for verbose
+
+def detect_and_decode(byte_string):
+	if not isinstance(byte_string,bytes):
+		raise ValueError (f'"no bytes: {byte_string}')
+	coding=json.detect_encoding(byte_string)
+	#DEBUGPRINT(f'Json detected: {coding}')
+	return byte_string.decode(coding)
 
 class InputFileIterator:
 	def __init__(self, consignment):
@@ -27,41 +36,43 @@ class InputFileIterator:
 
 	def read_listing(S,listing):
 		try:
-			with open(listing, 'r') as f:
-				S.filelist = f.readlines()
+			with open(listing, 'rb') as f:
+				data = f.read()
 		except IOError as e:
 			print(f'InputFileIterator could not open "{listing}"')
 			print(f'error {e.errno} "{e.strerr}"')
 			exit(e.errno)
-		for i in range(0,6):
-			DEBUGPRINT(f'{type(S.filelist[i])} "{S.filelist[i]}"')
-		S.strip_newline()
-		S.filelist.append('\n')
+		S.filelist=data.split(b'\n')
+		# for i in range(0,6):
+		# 	DEBUGPRINT(f'{type(S.filelist[i])} "{S.filelist[i]}"')
+		#S.strip_newline()
+		S.filelist.append(b'\n')
 		S.filelist_len = len(S.filelist)-1
 
 	def file_reaper(S):
 		def split_path():
 			# "/home/bob/usb/Media/foto/Foto 2 1999/Familie/Lalbiharie/Alle drie 651.jpg"
-			# source_full_path = source_scanned_dir + source_dir + stem_name + extension
-			# source_path      =                      source_dir + stem_name + extension
+			# source_file_char = source_scanned_dir + source_dir + stem_name + extension
+			# source_tail_char      =                      source_dir + stem_name + extension
 			# basename         =                                   stem_name + extension
 			path        = S.at_index()
-			scandir     = S.scaned_dir
-			source_path = path[len(scandir):]
-			basename    = os.path.basename(source_path)
-			stem_name,extension = os.path.splitext(basename)
-			source_dir = os.path.dirname(source_path)
-			return {
-				"source_full_path":path,
-				"source_scanned_dir":scandir,
-				"source_path":source_path,
-				"basename":basename,
-				"stem_name":stem_name,
-				"extension":extension,
-				"source_dir":source_dir,
-				"last_file_accessed":S.last_file_accessed,
-			    "completed":S.completed
+			utf_path    = detect_and_decode(path)
+			scandir     = detect_and_decode(S.scaned_dir)
+			utf_tail    = utf_path[len(scandir):]
+			#BUG_OFF(f'filesiter 62 {utf_tail=}')
+			# Manipulation of original begins here
+			source_file_char = clean_path(utf_path)
+			source_tail_char = clean_path(utf_tail)
+			ret = {
+				"source_file_char"          :source_file_char,
+				"source_tail_char"          :source_tail_char,
+				"completed"                 :S.completed
 				}
+			#JDUMP(ret,'83 return ret')
+			# byte strings json dumps doesn't like
+			ret["last_file_accessed"]=S.last_file_accessed
+			ret["source_file_bytes"]=path
+			return ret
 
 		valid=False
 		seen=0

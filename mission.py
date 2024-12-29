@@ -31,11 +31,11 @@ mission={
 
 # initiated by filelistiter.py InputFileIterator.file_reaper
 
-# source_full_path = source_scanned_dir + source_dir + stem_name + extension
-# source_path      =                      source_dir + stem_name + extension
+# source_file_char = source_scanned_dir + source_dir + stem_name + extension
+# source_tail_char      =                      source_dir + stem_name + extension
 # basename         =                                   stem_name + extension
-    "source_full_path"   : " full path to source file"
-    "source_path"        : " source_dir + stem_name + extension"
+    "source_file_char"   : " full path to source file"
+    "source_tail_char"        : " source_dir + stem_name + extension"
     "source_scanned_dir" : " root path which was scanned by "listfiles.py",
     "source_dir"
 	"basename"
@@ -52,7 +52,7 @@ mission={
     "source_tail_path"   : "filepath after "source_scanned_dir""
     "Error"              : "An error message set if "exiftool" reports an error."
     "mime_general"       : "General mime type reported by "exiftool"."
-    "extension"          : "extension from the "source_full_path"."
+    "extension"          : "extension from the "source_file_char"."
     "FileTypeExtension"  : "extension as reported by "exiftool"."
     
 # values set in PathSeeker.compose_path -> TreeOfKnowledge.check_extension

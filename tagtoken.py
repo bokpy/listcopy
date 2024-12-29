@@ -639,13 +639,13 @@ class FileToken(TagToken):
 		:param mission:
 		:return: matches True else False
 		"""
+		#BUG_OFF(f'FileToken({mission["mime_general"]}, {mission["FileTypeExtension"]})')
+		#BUG_OFF(f'{ S["generals"]}, {S["extensions"]}')
+		if 'default' in S["generals"]:
+			return True
 		if mission["mime_general"] in S['generals']:
 			return True
-		if mission["FileTypeExtension"] in S['extensions']:
-			return True
-		if mission["extension"].lower() in S['extensions']:
-			return True
-		if 'default' in S["generals"]:
+		if mission["extension"] in S['extensions']:
 			return True
 			# find_mime='^'+filedata["mime"]+'.*$'
 			# for mime in S['mime']:

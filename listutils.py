@@ -13,8 +13,8 @@ from time import sleep
 
 from scipy.stats import randint
 
-DATA_BEGIN_MARKER='-------->Data_Begin_Marker-------->'
-DATA_END_MARKER='<--------Data_End_Marker<--------'
+DATA_BEGIN_MARKER=b'-------->Data_Begin_Marker-------->'
+DATA_END_MARKER=b'<--------Data_End_Marker<--------'
 CONTINUE='<CONTINUE>'
 DEBUGPRINT=print
 
@@ -486,9 +486,75 @@ def dict_dump(dct:dict,title=None,pause=None):
 	if pause:
 		input(pause)
 
+def clean_path(path):
+	#BUG_OFF(f'  path: "{path}"')
+	clean0=clean_string(path)
+	##BUG_OFF(f'clean0: "{clean0}"')
+	clean1=[]
+	pre_split=re.sub(r'([/\.]{1})',r'\1 ',clean0)
+	#BUG_OFF(f'  pre: "{pre_split}"')
+	#BUG_OFF(f'split: "{pre_split.split(" ")}"')
+	saw_slash= False
+	for word in pre_split.split(' '):
+		if not word:
+			clean1.append("#")
+			continue
+		if word == '/' or word == '.':
+			clean1.append(word)
+			continue
+		clean1.append(clean_word(word))
+	clean2='@'.join(clean1)
+	#BUG_OFF(f'clean2: "{clean2}"')
+	clean3=re.sub(r'/@',r'/',clean2)
+	clean4=re.sub(r'\.@',r'.',clean3)
+	clean5=re.sub(r'#?@',r' ',clean4)
+	clean6=re.sub(r'\s+',' ',clean5)
+	#BUG_OFF(f'clean4: "{clean4}"')
+	return clean6
+
+def clean_string(sentence):
+	#sentence = sentence.lower()  # Convert to lowercase
+	sentence = re.sub(r'\s*\([^\)]+\)\s*','',sentence) # remove what is beween parentheses (..)
+	sentence = re.sub(r'\s*\[[^\]]+\]\s*','',sentence) # remove what is beween brackets [..]
+	collon = sentence.find(':')
+	if collon > -1:
+		sentence = sentence[collon+1:]
+	sentence=re.sub(r'_-',' ',sentence)
+	clean=[]
+	for word in sentence.split(' '):
+		clean.append(clean_word(word))
+	return ' '.join(clean).strip()
+
+
+def clean_word(word):
+	if not word:
+		return ''
+	word=word.lower()
+	word=re.sub(r'[\\:?*<>|]',"-",word)
+	word=upcase_initial(word)
+	return word.strip()
+
+def test_clean_path(file):
+	with open(file,'rb') as f:
+		data=f.read()
+	lines=data.split(b'\n')
+	for line in lines:
+		line=line.decode("utf-8",errors='ignore')
+		print(f'  line: "{line}"')
+		clean = clean_path(line)
+		print(f'clean : "{clean}"\n')
+
+def test_one_clean_path():
+	line="/home/bob/usb/Media/G.S. Labiharie/Mijn muziek/Muziek Sjoukje/ALBUMS/Aaliyah/Aaliyah/15 [Untitled Track].wma"
+	clean = clean_path(line)
+	print(f'clean : "{clean}"\n')
+
 def main():
 	#test_meters_per_degree()
-	test_base62()
+	#test_base62()
+	#test_clean_path("/home/bob/python/750_gs_lal.list")
+	test_one_clean_path()
+
 if __name__ == '__main__':
 	main()
 # maandag	moandei
