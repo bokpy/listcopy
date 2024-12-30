@@ -1,6 +1,7 @@
 
 from collections import deque
 import os
+import shutil
 import time
 import json
 from icecream import ic as DEBUGCREAM
@@ -65,10 +66,10 @@ def replace_ilegal(mission):
 	target=mission["target_full_path"]
 	target=re.sub(r'[\\:?*<>|]','',target)
 	target=re.sub(r'| / | /|/ ','/',target)
-	mission["target_path_"]=target_path
-	mission["target_dir"]=os.path.dirname(target_path)
-	mission["target_full_path"]=mission["dest_base_dir"]+target_path
-	mission["target_full_dir"] = os.path.dirname(mission["target_full_path"])
+	# mission["target_path"]      = target
+	# mission["target_dir"]       = os.path.dirname(target)
+	mission["target_full_path"] = target
+	#mission["target_full_dir"]  = os.path.dirname(mission["target_full_path"])
 
 # chunk size optimising
 def least_sig(f,intdigits=3,deci_digits=3):
@@ -289,7 +290,16 @@ class Replicator:
 		verbose=[eat,print][consignment['verbose']]
 		S.consignment  = consignment
 		S.fs_max_file  = consignment["FsMaxFileSize"]
-		S.throttle     = Throttle(consignment)
+
+		if 'shutil' in consignment:
+			S.shutil_off = S.shutil_on = None
+			if 'throttle' in consignment:
+				on,off = consignment['throttle'].split(',')
+				S.shutil_on = float(on)
+				S.shutil_off= float(off)
+				S.shutil_start_time_flag = None
+		else:
+			S.throttle     = Throttle(consignment)
 
 	def check_destination(S,mission):
 		S.check_dir(mission)
@@ -342,13 +352,36 @@ class Replicator:
 			return False
 		return True
 
-	# def check_dir(S,destination):
-	# 	dir = os.path.dirname(destination)
-	# 	try:
-	# 		os.makedirs(dir,0o777,True)
-	# 		return True
-	# 	except OSError as e:
-	# 		raise
+	def shutil_copy(S, mission):
+		if not S.check_size(mission):
+			return False
+		src = mission["source_file_bytes"]
+		dst = mission["target_full_path"]
+		#BUG_OFF(f'shutil.copy: {mission["source_file_bytes"]} to')
+		#BUG_OFF(f'{dst}')
+		if not S.shutil_start_time_flag:
+			S.shutil_start_time_flag=time.time()
+		try:
+			shutil.copy(src,dst)
+		except OSError as e:
+			print(f'shutil.copy {mission["source_file_bytes"]} to')
+			print(f'{dst} failed)')
+			print(f'{e}')
+			mission["Error"]=e
+			return False
+		if not S.shutil_on:
+			return True
+		now=time.time()
+		on_time = now - S.shutil_start_time_flag
+		if on_time < S.shutil_on:
+			return True
+		#BUG_OFF(f'shutil_copy Time to rest',end=' ',flush=True)
+		S.shutil_start_time_flag=None
+		os.sync()
+		rest = (on_time * S.shutil_off)/S.shutil_on
+		time.sleep(rest)
+		#BUG_OFF("wake up.")
+		return True
 
 	def write_chunks_to_file(S, mission):
 		S.check_dir(mission) # destination can change if the directory can't bee made

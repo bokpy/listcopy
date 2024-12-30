@@ -5,7 +5,9 @@ import os
 import time
 import json
 
-from brainzmusic import BrainzMusic
+from magic.compat import MIME_TYPE
+
+from brainzmusic import BrainzMusic,brush_tag
 from geolocate import OsmTurbo, gps_alpha_to_float
 from collections import deque
 import math
@@ -168,24 +170,18 @@ def extract_meaning(lines, min=0.8):
 
 def duration_str(duration):
 	# "Duration": "0:21:06",
-
-	timeing = re.findall(r'(\d\d|\d)', duration)
-	if not timeing:
+	t = re.findall(r'\d+',duration)
+	if not t:
 		return duration
 	ret = ''
-	i = len(timeing)
-	if i > 3:
-		i = 3
-		timeing = timeing[:3]
+	i=0
 	hms = ["s", "m", "u"]
-	zero = True
-	for t in timeing:
-		i -= 1
-		it = int(t)
-		if zero and it == 0:
-			continue
-		zero = False
-		ret += f'{it:02}{hms[i]}'
+	while t:
+		smh = t.pop()
+		ret = f'{int(smh):02}{hms[i]}{ret}'
+		i+=1
+		if i > 2:
+			break
 	return ret
 
 def exiftool_tags_write(filepath, tags_dict):
@@ -275,7 +271,6 @@ class TreeOfKnowledge(dict):
 			#DEBUGPRINT('TreeOfKnowledge.reset ERROR')
 			mission["Error"] = S.exiftool_data["Error"]
 			return
-
 		if "FileTypeExtension" in S.exiftool_data:
 			mission["extension"] = '.' + S.exiftool_data["FileTypeExtension"]
 		else:
@@ -287,10 +282,13 @@ class TreeOfKnowledge(dict):
 		# JDUMP(S,'after add: geo, date, duration','276')
 		if not "MIMEType" in S.exiftool_data:
 			S.exiftool_data["MIMEType"] = "unclassified/unclassified"
+		MIMEType = S.exiftool_data["MIMEType"]
+		S.groom_exiftool_data()
+		S.exiftool_data["MIMEType"] = MIMEType
 		general, special = S.exiftool_data["MIMEType"].split('/')
 		S.exiftool_data['general'] = mission["mime_general"] = general
 		S.exiftool_data['special'] = special
-		S.groom_exiftool_data()
+		#JDUMP(S.exiftool_data,'S.exiftool_data')
 
 	def groom_exiftool_data(S):
 		"""
@@ -303,13 +301,14 @@ class TreeOfKnowledge(dict):
 			if not S.exiftool_data[key]:
 				S.exiftool_data.pop(key,None)
 				continue
-			if not isinstance(S.exiftool_data[key],str):
-				#DEBUGPRINT(f'No str {key}:{S.exiftool_data[key]}')
-				S.exiftool_data[key]=str(S.exiftool_data[key])
+			value = str(S.exiftool_data[key])
+			value = brush_tag(value)
+			value=str(value)
+			S.exiftool_data[key]=value
 			if key.islower():
 				continue
 			low_key = key.lower()
-			S.exiftool_data[low_key] = S.exiftool_data[key]
+			S.exiftool_data[low_key] = value
 
 	# JDUMP(S.exiftool_data,"TreeOfKnowledge.reset end",290)
 
@@ -362,8 +361,7 @@ class TreeOfKnowledge(dict):
 	def add_duration_tag_to_exif(S):
 		if not 'Duration' in S.exiftool_data:
 			return
-		S.exiftool_data['durationstr'] = duration_str(
-			S.exiftool_data['Duration'])
+		S.exiftool_data['durationstr'] = duration_str(S.exiftool_data['Duration'])
 
 	def show_exif_data(S):
 		for key in S.exiftool_data:
@@ -410,7 +408,7 @@ class TreeOfKnowledge(dict):
 		label = tokkie['label']
 		#OFF_DEBUG(f'Look for: "{tokkie["label"]:12}"',end='')
 		if  label in S.exiftool_data :
-			tokkie.set_payload(S.exiftool_data[label])
+			tokkie += S.exiftool_data[label]
 			#WAIT(f' found in exif is "{tokkie["payload"]}"')
 			return tokkie['payload']
 
@@ -477,8 +475,10 @@ class TreeOfKnowledge(dict):
 			return tokkie['payload']
 
 		if 'filename' in meaning:
+			basename   = os.path.basename(S["source_file_char"])
+			stemname,_ = os.path.splitext(basename)
 			#BUG_OFF(f'filename meaning "{S["stem_name"]}"')
-			score,text = guess_meaning(S["stem_name"])
+			score,text = guess_meaning(stemname)
 			if score > low_limit:
 				#BUG_OFF(f'filename meaning: {score=:6.2f} "{text}"')
 				tokkie['payload'] = text
@@ -510,13 +510,15 @@ class TreeOfKnowledge(dict):
 		# JDUMP(S['Brainz'],'517 knowlege Brainz')
 		# JDUMP(S.exiftool_data,'exiftool data')
 		label=splt[0]
-		max=1
+		percent=100
 		if len(splt)==2:
-			max=int(splt[1])
+			percent=int(splt[1])
 		sb=S['Brainz']
-		value=sb.lookup_label(label,max)
-		tokkie['payload'] = value
+		value=sb.lookup_label(label,percent)
+		tokkie += value
 		return value
+		# tokkie['payload'] = value
+		# return value
 
 	def regex_tokkie(S, tokkie):
 		#OFF_DEBUG(f'regex_tokkie({tokkie=})')

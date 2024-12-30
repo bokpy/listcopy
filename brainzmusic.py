@@ -23,19 +23,31 @@ def JDUMP(dct,title=''):
 	print(f'{jd}')
 
 def brush_tag(tag):
-	#BUG_OFF(f'brush_tag: "{tag}"')
-	tag = re.sub(r'(?i)\s*( and |&)\s*',r'&',tag)
-	tag = re.sub(r':\s*.*','',tag)
+	if not isinstance (tag,str):
+		DEBUGPRINT(f'brush_tag: {type(tag)} "{tag}"')
+		raise RuntimeError (f'strange type of tag')
+	# match = re.findall(r'\(|\)',tag)
+	# if match:
+	# 	DEBUGPRINT(f'Parentises in "{tag}" <=====')
+	#tag = re.sub(r'(?i)\s*( and |&)\s*',r'&',tag)
 	tag = re.sub(r'\s*\([^\)]+\)\s*','',tag) # remove what is beween parentheses (..)
+	#BUG_OFF(f'{tag} ')
 	tag = re.sub(r'\s*\[[^\]]+\]\s*','',tag) # remove what is beween brackets [..]
+	#BUG_OFF(f'{tag} ')
+	tag = re.sub(r'(?i)\s(\w{1})\s*(and|&)\s*(\w{1})',r' \1&\3',tag)
+	#BUG_OFF(f'{tag} ')
+	tag = re.sub(r':\s*.*','',tag)
+	#BUG_OFF(f'{tag} ')
 	tag = re.sub(r'^\W+|\W+$','',tag)
+	#BUG_OFF(f'{tag} ')
 	tag = re.sub(r'/','-',tag)
-	#BUG_OFF(f'   return: "{tag.title()}"')
+	#BUG_OFF(f'{tag.title()} ')
+	tag=re.sub(r'(?i)([A-Z]{1})(-|_)',r'\1 ',tag)
+	tag=re.sub(r'(?i)(-|_)([A-Z]{1})',r' \2',tag)
 	return tag.title()
 
-
-def label_brush(labels,return_scores=False,return_labels=True)->list:
-	#DEBUGPRINT(f'\nLabel Brush: {labels} 24')
+def label_brush(labels)->list:
+	#BUG_OFF(f'\nLabel Brush: {labels} 38')
 	label_store={}
 	for label in labels:
 		#BUG_OFF(f'{label=}')
@@ -43,22 +55,17 @@ def label_brush(labels,return_scores=False,return_labels=True)->list:
 			continue
 		if label == "Various Artists":
 			continue
-		if not label in label_store:
-			label_store[label]=1
+
+		plain = re.sub('\W*','',label).lower()
+		if not plain in label_store:
+			label_store[plain]=[1,label]
 			continue
-		label_store[label]+=1
+		label_store[plain][0]+=1
 
-	scored_labels=[ (label_store[key],key) for key in label_store ]
+	scored_labels=[ (label_store[key][0],label_store[key][1]) for key in label_store ]
 	scored_labels.sort(reverse=True)
-
-	result=[]
-	for count,label in scored_labels:
-		#BUG_OFF(f'{count=} {label=} {key=}')
-		entry=[]
-		if return_scores:      entry.append(count)
-		if return_labels:      entry.append(label)
-		result.append(entry)
-	return (result)
+	#BUG_OFF(scored_labels)
+	return scored_labels
 
 def init_client():
 	acoustid_client_file = os.path.expanduser('~/.local/listcopy/AcoustID.key')
@@ -115,6 +122,13 @@ def bee_patient():
 	if from_then_to_now < 0.3:
 		time.sleep(0.3-from_then_to_now)
 	LatestBrainCall=time.time()
+
+def compare_word_chars(a,b):
+	aclear=re.sub('\W*','',a).lower()
+	bclear=re.sub('\W*','',b).lower()
+	if aclear > bclear : return 1
+	if aclear < bclear : return -1
+	return 0
 
 duration_re=re.compile(r'DURATION=(\d+).*')
 finger_re=re.compile(r'FINGERPRINT=(.*)')
@@ -217,7 +231,6 @@ class BrainzMusic(dict):
 		print(f'{title}:')
 		print(f'{json.dumps(S,indent=4)}')
 			
-
 	def comb(S,brainz):
 		# *title
 		# *artist
@@ -230,7 +243,7 @@ class BrainzMusic(dict):
 		artist_tags    =deque()
 		title_tags     =deque()
 		album_tags     =deque()
-		genre_tags     =deque()
+		#genre_tags     =deque()
 		performer_tags =deque()
 		cover_tags     =deque()
 		duration=[0,1]
@@ -243,6 +256,9 @@ class BrainzMusic(dict):
 			duration[1]+=1
 
 		def add_title(tag):
+			if not tag:
+				DEBUGPRINT(f'250 BrainzMusic tag = {tag}')
+				return
 			title_tags.append(brush_tag(tag))
 
 		def add_artists(cast):
@@ -259,7 +275,8 @@ class BrainzMusic(dict):
 			album_tags.append(brush_tag(tag))
 
 		def add_genre(tag):
-			genre_tags.append(brush_tag(tag))
+			#genre_tags.append(brush_tag(tag))
+			S['genres']=tag
 
 		def add_cover(tag):
 			cover_tags.append(brush_tag(tag))
@@ -276,59 +293,43 @@ class BrainzMusic(dict):
 					youngest_date.update(date)
 					return
 
+		tag_action = {
+			 "date"     :early_date
+			,"artists"  :add_artists
+			,"title"    :add_title
+			,"duration" :add_duration
+			,"album"    :add_album
+			,"genre"    :add_genre
+			,"cover"    :add_cover
+			,"performer":add_performer
+			}
+
 		def _comb(lobe):
 			for key in lobe:
-				if key == 'date':
-					early_date(lobe['date'])
-					continue
-				if key == "artists":
-					add_artists(lobe[key])
-					continue
-				if key == "title":
-					add_title(lobe[key])
-					continue
-				if key == "duration":
-					add_duration(lobe[key])
-					continue
-				if key == "album":
-					add_album(lobe[key])
-					continue
-				if key == "genre":
-					add_genre(lobe[key])
-					continue
-				if key == "cover":
-					add_cover(lobe[key])
-					continue
-				if key == "performer":
-					add_performer(lobe[key])
-					continue
+				content=lobe[key]
+				if key in tag_action:
+					tag_action[key](content)
+
 				##BUG_OFF(f'{key=}')
 				key_set.add(key)
-				if isinstance(lobe[key],dict):
-					_comb(lobe[key])
-				elif isinstance(lobe[key],list):
-					for item in lobe[key]:
+				if isinstance(content,dict):
+					_comb(content)
+				elif isinstance(content,list):
+					for item in content:
 						if isinstance(item,dict):
 							_comb(item)
-							continue
-						#BUG_OFF(f'{key=} {item=}')
+
 		_comb(brainz)
 		if artist_tags:
-			S['artists']=label_brush(artist_tags,return_scores=True,return_labels=True)
+			S['artists']=label_brush(artist_tags)
 		if title_tags:
-			S['titles']=label_brush(title_tags,True,True)
+			S['titles']=label_brush(title_tags)
 		if album_tags:
 			S['albums']=label_brush(album_tags)
-		if genre_tags:
-			if len(genre_tags)==1:
-				S['genre']=genre_tags.pop()
-			else:
-				genre=label_brush(genre_tags,return_labels=True)[0]
-				S['genre']=genre
 		if performer_tags:
-			S['performers']=label_brush(title_tags,True,True)
+			S['performers']=label_brush(title_tags)
 		if cover_tags:
-			S['covers']=label_brush(cover_tags,return_labels=True)
+			S['covers']=label_brush(cover_tags)
 
 		S['duration'] = duration[0] / duration[1]
 		S['day']=youngest_date['day']
@@ -340,9 +341,9 @@ class BrainzMusic(dict):
 			S['release_date']+=binder+str(youngest_date[key])
 			binder='-'
 
-	def lookup_label(S,label,max=1):
+	def lookup_label(S,label,percent=100):
 		label=label.lower()
-		def lookup_items(label,max):
+		def lookup_items(label,percent):
 			if not label in S:
 				#BUG_OFF(f'BrainzMusic No label "{label}"')
 				return None
@@ -350,17 +351,29 @@ class BrainzMusic(dict):
 				#BUG_OFF(f'BrainzMusic No "{label}" found.')
 				return  None
 			items=[]
-			for item in S[label]:
-				items.append(item[1])
-				max-=1
-				if max < 1:
+			max = 3
+			hurdle=None
+			#BUG_OFF(f'{S[label]=}')
+			for score,item in S[label]:
+				if not hurdle:
+					hurdle = score * percent
+				score100 = score*100
+				#BUG_OFF(f'score: {score100:05} >hurdle:{hurdle:05} {score100 > hurdle} ',end=' ')
+				#BUG_OFF(f' [{score:05}] {item}')
+				if score100 < hurdle:
 					break
+				max -= 1
+				if max < 0:
+					items=items[:1]
+					break
+				items.append(item)
 			return ', '.join(items)
 
 		if label == 'day'     : return S.get(label,None)
 		if label == 'month'   : return S.get(label,None)
 		if label == 'year'    : return S.get(label,None)
 		if label == 'duration': return S.get(label,None)
+		if label == 'genres'  : return S.get(label,None)
 		if label == 'date'    :
 			date=''
 			delim=''
@@ -370,15 +383,9 @@ class BrainzMusic(dict):
 					date=delim+str(add)
 					delim='-'
 			return date
-		for key in 'artists','titles','albums','covers','performers','genres':
+		for key in 'artists','titles','albums','covers','performers':
 			if label == key :
-				if max > 0:
-					return lookup_items(label,max)
-				else:
-					index=-max
-					if label in S:
-						if len(S[label]) > index:
-							return S[label][index][1]
+					return lookup_items(label,percent)
 		#BUG_OFF(f'BrainzMusic Unkown label "{label}"')
 		return None
 		'''

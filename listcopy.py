@@ -153,6 +153,11 @@ parser.add_argument('--throttle',
                     help='Slow down to save the ssd drive "on time,off time" eg 2.5,0.5 is 2.5 secs on 0.5 off.',
                     action='store'
                     )
+#shutil shutil shutil shutil shutil shutil shutil shutil shutil shutil shutil shutil shutil shutil shutil shutil
+parser.add_argument('--shutil',
+                    help='use shultil.copy(src,dst) to copy files.',
+                    action='store_true'
+                    )
 args = parser.parse_args()
 
 def explain()->None:
@@ -323,12 +328,23 @@ def process_filelisting(consignment):
 		replicator.check_destination(mission)
 		verbose(f'replica: "{mission["target_full_path"]}"')
 		listing.save_processing(mission,False)
-		if not replicator.write_chunks_to_file(mission):
-			if 'Error' in mission:
-				bad_file_handle.write(mission["source_file_char"] + ' # ' +  mission["Error"] + '\n' )
-				listing.save_processing(mission,False)
-				verbose(f'Bad file skipped: "{mission["Error"]}".')
-				continue
+		succes=True
+		if 'shutil' in consignment:
+			succes =  replicator.shutil_copy(mission)
+		else:
+			succes = replicator.write_chunks_to_file(mission)
+
+		if 'Error' in mission:
+			bad_file_handle.write(mission["source_file_char"] + f' # {mission["Error"]}\n')
+			listing.save_processing(mission,False)
+			verbose(f'Bad file skipped: "{mission["Error"]}".')
+			continue
+
+		if not succes:
+			raise RuntimeError ('procces file listing got an error without an message.')
+		#DEBUG -------------------------------------------------
+		# if '(' in mission["target_full_path"] :
+		# 	raise RuntimeError ("Parentisis in file name")
 		filesize=str(Suffix(mission["FileSize"]))
 		verbose(f'file size: {filesize}')
 
@@ -395,7 +411,9 @@ def main() -> None:
 		exit(0)
 
 	consignment['verbose']   = args.verbose
-	consignment['dest_path'] = lu.no_end_slash(args.destination)
+	dest_path=os.path.expanduser(args.destination)
+	consignment['dest_path'] = lu.no_end_slash(dest_path)
+
 	consignment['language']  = args.language
 	consignment['input']     = args.input
 
@@ -409,8 +427,9 @@ def main() -> None:
 		consignment['gps_info'] = os.path.expanduser('~/.osm.data')
 	consignment['current_file'] = None
 
-	if args.dry_run : consignment['dry_run'] = True
-	if args.throttle: consignment['throttle']  = args.throttle
+	if args.dry_run : consignment['dry_run']       = True
+	if args.throttle: consignment['throttle']      = args.throttle
+	if args.shutil  : consignment['shutil']        = args.shutil
 	if args.labels  : consignment['store_labels']  = set()
 	target_fs_properties(consignment)
 

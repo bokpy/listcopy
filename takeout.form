@@ -48,44 +48,41 @@ name:literal{""};
 #                                                                                                 #
 ###################################################################################################
 
-audio:/literal{lûd_en_ferskes}
+audio:/literal{"lûd en ferskes"}
      (
      / label{Genre} |
      / label{Genres}  |
      / label{ProviderStyle} |
-     / label{year} |
-     / "samar wat"
+     / "No Style" |
+     #/ label{year} |
+     #/ "samar wat"
      )
      (
-     / label{artists,2} |
+     / label{artists,95} | # all artists that score the percentage of the artist on top
      / label{AlbumArtist} |
-     / "gearstaller " label{Composer}  " skriuwer " label{Author} |
-     / "gearstaller " label{Composer}  |
-     / "skriuwer " label{Author} |
-     / label{names} |
-     lieteral{"ûnklear"}
+     / label{Composer}  |
+     / label{Author} |
+     / label{names,95} |
+     / "undetectedlieteral"
      )
      (
-     / label{albums,1} |
-     / label{covers,1} |
+     / label{albums,97}  |
+     / label{covers,97}  |
      / label{AlbumTitle} |
-     / label{Composer} |
-     / label{Publisher} |
-     / label{titles,-2} |
-     / label{titles,-1} |
-     / "ferskate"
+      ""
      )
      /
      (
-     "-" label{TrackNumber} "- " |
+     "-" label{TrackNumber:02} "- " |
      ""
      )
      (
-     label{Titles,1} |
-     label{title,1} |
+     label{Titles,97} |
+     label{title,1}   |
+     meaning{filename,0.6} |
      meaning{top,0.6} |
      meaning{second} _ meaning{first} |
-     meaning{first} |
+     meaning{first}   |
      label{shortname} |
      literal{"moniker"}
      )

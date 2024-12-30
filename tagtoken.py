@@ -117,6 +117,8 @@ class TagToken(dict):
 			'payload'  : subdirectory name or '' if 'subdir' exceeds path length
 		or
 			'label'    : label to find from knowledge sources as "exiftool", "MusicBrainz", "OpenStreetMap" for now
+			'format'   : optional format string label{tagname:format}
+			'slice'    : optional slice label{tagname[slice]}
 			'payload'  : result of lookup or None
 	"""
 
@@ -198,12 +200,8 @@ class TagToken(dict):
 		global split_value_re
 		type, val = split_value_re.search(value).groups()
 
-		if type == 'literal':
-			if (val[:1] == '"') and (val[-1:] == '"'):
-				val = val[1:-1]
-			if (val[:1] == "'") and (val[-1:] == "'"):
-				val = val[1:-1]
-			S['fixed'] = val
+		if type == 'literal': # remove quotes and save
+			S['fixed'] = re.sub(r"^(['\"])(.*)\1$", r"\2", val)
 			return
 
 		if type == 'subdir':
@@ -217,6 +215,10 @@ class TagToken(dict):
 			# DEBUGPRINT(f'{val=} {slice}')
 			if slice:
 				S['label'], S['slice'] = slice[0]
+				return
+			collon=re.findall(r':.*',val)
+			if collon:
+				S['format'] = collon[0]
 				return
 			S['label'] = val
 			return
@@ -239,12 +241,27 @@ class TagToken(dict):
 		S.pop('mainline', None)
 		S.init_label(value)
 
-	def set_payload(S, val):
-		val=str(val)
+	def __iadd__(S, val):
+		#DEBUGPRINT(f'TagToken.__iadd__({val})')
+		payload=val
 		if 'slice' in S:
-			S['payload'] = eval(f'val{S["slice"]}')
-			return
-		S['payload'] = val
+			payload = eval(f'val{S["slice"]}')
+		elif 'format' in S:
+			format=S['format'][1:]
+			if format[-1:] == 'f':
+				val = float(val)
+			else:
+				val = int(val)
+			payload = "{:{}}".format(val, format)
+		S['payload'] = payload
+		return S
+
+	# def set_payload(S, val):
+	# 	val=str(val)
+	# 	if 'slice' in S:
+	# 		S['payload'] = eval(f'val{S["slice"]}')
+	# 		return
+	# 	S['payload'] = val
 
 	def tie_end(S, tokkie):
 		last_tokkie = S
