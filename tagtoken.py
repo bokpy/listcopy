@@ -210,15 +210,17 @@ class TagToken(dict):
 			return
 
 		if type == 'label':
-			# DEBUGPRINT(f'{val=}')
+			#BUG_OFF(f'{val=}')
 			slice = slice_re.findall(val)
-			# DEBUGPRINT(f'{val=} {slice}')
+			#BUG_OFF(f'{val=} {slice}')
 			if slice:
 				S['label'], S['slice'] = slice[0]
+				#BUG_OFF(f'label: {S["label"]} slice: {S["slice"]}')
 				return
-			collon=re.findall(r':.*',val)
-			if collon:
-				S['format'] = collon[0]
+			collon = val.find(':') # (re.findall(r':.*',val)
+			if -1 < collon :
+				S['label']  = val[:collon]
+				S['format'] = val[collon:]
 				return
 			S['label'] = val
 			return
@@ -242,7 +244,9 @@ class TagToken(dict):
 		S.init_label(value)
 
 	def __iadd__(S, val):
-		#DEBUGPRINT(f'TagToken.__iadd__({val})')
+		#BUG_OFF(f'TagToken.__iadd__({val})')
+		if val == None:
+			return
 		payload=val
 		if 'slice' in S:
 			payload = eval(f'val{S["slice"]}')
@@ -254,7 +258,7 @@ class TagToken(dict):
 				val = int(val)
 			payload = "{:{}}".format(val, format)
 		S['payload'] = payload
-		return S
+		#return S
 
 	# def set_payload(S, val):
 	# 	val=str(val)
@@ -354,10 +358,10 @@ class TagToken(dict):
 		for token in tokens:
 			# print(f'{token=}',end=' -> ')
 			lose_wagon = TagToken(token)
-			if lose_wagon.is_name():
-				DEBUGPRINT(f'\nNAME {str(lose_wagon)}')
+			#if lose_wagon.is_name():
+				#BUG_OFF(f'\nNAME {str(lose_wagon)}')
 			# print(f'{lose_wagon.str_id_type()} <- {token}')
-			print(f'{last_wagon.str_id_type()} next {lose_wagon.str_id_type()}', end='')
+			#BUG_OFF(f'{last_wagon.str_id_type()} next {lose_wagon.str_id_type()}', end='')
 			if lose_wagon.is_fork():
 				print(f' Pushed mainline')
 				fork_push(lose_wagon)
@@ -382,23 +386,23 @@ class TagToken(dict):
 				last_wagon = lose_wagon
 				continue
 			last_wagon = test_and_couple(last_wagon, lose_wagon)
-			if last_wagon.is_name():
-				DEBUGPRINT('\nName got coupled')
+			#if last_wagon.is_name():
+				#BUG_OFF('\nName got coupled')
 
 		# last_wagon=lose_wagon
 		# if not "mainline" in last_wagon:
-		# 	DEBUGPRINT(f'{str(lose_wagon)} is end file name token')
+		# 	#BUG_OFF(f'{str(lose_wagon)} is end file name token')
 		S.schow_trains_recursing()
-		DEBUGPRINT(f'End do_shunting({str(last_wagon)})')
+		#BUG_OFF(f'End do_shunting({str(last_wagon)})')
 
 	def init_from_dict(S, tokdct):
-		# DEBUGPRINT('\ninit_from_dict :',end='')
+		#BUG_OFF('\ninit_from_dict :',end='')
 		# l=len('init_from_dict :')
 		# spaces=''
 		for key, val in tokdct.items():
-			# DEBUGPRINT(f'init {key=}:{val=}')
+			#BUG_OFF(f'init {key=}:{val=}')
 			if val and key in TT_INT_KEYS:
-				# DEBUGPRINT(f'{spaces} {key} {val}')
+				#BUG_OFF(f'{spaces} {key} {val}')
 				S[key] = int(val)
 				# spaces='-'*l
 				continue
@@ -570,7 +574,7 @@ class TagToken(dict):
 	def links_to_ids(S):
 		global TagTokenList
 		for tag in TagTokenList:
-			# DEBUGPRINT(f'links_to_ids {tag.str_short()}')
+			#BUG_OFF(f'links_to_ids {tag.str_short()}')
 			tag._link2id('mainline')
 			tag._link2id('diverge')
 
@@ -582,7 +586,7 @@ class TagToken(dict):
 			return
 		_int = S[key]
 		if not isinstance(_int, int):  # should not happen again delete later
-			# DEBUGPRINT(f'BadBoy "{str(S)}"')
+			#BUG_OFF(f'BadBoy "{str(S)}"')
 			raise ValueError(f'expected int got {type(_int)}')
 			stck = inspect.stack()
 			while stck:
@@ -593,7 +597,7 @@ class TagToken(dict):
 	def ids_to_links(S):
 		global TagTokenList
 		for tag in TagTokenList:
-			# DEBUGPRINT(f'ids_to_links {str(tag)}')
+			#BUG_OFF(f'ids_to_links {str(tag)}')
 			tag._int2link('mainline')
 			tag._int2link('diverge')
 
@@ -620,11 +624,11 @@ class TagToken(dict):
 			print(f'Reading TagToken Tree from "{file_name}" failed.')
 			print(f'{e.errno=} {e.strerror}')
 			exit(e.errno)
-		# DEBUGPRINT(json.dumps(jaysson,indent=4))
+		#BUG_OFF(json.dumps(jaysson,indent=4))
 		for tag_dct in jaysson:
-			# DEBUGPRINT(f'tag_dct red {json.dumps(tag_dct)}')
+			#BUG_OFF(f'tag_dct red {json.dumps(tag_dct)}')
 			new_token = TagToken(tag_dct)
-		# DEBUGPRINT(f'new_token= {str(new_token)}')
+		#BUG_OFF(f'new_token= {str(new_token)}')
 		# TagTokenList.append(new_token)
 		# S.show_listed_str()
 		S.ids_to_links()
@@ -634,9 +638,9 @@ class FileToken(TagToken):
 
 	def __init__(S, mime_and_ext: str):
 		TagToken.__init__(S)
-		#DEBUGPRINT(f'FileToken({mime_and_ext=})')
+		#BUG_OFF(f'FileToken({mime_and_ext=})')
 		S['token'] = TT_FILE
-		# DEBUGPRINT(f'FileToken {category_string}')
+		#BUG_OFF(f'FileToken {category_string}')
 		#S['mime']       =
 		#S['mimes']      = []
 		S['generals']   = []
@@ -656,11 +660,11 @@ class FileToken(TagToken):
 		:param mission:
 		:return: matches True else False
 		"""
-		#BUG_OFF(f'FileToken({mission["mime_general"]}, {mission["FileTypeExtension"]})')
+		#BUG_OFF(f'FileToken({mission["general"]}, {mission["FileTypeExtension"]})')
 		#BUG_OFF(f'{ S["generals"]}, {S["extensions"]}')
 		if 'default' in S["generals"]:
 			return True
-		if mission["mime_general"] in S['generals']:
+		if mission["general"] in S['generals']:
 			return True
 		if mission["extension"] in S['extensions']:
 			return True

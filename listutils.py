@@ -2,16 +2,21 @@
 import time
 import datetime as dt # datetime.datetime gives problems
 import random
-from collections import deque
+from collections import deque,Counter
 import os
+import subprocess
+
 import json
 from icecream import ic
 import sys
 import re
 import traceback
-from time import sleep
 
-from scipy.stats import randint
+FY_MONTHS_SHORT = ['Jan', 'Feb', 'Mrt', 'Apr', 'Mai', 'Jun', 'Jul', 'Aug',
+                   'Sep', 'Okt', 'Nov', 'Des']
+FY_MONTHS_LONG = ['jannewaris', 'febrewaris', 'maart', 'april', 'maaie', 'juny',
+                  'july', 'augustus', 'septimber', 'oktober', 'novimber',
+                  'desimber']
 
 DATA_BEGIN_MARKER=b'-------->Data_Begin_Marker-------->'
 DATA_END_MARKER=b'<--------Data_End_Marker<--------'
@@ -59,6 +64,53 @@ control_chars_str = [
 	"US"    # Unit Separator (31)
 ]
 
+
+# def run_subprocess(prog,file,args=[]):
+def run_subprocess(prog, file, args):
+	# BUG_OFF(f'run_subprocess: {type(file)} "{file}"')
+	# if not os.path.exists(file):
+	# 	DEBUGPRINT(f'Os can not detect file')
+
+	command = [prog] + args
+	if file:
+		command += [file]
+
+	def debug_return_error(meta, error=None):
+		print(f'Error on "{file}"')
+		if meta:
+			print(f'run_subprocess returncode {meta.returncode}')
+			print(f'"{meta.stdout=}"')
+			print(f'"{meta.stderr=}"')
+			return meta.stdout
+		if error:
+			print(f'{error}')
+			return f'{error}'
+		return 'metadata.py run_subprocess debug_return_error() -> Error.'
+
+	def return_error(meta, error=None):
+		return meta.stdout
+
+	try:
+		meta = subprocess.run(command, capture_output=True, text=True)
+		if meta.returncode != 0:
+			return debug_return_error(meta)
+		return meta.stdout
+	except OSError as e:
+		return debug_return_error(None, e)
+
+def get_exiftool_writable_extensions():
+	extensions = run_subprocess('exiftool','', ['-listwf'])
+	lines=extensions.split('\n')
+	joint=''
+	for line in lines:
+		if not line:
+			continue
+		if "Writable" in line:
+			continue
+		joint+=line
+	joint=joint.lower().strip()
+	joint=re.sub(r'\s+',r',.',joint)
+	return joint.split(',')
 
 class LocalTimeString:
 	
@@ -433,6 +485,37 @@ class Base62:
 			value //= S.digs
 		return ret
 
+def remove_repeated_numbers(line:str)->str:
+	numbers=re.findall(r'\d+',line)
+	if not numbers:
+		return line
+	doubles=Counter(numbers).most_common(1)[0]
+	if doubles[1] < 2:
+		return line
+	number= doubles[0]
+	stack=deque(re.findall(r'(\D+)|(\d+)',line))
+	newstr=''
+
+	while True:
+		txt,num = stack.popleft()
+		if txt:
+			newstr+=txt
+			continue
+		if number == num:
+			newstr+=num
+			break
+		newstr+=num
+
+	while stack:
+		txt,num = stack.popleft()
+		if txt:
+			newstr+=txt
+			continue
+		if number == num:
+			continue
+		newstr+=num
+	return newstr
+
 def test_base62():
 	for deca in 1,10,100,1000,10000,100000:
 		start=deca
@@ -534,6 +617,27 @@ def clean_word(word):
 	word=upcase_initial(word)
 	return word.strip()
 
+def brush_tag(tag):
+	if not isinstance (tag,str):
+		DEBUGPRINT(f'brush_tag: {type(tag)} "{tag}"')
+		raise RuntimeError (f'strange type of tag')
+	tag = re.sub(r'\s*\([^\)]+\)\s*','',tag) # remove what is beween parentheses (..)
+	tag = re.sub(r'\s*\[[^]]+\]\s*','',tag) # remove what is beween brackets [..]
+	tag = re.sub(r'(?i)\s(\w{1})\s*(and|&)\s*(\w{1})',r' \1&\3',tag)
+	tag = re.sub(r':\s*.*','',tag)
+	tag = re.sub(r'^\W+|\W+$','',tag)
+	tag = re.sub(r'/','-',tag)
+	tag=re.sub(r'(?i)([A-Z]{1})(-|_)',r'\1 ',tag)
+	tag=re.sub(r'(?i)(-|_)([A-Z]{1})',r' \2',tag)
+	return tag.title()
+
+def word_set(line:str)->str:
+	words=re.findall(r'\w+',line)
+	if not words:
+		return ''
+	wordset=set(words)
+	return ' '.join(wordset)
+
 def test_clean_path(file):
 	with open(file,'rb') as f:
 		data=f.read()
@@ -553,7 +657,11 @@ def main():
 	#test_meters_per_degree()
 	#test_base62()
 	#test_clean_path("/home/bob/python/750_gs_lal.list")
-	test_one_clean_path()
+	#test_one_clean_path()
+	test="-12- en 19 nov 1954 12m keer 13 = 12 "
+	clean=remove_repeated_numbers(test)
+	print(f'"{test}"')
+	print(f'"{clean}"')
 
 if __name__ == '__main__':
 	main()

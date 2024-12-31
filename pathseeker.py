@@ -122,6 +122,8 @@ class PathSeeker:
 			mission["dest_file"]= "Error"
 			return False
 
+		#DBG(S.good_and_evil.exiftool_data,"PathSeeker.compose_path 125")
+
 		path_stack=deque()
 
 		def bares_fruit(tokkie):
@@ -181,7 +183,7 @@ class PathSeeker:
 		# DEBUGPRINT(f'No Polish: "{path}"')
 		# path=polish(path)
 		mission['target_path']=path
-		S.good_and_evil.check_extension(mission)
+		S.good_and_evil.check_basename(mission)
 		return True
 
 # def polish(path):

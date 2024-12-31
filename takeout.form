@@ -18,19 +18,19 @@ JSON:/literal{"json"}/name:subdir{0};
 image,PSD:/"ôfbyldings"/
 
     (
-     label{year}_label{monthstr}  / label{addr:city}_label{addr:street}_label{addr:housenumber} |
-     label{year}_label{monthstr}  / label{addr:city}_label{addr:street} |
-     label{year} / label{addr:city}_label{addr:street} |
+     label{xf_year}_label{xf_monthstr}  / label{addr:city}_label{addr:street}_label{addr:housenumber} |
+     label{xf_year}_label{xf_monthstr}  / label{addr:city}_label{addr:street} |
+     label{xf_year} / label{addr:city}_label{addr:street} |
      label{addr:city}_label{addr:street} _label{addr:housenumber} |
      label{addr:city}_label{addr:street}  |
-     label{year}_label{monthstr} |
-     label{year} |
+     label{xf_year}_label{xf_monthstr} |
+     label{xf_year} |
      literal{"no year no address"}
     )
     (
-    / label{make} " model " label{Model}
-    | / label{make}
-    | / label{model}
+    / label{xf_make} " model " label{xf_Model}
+    | / label{xf_make}
+    | / label{xf_model}
     | literal{""}
     )
 (
@@ -50,37 +50,40 @@ name:literal{""};
 
 audio:/literal{"lûd en ferskes"}
      (
-     / label{Genre} |
-     / label{Genres}  |
-     / label{ProviderStyle} |
+     / label{xf_Genre} |
+     / label{mb_genre}  |
+     / label{xf_ProviderStyle} |
      / "No Style" |
-     #/ label{year} |
+     #/ label{xf_year} |
      #/ "samar wat"
      )
      (
-     / label{artists,95} | # all artists that score the percentage of the artist on top
-     / label{AlbumArtist} |
-     / label{Composer}  |
-     / label{Author} |
-     / label{names,95} |
-     / "undetectedlieteral"
+     / label{mb_artist,95} | # all artists that score the percentage of the artist on top
+     / label{xf_AlbumArtist} |
+     / label{mb_performer} |
+     / label{xf_Composer}  |
+     / label{xf_Author} |
+     / label{mb_name,95} |
+     / "undetected"
      )
      (
-     / label{albums,97}  |
-     / label{covers,97}  |
-     / label{AlbumTitle} |
+     / label{xf_AlbumTitle} |
+     / label{mb_album,97}  |
+     / label{mb_cover,97}  |
+     / label{xf_Publisher} |
       ""
      )
      /
      (
-     "-" label{TrackNumber:02} "- " |
+     "-" label{xf_TrackNumber:02} "- " |
+     "-" label{mb_position:02} "- " |
      ""
      )
      (
-     label{Titles,97} |
-     label{title,1}   |
+     label{mb_title,97} |
+     label{xf_title}   |
      meaning{filename,0.6} |
-     meaning{top,0.6} |
+     meaning{xf_top,0.6} |
      meaning{second} _ meaning{first} |
      meaning{first}   |
      label{shortname} |
@@ -97,21 +100,21 @@ audio:/literal{"lûd en ferskes"}
 
 video,MP4:/literal{filmkes}
     (
- #   / label{year} _ label{monthstr} / label{addr:city} _ label{addr:street} _ label{addr:housenumber}
- # | / label{year} _ label{monthstr} / label{addr:city} _ label{addr:street}
- # | / label{year} _ label{monthstr} / label{addr:city} _ label{addr:street}
+ #   / label{xf_year} _ label{xf_monthstr} / label{addr:city} _ label{addr:street} _ label{addr:housenumber}
+ # | / label{xf_year} _ label{xf_monthstr} / label{addr:city} _ label{addr:street}
+ # | / label{xf_year} _ label{xf_monthstr} / label{addr:city} _ label{addr:street}
  # | / label{addr:city} _ label{addr:street}
- # | / label{year} _ label{monthstr} _ label{day}
+ # | / label{xf_year} _ label{xf_monthstr} _ label{xf_day}
  # | / regex{"r'dit is een regular expression'"}
-    / label{year} _ label{monthstr}
-    | / label{Year}
+    / label{xf_year} _ label{xf_monthstr}
+    | / label{xf_Year}
     | replace{"test"}
     | literal{""}
     )
     (
-      / label{make} " " label{Model}
-    | / label{make}
-    | / label{model}
+      / label{xf_make} " " label{xf_Model}
+    | / label{xf_make}
+    | / label{xf_model}
     | literal{""}
     )
     (
@@ -126,14 +129,14 @@ video,MP4:/literal{filmkes}
 | / label{FileName}
 )
 (
-_label{durationstr}
+_label{xf_durationstr}
 | literal{""}
 )
 name:literal{""};
 
 text:/literal{"skrift"}/
-(  label{year} _ label{mountstr} |
-   label{year} |
+(  label{xf_year} _ label{xf_mountstr} |
+   label{xf_year} |
    literal{""}
 )
 name:label{FileName}

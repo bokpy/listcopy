@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+from cgitb import reset
+from email.errors import NonASCIILocalPartDefect
 import subprocess
 import re
 import os
@@ -9,16 +11,23 @@ from magic.compat import MIME_TYPE
 
 from brainzmusic import BrainzMusic,brush_tag
 from geolocate import OsmTurbo, gps_alpha_to_float
-from collections import deque
+from collections import deque,Counter
 import math
 from icecream import ic as DEBUGCREAM
 
-from metadata import get_mime_etc
+from metadata import read_exif_data
 from tagtoken import TagToken
-from listutils import timestamp2epoch, JDUMP, dict_dump,clean_path
+from listutils import timestamp2epoch, JDUMP, dict_dump,clean_path,remove_repeated_numbers,word_set
 
 DEBUGINPUT = input
 DEBUGPRINT = print
+# def #DBG(dct,mess=''):
+# 	if mess:
+# 		print(mess)
+# 	if not dct :
+# 		print ( "empty dictionary")
+# 		return
+# 	print(f'"general" in dict {"general" in dct}')
 
 camera = {
 	'IMG' : ('Apple iPhone', 'Samsung Galaxy', 'Google Pixel'),
@@ -168,22 +177,6 @@ def extract_meaning(lines, min=0.8):
 		return None
 	return ret
 
-def duration_str(duration):
-	# "Duration": "0:21:06",
-	t = re.findall(r'\d+',duration)
-	if not t:
-		return duration
-	ret = ''
-	i=0
-	hms = ["s", "m", "u"]
-	while t:
-		smh = t.pop()
-		ret = f'{int(smh):02}{hms[i]}{ret}'
-		i+=1
-		if i > 2:
-			break
-	return ret
-
 def exiftool_tags_write(filepath, tags_dict):
 	"""
 	Does not work needs tweaking of exiftool configuration
@@ -247,12 +240,7 @@ class TreeOfKnowledge(dict):
 		dict.__init__(S)
 		S.osm = consignment['OsmTurbo']
 		S.lang = consignment['language']
-
-	# S.tokkie_select={
-	# 	'label'   : TreeOfKnowledge.label_tokkie,
-	# 	'subdir'  : TreeOfKnowledge.subdir_tokkie,
-	# 	'replace' : TreeOfKnowledge.replace_tokkie
-	# }
+		S.comment = 'comment' in consignment
 
 	def reset(S, mission: dict):
 		# clear old files data
@@ -260,133 +248,59 @@ class TreeOfKnowledge(dict):
 			S.pop(key, None)
 		S |= mission
 		S['split_tail_path']  = S["source_tail_char"].split('/')
-		S["exiftool_data"] = {}
-		# JDUMP(S["exiftool_data"] ,'reset start S["exiftool_data"]',261 )
-		S.exiftool_data = S["exiftool_data"] # kind off shorthand
-		if not get_mime_etc(S["source_file_bytes"], S["exiftool_data"]): # runs exiftool -j -all
-			#DEBUGPRINT(f'{type(S["source_file_bytes"])} "{S["source_file_bytes"]}"')
+		S["exiftool_data"]    = xf_data  =  read_exif_data(S["source_file_bytes"])
+		if "Error" in xf_data:
 			mission["Error"] = "Can't open file to get exiftool data"
 			return
-		if "Error" in S.exiftool_data:
-			#DEBUGPRINT('TreeOfKnowledge.reset ERROR')
-			mission["Error"] = S.exiftool_data["Error"]
-			return
-		if "FileTypeExtension" in S.exiftool_data:
-			mission["extension"] = '.' + S.exiftool_data["FileTypeExtension"]
+		# JDUMP(S["exiftool_data"] ,'reset start S["exiftool_data"]',261 )
+		S.exiftool_data = S["exiftool_data"] # kind off shorthand
+		if "xf_filetypeextension" in S.exiftool_data:
+			mission["extension"] = '.' + S.exiftool_data["xf_filetypeextension"]
 		else:
 			root_path,mission["extension"]=os.path.splitext( S["source_tail_char"])
 		mission["extension"] = mission["extension"].lower()
-		S.add_geo_labels_to_exif()
-		S.add_date_labels_to_exif()
-		S.add_duration_tag_to_exif()
-		# JDUMP(S,'after add: geo, date, duration','276')
-		if not "MIMEType" in S.exiftool_data:
-			S.exiftool_data["MIMEType"] = "unclassified/unclassified"
-		MIMEType = S.exiftool_data["MIMEType"]
-		S.groom_exiftool_data()
-		S.exiftool_data["MIMEType"] = MIMEType
-		general, special = S.exiftool_data["MIMEType"].split('/')
-		S.exiftool_data['general'] = mission["mime_general"] = general
-		S.exiftool_data['special'] = special
-		#JDUMP(S.exiftool_data,'S.exiftool_data')
-
-	def groom_exiftool_data(S):
-		"""
-		Remove keys that carry no values add for all keys if
-		not allready lowercase an lowercase key.
-		:return: None
-		"""
-		keys = [key for key in S.exiftool_data.keys()]
-		for key in keys:
-			if not S.exiftool_data[key]:
-				S.exiftool_data.pop(key,None)
-				continue
-			value = str(S.exiftool_data[key])
-			value = brush_tag(value)
-			value=str(value)
-			S.exiftool_data[key]=value
-			if key.islower():
-				continue
-			low_key = key.lower()
-			S.exiftool_data[low_key] = value
-
-	# JDUMP(S.exiftool_data,"TreeOfKnowledge.reset end",290)
-
-	def add_date_labels_to_exif(S):
-		# 2024:09:03 10:51:43"
-		date_labels = ["DateTimeOriginal", "CreateDate", "DateTimeOriginal",
-		               "CreateDate", "CreationDate", "TrackCreateDate",
-		               "VolumeCreateDate", "VolumeModifyDate", "FileModifyDate"]
-		time_stamps = []
-		for datelabel in date_labels:
-			if datelabel in S.exiftool_data.keys():
-				dt = S.exiftool_data[datelabel]
-				if not (isinstance(dt, str) or isinstance(dt, bytes)):
-					#print(f'knowledge 333 {type(dt)} "{dt}"')
-					continue
-				tstamp = timestamp2epoch(dt)
-				if tstamp > 0:
-					time_stamps.append(tstamp)
-		if not time_stamps:
-			return
-		# DEBUGPRINT(f'{time_stamps=}')
-		time_stamps.sort()
-		early = time_stamps[0]
-		nt = time.gmtime(early)
-		S.exiftool_data['year'] = str(nt.tm_year)
-		S.exiftool_data['month'] = str(nt.tm_mon)
-		S.exiftool_data['day'] = str(nt.tm_mday)
-		S.exiftool_data['weekday'] = str(nt.tm_wday)
-		S.exiftool_data['hour'] = str(nt.tm_hour)
-		S.exiftool_data['min'] = str(nt.tm_min)
-		S.exiftool_data['sec'] = str(nt.tm_sec)
-		S.exiftool_data['yearday'] = str(nt.tm_yday)
-		S.exiftool_data['monthstr'] = fy_months_long[nt.tm_mon - 1]
-		return
-
-	def add_geo_labels_to_exif(S):
-		if "GPSLatitude" in S.exiftool_data:
-			S.exiftool_data['lat'] = gps_alpha_to_float(
-				S.exiftool_data["GPSLatitude"])
-			S.exiftool_data['lon'] = gps_alpha_to_float(
-				S.exiftool_data["GPSLongitude"])
-			return S.exiftool_data['lat'], S.exiftool_data['lon']
-		elif "GPSPosition" in S.exiftool_data:
-			lat_asc, lon_asc = S.exiftool_data["GPSPosition"].split(',')
-			S.exiftool_data['lat'] = gps_alpha_to_float(lat_asc)
-			S.exiftool_data['lon'] = gps_alpha_to_float(lon_asc)
-			return S.exiftool_data['lat'], S.exiftool_data['lon']
-		return None, None
-
-	def add_duration_tag_to_exif(S):
-		if not 'Duration' in S.exiftool_data:
-			return
-		S.exiftool_data['durationstr'] = duration_str(S.exiftool_data['Duration'])
-
-	def show_exif_data(S):
-		for key in S.exiftool_data:
-			print(f'{key:>20}:{S.exiftool_data[key]}')
+		mission["general"]   = xf_data["general"]
+		mission["special"]   = xf_data["special"]
+		#DBG(S["exiftool_data"],"TreeOfKnowledge reset EXIF")
 
 	def check_on_key(S, key):
 		if not key in S:
-			return None
+			return NonASCIILocalPartDefect
 		return S[key]
 
-	def check_extension(S, mission):
-		path = mission["target_path"]
-		filename, file_extension = os.path.splitext(path)
-		filename = filename.replace('.','-')
-		# DEBUGPRINT(f'check_extension "{path}" { file_extension=}')
-		mission["target_dir"] = os.path.dirname(path)
-		if len(file_extension) > 1:
-			return
-		ext = mission["extension"]
-		if len(ext) < 2:
-			ext = mission["FileTypeExtension"]
-		mission["target_path"] = filename + ext
+	def check_basename(S, mission):
+		path     = mission["target_path"]
+		dir      = os.path.dirname(path)
+		basename = os.path.basename(path)
+		stem,ext = os.path.splitext(basename)
+		stem     = remove_repeated_numbers(stem).strip()
+		stem     = re.sub(r'\s*\.\s*',r' ',stem)
+		DEBUGPRINT(f'"{stem=}" "{ext=}"')
+		if ext:
+			if len(ext) > 4:
+				ext = '.' + S.exiftool_data["xf_filetypeextension"]
+		target_path = dir + '/' + stem  + ext.lower()
+		# DEBUGPRINT
+		slash = target_path.rfind('/')
+		point = target_path.rfind('.')
+		if point < 0 :
+			raise RuntimeError ('No extension')
+		if slash > point:
+			raise RuntimeError ('No extension . before / in path')
+		#DEBUGPRINT
+		mission["target_path"] = target_path
+		if S.comment:
+			mission['comment']=word_set(S['source_tail_char'])
 
-	# def check_evil_chars(S,path):
-	# 	eval_re=re.compile(r[.,check_evil_chars(path)])
+	def exif_lookup(S,label):
+		label=label.lower()
+		#mess = f'BrainzMusic.lookup_label("{label}",{percent:02}%'.ljust(52)
+		mess = f'TreeOfKnowledge xflookup("{label}")'.ljust(45)
+		res = ''
+		if label in S.exiftool_data:
+			res = f"---> {S.exiftool_data[label]}"
+		#BUG_OFF(f'{mess} {res}')
+		return S.exiftool_data.get(label,None)
 
 	def subdir_tokkie(S, tokkie):
 		i = int(tokkie['subdir'])
@@ -406,22 +320,22 @@ class TreeOfKnowledge(dict):
 
 	def label_tokkie(S, tokkie):
 		label = tokkie['label']
-		#OFF_DEBUG(f'Look for: "{tokkie["label"]:12}"',end='')
-		if  label in S.exiftool_data :
-			tokkie += S.exiftool_data[label]
-			#WAIT(f' found in exif is "{tokkie["payload"]}"')
-			return tokkie['payload']
+		#BUG_OFF(f'Look for: "{tokkie["label"]:12}"',end='')
+		result = S.exif_lookup(label)
+		if result:
 
+			tokkie +=result
+			return result
 		if S.exiftool_data['general'] == 'audio':
-			#OFF_DEBUG(" = Audio ",end='')
 			return S.audio_tokkie(tokkie)
 		#OFF_DEBUG(" No Audio ")
 		if S.exiftool_data['general'] == 'image':
-			# for a image with coordinates "OpenStreetMap" could possibly supply the wanted data
-			latitude, longitude = S.get_coordinates()
-			if latitude == None:  # no coordinates no luck
+			latitude = S.exif_lookup('xf_latitude')
+			if not latitude:
 				return None
+			longitude = S.exif_lookup('xf_longitude')
 			return S.geo_tokkie(tokkie, latitude, longitude, label)
+		return None
 
 	def meaning_tokkie(S, tokkie):
 		if ',' in tokkie['meaning']:
@@ -513,8 +427,7 @@ class TreeOfKnowledge(dict):
 		percent=100
 		if len(splt)==2:
 			percent=int(splt[1])
-		sb=S['Brainz']
-		value=sb.lookup_label(label,percent)
+		value=S['Brainz'].lookup_label(label,percent)
 		tokkie += value
 		return value
 		# tokkie['payload'] = value
@@ -563,30 +476,36 @@ class TreeOfKnowledge(dict):
 			return {}
 		return S['OsmData']
 
-	def exif_knowledge(S):
-		return S.exiftool_data
+	# def exif_knowledge(S):
+	# 	return S.exiftool_data
 
-	def get_coordinates(S):
-		if 'lat' in S.exiftool_data:
-			return S.exiftool_data['lat'], S.exiftool_data['lon']
-		S.exiftool_data['lat'] = S.exiftool_data['lon'] = None
-		if "GPSLatitude" in S.exiftool_data:
-			S.exiftool_data['lat'] = gps_alpha_to_float(
-				S.exiftool_data["GPSLatitude"])
-			S.exiftool_data['lon'] = gps_alpha_to_float(
-				S.exiftool_data["GPSLongitude"])
-		elif "GPSPosition" in S.exiftool_data:
-			lat_asc, lon_asc = S.exiftool_data["GPSPosition"].split(',')
-			S.exiftool_data['lat'] = gps_alpha_to_float(lat_asc)
-			S.exiftool_data['lon'] = gps_alpha_to_float(lon_asc)
-		# DEBUGPRINT(f"get_coordinates calculated {S.exiftool_data['lat']},{S.exiftool_data['lon']}")
-		return S.exiftool_data['lat'], S.exiftool_data['lon']
+	# def get_coordinates(S):
+	# 	if 'lat' in S.exiftool_data:
+	# 		return S.exiftool_data['lat'], S.exiftool_data['lon']
+	# 	S.exiftool_data['lat'] = S.exiftool_data['lon'] = None
+	# 	if "GPSLatitude" in S.exiftool_data:
+	# 		S.exiftool_data['lat'] = gps_alpha_to_float(
+	# 			S.exiftool_data["GPSLatitude"])
+	# 		S.exiftool_data['lon'] = gps_alpha_to_float(
+	# 			S.exiftool_data["GPSLongitude"])
+	# 	elif "GPSPosition" in S.exiftool_data:
+	# 		lat_asc, lon_asc = S.exiftool_data["GPSPosition"].split(',')
+	# 		S.exiftool_data['lat'] = gps_alpha_to_float(lat_asc)
+	# 		S.exiftool_data['lon'] = gps_alpha_to_float(lon_asc)
+	# 	# DEBUGPRINT(f"get_coordinates calculated {S.exiftool_data['lat']},{S.exiftool_data['lon']}")
+	# 	return S.exiftool_data['lat'], S.exiftool_data['lon']
 
 
 def main() -> None:
-	line="S28 april 2008 Spreekwoorden"
-	extracted = guess_meaning(line)
-	print(f'"{extracted}"')
+	path = "G.S. Labiharie/Mijn muziek/Muziek Sjoukje/ALBUMS/Justin Timberlake/Lovestoned/04 Nummer 4"
+	comment = word_set(path)
+	print(path)
+	print(comment)
+
+	# line="S28 april 2008 Spreekwoorden"
+	# extracted = guess_meaning(line)
+	# print(f'"{extracted}"')
+
 	# test = {'Test': 'test data', 'BOB': ' van der BURG'}
 	# exiftool_tags_write('/home/bob/temp/RoosFoto/46981.jpg', test)
 	# pass

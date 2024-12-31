@@ -8,43 +8,20 @@ import datetime
 import time
 import re
 from icecream import ic
-from collections import deque
+from collections import deque,Counter
 
-from filelistiter import DEBUGPRINT
-from listutils import clean_string
+from listutils import FY_MONTHS_LONG, FY_MONTHS_SHORT, brush_tag
 
 ACOUSTID_URL = "https://api.acoustid.org/v2/lookup"
 USER_AGENT_STRING = "listcop.py/0.0.1 ( Bok.at.Git@gmail.com )"
-import re
+
+DEBUGPRINT = print
 
 def JDUMP(dct,title=''):
 	jd=json.dumps(dct,indent=4)
 	if(title): print(title)
 	print(f'{jd}')
 
-def brush_tag(tag):
-	if not isinstance (tag,str):
-		DEBUGPRINT(f'brush_tag: {type(tag)} "{tag}"')
-		raise RuntimeError (f'strange type of tag')
-	# match = re.findall(r'\(|\)',tag)
-	# if match:
-	# 	DEBUGPRINT(f'Parentises in "{tag}" <=====')
-	#tag = re.sub(r'(?i)\s*( and |&)\s*',r'&',tag)
-	tag = re.sub(r'\s*\([^\)]+\)\s*','',tag) # remove what is beween parentheses (..)
-	#BUG_OFF(f'{tag} ')
-	tag = re.sub(r'\s*\[[^\]]+\]\s*','',tag) # remove what is beween brackets [..]
-	#BUG_OFF(f'{tag} ')
-	tag = re.sub(r'(?i)\s(\w{1})\s*(and|&)\s*(\w{1})',r' \1&\3',tag)
-	#BUG_OFF(f'{tag} ')
-	tag = re.sub(r':\s*.*','',tag)
-	#BUG_OFF(f'{tag} ')
-	tag = re.sub(r'^\W+|\W+$','',tag)
-	#BUG_OFF(f'{tag} ')
-	tag = re.sub(r'/','-',tag)
-	#BUG_OFF(f'{tag.title()} ')
-	tag=re.sub(r'(?i)([A-Z]{1})(-|_)',r'\1 ',tag)
-	tag=re.sub(r'(?i)(-|_)([A-Z]{1})',r' \2',tag)
-	return tag.title()
 
 def label_brush(labels)->list:
 	#BUG_OFF(f'\nLabel Brush: {labels} 38')
@@ -155,28 +132,28 @@ def exec_fpcalc(audio_file)   -> dict:
 	return ret
 
 def musicbrainz_request(fingerprint,duration,meta=['releases', 'recordings', 'tracks','compress', 'usermeta','sources']):
-		"""
-			Do a request for MusicBrainz data via "https://api.acoustid.org/v2/lookup"
-			with a with "fpcalc" fingerprint,duration.
-		:param  filepath: file to "fpcalc" fingerprint and request the data
-		:param meta: a list of data fields to retrieve
-		:return: MusicBrainz data dict
-		"""
-		global ACOUSTID_URL,ACOUSTID_CLIENT
-		bee_patient()
-		meta = '+'.join(meta)
-		query = f'''https://api.acoustid.org/v2/lookup?client={ACOUSTID_CLIENT}&duration={duration}&fingerprint={fingerprint}&meta={meta}'''
-		response = requests.get(query)
-		status=response.status_code
-		if status != 200:
-			ic()
-			print(f"BrainzMusic:fingerprint_request error {status}")
-			print(f"{requests.status_codes._codes[status]}")
-			print(f'{query}')
-			return None
-		##BUG_OFF(f'{response.text}')
-		ret=json.loads(response.text)
-		return ret
+	"""
+		Do a request for MusicBrainz data via "https://api.acoustid.org/v2/lookup"
+		with a with "fpcalc" fingerprint,duration.
+	:param  filepath: file to "fpcalc" fingerprint and request the data
+	:param meta: a list of data fields to retrieve
+	:return: MusicBrainz data dict
+	"""
+	global ACOUSTID_URL,ACOUSTID_CLIENT
+	bee_patient()
+	meta = '+'.join(meta)
+	query = f'''https://api.acoustid.org/v2/lookup?client={ACOUSTID_CLIENT}&duration={duration}&fingerprint={fingerprint}&meta={meta}'''
+	response = requests.get(query)
+	status=response.status_code
+	if status != 200:
+		ic()
+		print(f"BrainzMusic:fingerprint_request error {status}")
+		print(f"{requests.status_codes._codes[status]}")
+		print(f'{query}')
+		return None
+	##BUG_OFF(f'{response.text}')
+	ret=json.loads(response.text)
+	return ret
 
 class BrainzMusic(dict):
 
@@ -213,7 +190,8 @@ class BrainzMusic(dict):
 		if not all_data:
 			return
 		#JDUMP(all_data,"BrainzMusic raw")
-		#S.winnow(all_data)
+		# exit("BrainzMusic,__init__")
+		# #S.winnow(all_data)
 		S.comb(all_data)
 		#S.show("init succeded")
 
@@ -232,20 +210,30 @@ class BrainzMusic(dict):
 		print(f'{json.dumps(S,indent=4)}')
 			
 	def comb(S,brainz):
-		# *title
-		# *artist
-		# *year
-		# *filename
-		# *album
-		# *cover
+		# mb_album
+		# mb_artist
+		# mb_cover
+		# mb_date
+		# mb_day
+		# mb_duration
+		# mb_filename
+		# mb_genre
+		# mb_month
+		# mb_performer
+		# mb_title
+		# mb_track_count
+		# mb_year
+
+		combstack=deque()
 		key_set=set()
-		youngest_date={'year':9999,'month':99,'day':99}
+		youngest_date  ={'year':9999,'month':99,'day':99}
 		artist_tags    =deque()
 		title_tags     =deque()
 		album_tags     =deque()
-		#genre_tags     =deque()
+		genre_tags     =deque()
 		performer_tags =deque()
 		cover_tags     =deque()
+		track_count_tags = deque()
 		duration=[0,1]
 
 		def add_duration(val):
@@ -254,6 +242,13 @@ class BrainzMusic(dict):
 				return
 			duration[0]+=val
 			duration[1]+=1
+
+		def add_track_count(tag):
+
+			try:
+				track_count_tags.append(int(tag))
+			except ValueError:
+				pass
 
 		def add_title(tag):
 			if not tag:
@@ -275,8 +270,8 @@ class BrainzMusic(dict):
 			album_tags.append(brush_tag(tag))
 
 		def add_genre(tag):
-			#genre_tags.append(brush_tag(tag))
-			S['genres']=tag
+			#DEBUGPRINT(f'add_genre("{tag}") "{brush_tag(tag)}"') #genre_tags.append(brush_tag(tag))
+			S['mb_genre']=brush_tag(tag)
 
 		def add_cover(tag):
 			cover_tags.append(brush_tag(tag))
@@ -294,55 +289,80 @@ class BrainzMusic(dict):
 					return
 
 		tag_action = {
-			 "date"     :early_date
-			,"artists"  :add_artists
-			,"title"    :add_title
-			,"duration" :add_duration
-			,"album"    :add_album
-			,"genre"    :add_genre
-			,"cover"    :add_cover
-			,"performer":add_performer
+			 "date"        :early_date
+			,"artists"     :add_artists
+			,"title"       :add_title
+			,"duration"    :add_duration
+			,"album"       :add_album
+			,"genre"       :add_genre
+			,"cover"       :add_cover
+			,"performer"   :add_performer
+			,"track_count" :add_track_count
 			}
 
 		def _comb(lobe):
+			# combstack.append(lobe)
+			# print(combstack)
 			for key in lobe:
+				key_set.add(key)
 				content=lobe[key]
+				if not content:
+					continue
 				if key in tag_action:
 					tag_action[key](content)
-
+					continue
+				mb_key= 'mb_' + key.lower()
+				if isinstance(content,str):
+					S[mb_key]=brush_tag(content)
+					continue
+				if isinstance(content,int) or isinstance(content,float):
+					S[mb_key]=str(content)
+					continue
 				##BUG_OFF(f'{key=}')
-				key_set.add(key)
 				if isinstance(content,dict):
 					_comb(content)
 				elif isinstance(content,list):
 					for item in content:
 						if isinstance(item,dict):
 							_comb(item)
+			#combstack.pop()
 
 		_comb(brainz)
-		if artist_tags:
-			S['artists']=label_brush(artist_tags)
-		if title_tags:
-			S['titles']=label_brush(title_tags)
-		if album_tags:
-			S['albums']=label_brush(album_tags)
-		if performer_tags:
-			S['performers']=label_brush(title_tags)
-		if cover_tags:
-			S['covers']=label_brush(cover_tags)
+		if artist_tags:		S['mb_artist']      = label_brush(artist_tags)
+		if title_tags:		S['mb_title']       = label_brush(title_tags)
+		if album_tags:		S['mb_album']       = label_brush(album_tags)
+		if performer_tags:	S['mb_performer']   = label_brush(title_tags)
+		if cover_tags:		S['mb_cover']       = label_brush(cover_tags)
+		if track_count_tags:S['mb_track_count'] = Counter(track_count_tags).most_common(1)[0][0]
 
-		S['duration'] = duration[0] / duration[1]
-		S['day']=youngest_date['day']
-		S['month']=youngest_date['month']
-		S['year']=youngest_date['year']
+		S['mb_duration'] = duration[0] / duration[1]
+		S['mb_day']      =youngest_date['day']
+		S['mb_month']    =youngest_date['month']
+		S['mb_year']     =youngest_date['year']
 		binder=''
-		S['release_date']=''
+		S['mb_release_date']=''
+		S['mb_date']=''
+		S['mb_short_date']=''
+		if S["mb_month"] > 12:
+			return
 		for key in 'day','month','year':
-			S['release_date']+=binder+str(youngest_date[key])
+			short = long = plus = f'{youngest_date[key]:02}'
+			if key == 'mb_month':
+				monthnumber=youngest_date[key]
+				#BUG_OFF(f'{key} number {monthnumber}')
+				long   = FY_MONTHS_LONG [monthnumber]
+				short  = FY_MONTHS_SHORT[monthnumber]
+			S['mb_release_date'] += binder + plus
+			S['mb_date']         += binder + long
+			S['mb_short_date']   += binder + short
 			binder='-'
 
 	def lookup_label(S,label,percent=100):
 		label=label.lower()
+		mess = f'BrainzMusic.lookup_label("{label}",{percent:02}%)'.ljust(45)
+		# if label in S:
+		# 	DEBUGPRINT(f'{mess} -> {S[label]}')
+
 		def lookup_items(label,percent):
 			if not label in S:
 				#BUG_OFF(f'BrainzMusic No label "{label}"')
@@ -369,22 +389,11 @@ class BrainzMusic(dict):
 				items.append(item)
 			return ', '.join(items)
 
-		if label == 'day'     : return S.get(label,None)
-		if label == 'month'   : return S.get(label,None)
-		if label == 'year'    : return S.get(label,None)
-		if label == 'duration': return S.get(label,None)
-		if label == 'genres'  : return S.get(label,None)
-		if label == 'date'    :
-			date=''
-			delim=''
-			for d in 'day','month','year':
-				add = S.get(d,None)
-				if add:
-					date=delim+str(add)
-					delim='-'
-			return date
-		for key in 'artists','titles','albums','covers','performers':
-			if label == key :
+		for tag in 'mb_day','mb_month','mb_year','mb_duration','mb_genre','mb_release_date','mb_date','mb_short_date':
+			if tag == label:
+				return S.get(label, None)
+		for tag in 'mb_artist','mb_title','mb_album','mb_cover','mb_performer':
+			if tag == label :
 					return lookup_items(label,percent)
 		#BUG_OFF(f'BrainzMusic Unkown label "{label}"')
 		return None
@@ -442,6 +451,8 @@ def main() -> None:
 	nosong = "/home/bob/temp/Users/Sander/Desktop/Foto's/2015.wav"
 
 if __name__ == '__main__':
-	mb=BrainzMusic("/home/bob/usb/Media/G.S. Labiharie/Mijn muziek/Muziek Sjoukje/ALBUMS/Justin Timberlake/Lovestoned/04 Nummer 4.wma")
+	# mb=BrainzMusic("/home/bob/usb/Media/G.S. Labiharie/Mijn muziek/Muziek Sjoukje/ALBUMS/Justin Timberlake/Lovestoned/04 Nummer 4.wma")
+	# JDUMP(mb)
+	mb=BrainzMusic("/home/bob/usb/Media/G.S. Labiharie/Mijn muziek/Muziek Sjoukje/ALBUMS/Scarlet's Walk/03 Wednesday.wma")
 	JDUMP(mb)
 	#main()

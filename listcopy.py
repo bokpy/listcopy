@@ -9,8 +9,7 @@ import json
 import time
 import signal
 import psutil
-import listutils as lu
-from listutils import JDUMP,Suffix
+from listutils import JDUMP,Suffix,run_subprocess,no_end_slash,get_exiftool_writable_extensions
 
 from geolocate    import OsmNode, OsmTurbo
 from filelistiter import InputFileIterator
@@ -137,6 +136,11 @@ parser.add_argument('-g', '--gps-info',
                     default='',
                     metavar='',
                     nargs='?'
+                    )
+# comment comment comment comment comment comment comment comment comment
+parser.add_argument('--comment',
+                    help='Write set of words of the source path as a meta comment to the destination if possible.',
+                    action='store_true'
                     )
 #d d d d d d d d d d d d d d d d d d
 parser.add_argument('-d', '--dry-run',
@@ -284,7 +288,9 @@ def process_filelisting(consignment):
 	listing    = InputFileIterator(consignment)
 	replicator = Replicator(consignment)
 	osmturbo   = OsmTurbo(consignment)
-
+	writable  = ''
+	if 'comment' in consignment:
+		writable = get_exiftool_writable_extensions()
 	bad_file   = consignment['bad_file']
 	try:
 		if os.path.exists(bad_file):
@@ -319,6 +325,8 @@ def process_filelisting(consignment):
 			continue
 		mission["target_full_path"] = os.path.join(consignment["dest_path"] + mission["target_path"])
 		if 'dry_run' in consignment:
+			print(f'source: "{mission["source_path_char"]}"')
+			print(f'target: "{mission["target_full_path"]}"')
 			if 'store_labels' in consignment:
 				keys=[k for k in pathseeker.knowledege().keys()]
 				#DEBUGPRINT(f'{keys=}')
@@ -343,10 +351,14 @@ def process_filelisting(consignment):
 		if not succes:
 			raise RuntimeError ('procces file listing got an error without an message.')
 		#DEBUG -------------------------------------------------
+		if 'comment' in mission and (mission["extension"] in writable):
+			DEBUGPRINT(f'{mission["comment"]}')
+			run_subprocess('exiftool',mission["target_full_path"],[f'-comment={mission["comment"]}'])
+
 		# if '(' in mission["target_full_path"] :
 		# 	raise RuntimeError ("Parentisis in file name")
 		filesize=str(Suffix(mission["FileSize"]))
-		verbose(f'file size: {filesize}')
+		verbose(f'Bytes copied: {filesize}')
 
 	if 'store_labels' in consignment:
 		for label in consignment['store_labels']:
@@ -412,7 +424,7 @@ def main() -> None:
 
 	consignment['verbose']   = args.verbose
 	dest_path=os.path.expanduser(args.destination)
-	consignment['dest_path'] = lu.no_end_slash(dest_path)
+	consignment['dest_path'] = no_end_slash(dest_path)
 
 	consignment['language']  = args.language
 	consignment['input']     = args.input
@@ -431,6 +443,7 @@ def main() -> None:
 	if args.throttle: consignment['throttle']      = args.throttle
 	if args.shutil  : consignment['shutil']        = args.shutil
 	if args.labels  : consignment['store_labels']  = set()
+	if args.comment : consignment['comment']       = True
 	target_fs_properties(consignment)
 
 	process_filelisting(consignment)

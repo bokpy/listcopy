@@ -51,11 +51,11 @@ mission={
 # values set in PathSeeker.compose_path -> TreeOfKnowledge.reset
     "source_tail_path"   : "filepath after "source_scanned_dir""
     "Error"              : "An error message set if "exiftool" reports an error."
-    "mime_general"       : "General mime type reported by "exiftool"."
+    "general"            : "General mime type reported by "exiftool"."
     "extension"          : "extension from the "source_file_char"."
     "FileTypeExtension"  : "extension as reported by "exiftool"."
     
-# values set in PathSeeker.compose_path -> TreeOfKnowledge.check_extension
+# values set in PathSeeker.compose_path -> TreeOfKnowledge.check_basename
 
 "target_full_path" = "target_dir" + "target_path"
     
