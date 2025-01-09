@@ -1,121 +1,177 @@
 #!/usr/bin/python3
 import os
-#import keyboard needs root
+from os import scandir
 import shutil
-#from fileinput import filename
-
-import psutil
+import atexit
 import argparse
 import sys
-import re
-import pathlib
+import json
 import time
 import signal
-import extensions as ext
+import psutil
+from listutils import JDUMP,Suffix,run_subprocess,no_end_slash,get_exiftool_writable_extensions
 
+from geolocate    import OsmNode, OsmTurbo
+from filelistiter import InputFileIterator
+from pathseeker   import PathSeeker
+from replicator   import Replicator
+from pathsyntax   import syntax_text
+
+from icecream import ic
+
+#DEBUGRETURN=return  return is not a function. This stops the script here.
 DEBUGPRINT=print
+DEBUGEXIT=exit
 
-ok_file=os.path.join(os.path.expanduser('~'),'listcopy.ok')
-bad_file=os.path.join(os.path.expanduser('~'),'listcopy.bad')
-processed_file=None
-FILTEROUT=['/Cookies/','/Microsoft/','/Windows/','/Cache','#.*#$','\.lnk$',
-           '\.tmp$','\.log$','\.err$','~$','/AppData/',
-           '\.ini$','/NTUSER.DAT',]
+def eat(*args):
+	pass
+verbose=eat # verbose = print for verbose
+
+processed_file='/No Such File ' + time.ctime() # for signal handler to fail
+
 #skiplist=None
-DATA_BEGIN_MARKER='<-DATA_BEGIN_MARKER->'
-DATA_END_MARKER='<-DATA_END_MARKER->'
-CONT='<CONTINUE>'
 MIN_SECS=60
 HOUR_SECS=3600
 MEGA=1024**2
 KILO=1024
-WorkPath='' # path for reading source listing or copy the files to
+#WorkPath='' # path for reading source listing or copy the files to
 INCLUDE_RE=EXCLUDE_RE=None
 DIFFER_PERCENTAGE=5 # percentage of speed difference when the chunk size is
 # recalculated
-MAXCHUNK=16*1024*1024
-FsMaxFileSize=1024*1024
-FsBlockSize=1024
+
 
 def handler(signum, frame):
 	global processed_file
 	signame = signal.Signals(signum).name
-	#DEBUGPRINT('\n\nINTERUPTED by a SIGNAL.')
+	#DEBUGPRINT('\n\nINTERRUPT by a SIGNAL.')
 	if processed_file and os.path.exists(processed_file):
 		os.remove(processed_file)
-		#DEBUGPRINT (f'removed partly copied "{processed_file}"')
-	#DEBUGPRINT(f'Signal handler called with signal {signame} ({signum})')
+		print (f'removed partly copied "{processed_file}"')
+	print(f'Signal handler called with signal {signame} ({signum})')
 	sys.exit(signum)
 
 signal.signal(signal.SIGINT, handler)
 
 ##################  Argument parsing  ###################
+
+call_name = os.path.basename(__file__)
+
 parser = argparse.ArgumentParser(
-	prog='listcopy.py',
-	description='Create a list of files matching some criteria.'
-	            ' Then the files can be copied using this list.'
-	            ' Copying can be interrupted and restarted with the same or an other destination '
-	            'directory',
-	epilog='Have Fun'
-)
+prog=call_name,
+description=f'Copy a with "listfiles.py" created list of files to destination directory. '
+            f'Picture files with exif data can be placed in subdirectories named based on this data. '
+            f'Copying can be interrupted at any moment with CTRL+C or a program error. '
+            f'The copying can be restarted where it left off to the same or an other destination. ',
 
-parser.add_argument('-v', '--verbose', help='Verbose output.',
-                    action='store_true')
-parser.add_argument('-u', '--usage', help='How to use.',
-                    action='store_true')
-parser.add_argument('-s', '--source', help='Generate a source files list.',action='store_true')
-parser.add_argument('-f', '--filter', help=f'don\'t copy {FILTEROUT}',
-                    action='store_true')
-parser.add_argument('-S','--skip', nargs='*', help='filepaths containing a '
-                                                  'match with one of these '
-                                                'regular expressions are skipped')
-parser.add_argument('-m', '--match',
-	help='Only filenames matching one of the regular expressions are listed.',
-	action='store',
-	nargs='*')
-
-#Greater or Lesser
-parser.add_argument('-g', '--greater',
-	help='Only files greater than this in mega bytes or use K for Kilo bytes like 32.8K',
-	action='store',
-	nargs=1)
-
-parser.add_argument('-l', '--lesser',
-	help='Only files lesser than this in mega bytes or use K for Kilo bytes like 32.8K',
-	action='store',
-	nargs=1)
-
-parser.add_argument('-x','--extension',
-                    help='select files by extensions  ',
-                    choices=ext.ext_classes.keys(),
-                    nargs='*',
+epilog='Have Fun'
+	)
+parser.add_argument('destination',
+                    help="The directory to copy the files to.",
+                    metavar='',
+                    nargs='?',
                     action='store'
-)
-
+                    )
+# 'u u u u u u u u u u u u u u u u '
+parser.add_argument('-u', '--usage',
+                    help='How to use.',
+                    action='store_true'
+                    )
+#v v v v v v v v v v v v v v v v
+parser.add_argument('-v', '--verbose',
+                    help='Verbose output.',
+                    action='store_true'
+                    )
+#i i i i i i i i i i i i i i i i
+parser.add_argument('-i', '--input',
+                    help='Read the filelisting from this file.',
+                    action='store',
+                    metavar='',
+                    nargs='?'
+                    )
+#t t t t t t t t t t t t t t t t
 parser.add_argument('-t', '--todo',
-	help='print the files that still need to bee copied of the file-list-file.',
-	action='store_true')
- 
-parser.add_argument('Path' ,
-                    help = f'Path to the source or destination directory {CONT} '
-                           f'to continue copying to the same directory',
-                    action='store', nargs='?')
-
+                    help='print the files that still need to bee copied of the filelisting file.',
+                    action='store_true'
+                    )
+#p p p p p p p p p p p p p p p p
+parser.add_argument('-p', '--post-it',
+                    help='File stam for post-it files stem.ok and stem.bad default "~/listcopy". '
+                         'Delete these files to start to copy from the beginning again. ',
+                    action='store',
+                    default='~/listcopy',
+                    metavar='',
+                    nargs='?'
+                    )
+#s s s s s s s s s s s s s s s s s s
+parser.add_argument('-s', '--substitute',
+                    help=f'Assemble a destination path according to a list of expressions. '
+						f'Enter "help" for a detailed explanation. ',
+                    nargs='?',
+                    metavar='file or expression',
+                    action='store'
+                    )
+#j j j j j j j j j j j j j j j j
+parser.add_argument('-j', '--json',
+						 help=f'Save the compiled --substitute string or file to a json file.',
+						 nargs='?',
+						 metavar='file.json',
+						 action='store'
+                    )
+#l l l l l l l l l l l l l l l l
+#langs='","'.join(lu.LANGUAGES.keys())
+langs='Not Implemented'
+parser.add_argument('-l', '--language',
+                    help=f'Language for days and months "{langs}".',
+                    #choices=lu.LANGUAGES.keys(),
+                    nargs='?',
+                    metavar='',
+                    default='eng',
+                    action='store'
+                    )
+#g g g g g g g g g g g g g g g g g g g
+parser.add_argument('-g', '--gps-info',
+                    help='File to read and write GPS, "OpenStreetMap, Overpass" data.',
+                    action='store',
+                    default='',
+                    metavar='',
+                    nargs='?'
+                    )
+# comment comment comment comment comment comment comment comment comment
+parser.add_argument('--comment',
+                    help='Write set of words of the source path as a meta comment to the destination if possible.',
+                    action='store_true'
+                    )
+#d d d d d d d d d d d d d d d d d d
+parser.add_argument('-d', '--dry-run',
+                    help='Just print the source and destination files.',
+                    action='store_true'
+                    )
+#random_pick random_pick random_pick random_pick random_pick random_pick random_pick random_pick
+parser.add_argument('-r', '--random_pick',
+                    help='Copy at random the given number of files from a listing to the destination directory.',
+                    nargs='?',
+                    action='store'
+                    )
+#labels labels labels labels labels labels labels labels
+parser.add_argument('--labels',
+                    help='Show the labels that are usable for the files in the listing at the end.',
+                    action='store_true'
+                    )
+#throttle throttle throttle throttle throttle throttle throttle throttle throttle throttle throttle
+parser.add_argument('--throttle',
+                    help='Slow down to save the ssd drive "on time,off time" eg 2.5,0.5 is 2.5 secs on 0.5 off.',
+                    action='store'
+                    )
+#shutil shutil shutil shutil shutil shutil shutil shutil shutil shutil shutil shutil shutil shutil shutil shutil
+parser.add_argument('--shutil',
+                    help='use shultil.copy(src,dst) to copy files.',
+                    action='store_true'
+                    )
 args = parser.parse_args()
 
-def HowTo()->None:
-	print ('Make a slow but failsafe copy of directories e.g. to usb thumb drives.')
-	print ('\nlistcopy.py -s path > file_with_sourcefiles')
-	print ('to create file with a list of the source files')
-	print ('for example do "cat file_with_sourcefiles | grep -v \'Remove '
-	       'these\' > filterd_sourcefiles"')
-	print ('for --skiplist syntax see: '
-	       '"https://docs.python.org/3/howto/regex.html#regex-howto"')
-	print ("for example: --skiplist '.ico$' '.lnk$' '.log$' '.tmp$'")
-	print (f'Successful copied files are listed in "{ok_file}" and skipped '
-	       f'next try')
-	print ('listcopy destination_dir < sourcefilelist')
-	print ('To start or restart copying')
+def explain()->None:
+	with open('README','r') as rm:
+		print (rm.read())
 	
 def time_delta_str(start, end) -> str:
 	global MIN_SECS, HOUR_SECS
@@ -188,508 +244,267 @@ def list_to_do():
 		os.renames(ok_file,f'{ok_file}.{int(time.time()) // 60}')
 	return 0
 
-def create_incl_excl_regs():
-	global INCLUDE_RE,EXCLUDE_RE,FILTEROUT
-	excl_str=''
-	skip_str=''
-	filter_str=''
-	incl_str=''
-	ext_str=''
-	match_str=''
-	incl_list=[]
-	if args.filter:
-		filter_str="|".join(FILTEROUT)
-	if args.skip:
-		skip_str="|".join(args.skip)
-	
-	if filter_str and skip_str:
-		excl_str=skip_str + '|' + filter_str
-	else:
-		excl_str=skip_str + filter_str
-	if len(excl_str)>0:
-		EXCLUDE_RE=re.compile(excl_str)
-	else:
-		EXCLUDE_RE=None
-	if args.extension:
-		#DEBUGPRINT(args.extension)
-		for key in args.extension:
-			#DEBUGPRINT(ext.ext_classes[key])
-			incl_list=incl_list + ext.ext_classes[key]
-		ext_str=r'\.(' + ext.string_extensions(incl_list)+ r')$'
-		#DEBUGPRINT (ext_str)
-		#DEBUGPRINT(incl_list)
-	if args.match:
-		#DEBUGPRINT (f'{args.match}')
-		match_str="|".join(args.match)
-		#DEBUGPRINT (f'{match_str=}')
-		
-	if ext_str and match_str:
-		incl_str= match_str + '|' + ext_str
-	else:
-		if match_str:
-			incl_str=match_str
-		else:
-			incl_str=ext_str
-	if len(incl_str)>0:
-		INCLUDE_RE=re.compile(incl_str,flags=re.IGNORECASE)
-	else:
-		INCLUDE_RE=None
-	return INCLUDE_RE,EXCLUDE_RE
-	
-def kilo_mega(strval)->int:
-	global KILO,MEGA
-	if strval[-1:].upper() == 'K':
-		val=float(strval[:-1])
-		return int(val*KILO)
-	return int(float(strval)*MEGA)
+def close_bad(file):
+	print(f'Closing "{file.name}"')
+	file.close()
 
-def list_sources()-> int:
-	"""List files to stdout and return the count."""
-	global WorkPath,ok_file,DATA_BEGIN_MARKER,DATA_END_MARKER
-	global args
-	
-	max_file_size=MEGA*MEGA
-	min_file_size=-1
-	do_size_check=False
-	if args.lesser:
-		max_file_size=kilo_mega(args.lesser[0])
-		do_size_check=True
-	if args.greater:
-		min_file_size=kilo_mega(args.greater[0])
-		do_size_check=True
-		
-	in_re,out_re=create_incl_excl_regs()
-	#DEBUGPRINT(in_re,out_re)
-	if os.path.exists(ok_file):
-		os.remove(ok_file)
-	
-	if not os.path.exists(WorkPath):
-		print(f'"{WorkPath}" does not exist.')
-		exit(1)
-		
-	count = 0
-	
-	print(DATA_BEGIN_MARKER)
-	print(WorkPath)
-	try:
-		for dirpath, dirnames, filenames in os.walk(WorkPath):
-			for filename in filenames:
-				fullpath=os.path.join(dirpath,filename)
-				if pathlib.Path(fullpath).is_symlink():
-					continue
-				if out_re:
-					if out_re.search(fullpath):# skip it
-						continue
-				if in_re:
-					if not in_re.search(fullpath):
-						continue
-				if do_size_check:
-					st=os.stat(fullpath)
-					file_size=st.st_size
-					#DEBUGPRINT(f'[{format_bytesize(file_size,8)}] ',end='')
-					if file_size>max_file_size:
-						continue
-					if file_size < min_file_size:
-						continue
-				count+=1
-				print(fullpath)
-				
-	except OSError as err:
-		print(f'OSError : {type(err)} {err.args}')
-		exit(1)
-	except TypeError as err:
-		print(f'TypeError : "did you give a valid source directory?')
-		exit(1)
-	print(DATA_END_MARKER)
-	print (f'{count} files selected.')
-	print (f'Excluding {out_re}')
-	print (f'Including {in_re}')
-	print(f'{max_file_size=}')
-	print(f'{min_file_size=}')
-	return count
-	
-def ErrorExit(e,message=None)->None:
-	print(f"I/O error ({e.errno}): {e.strerror}")
-	if message:
-		print(message)
-	# I/O error (28): No space left on device
-	if e.errno == 28 :
-		now=time.ctime()
-		shutil.copy(ok_file,ok_file + '.' + now )
-		print('You can try to write the remaining files to an other '
-	      'medium')
-	exit(1)
-	
-	# chunk size optimising
-	
-def differ_percentage(a,b):
-	"""gives a the percentage the smallest divers from the biggest."""
-	a = abs(a)
-	b = abs(b)
-	if a > b :
-		fraction = (b/a)*100
-	else:
-		fraction = (a/b)*100
-	return 100.0 - fraction
-
-def format_bytesize(size_in_bytes,strlen=0):
-	"""Make a compact human readable string of byte sizes."""
-	units = ["B", "KB", "MB", "GB", "TB"]
-	size = size_in_bytes
-	unit_index = 0
-
-	# Loop totdat de grootte kleiner is dan 1024 of de hoogste eenheid is bereikt
-	
-	while size >= 1024 and unit_index < len(units) - 1:
-		size /= 1024
-		unit_index += 1
-
-	# Return de grootte als een string met twee decimalen en de juiste eenheid
-	ret = f"{size:.2f}{units[unit_index]}"
-	if strlen:
-		return ret.rjust(strlen,' ')
-	return ret
-
-chunk_size=0
-chunk_got_bigger=True
-copy_speed=1.0
-prev_copy_speed=copy_speed
-
-def double_chunk(chunk)->int:
-	global MAXCHUNK,chunk_got_bigger
-	chunk+=chunk
-	chunk_got_bigger=True
-	if chunk >= MAXCHUNK:
-		return MAXCHUNK
-	return chunk
-
-def decrease_chunk(chunk,fraction=4)->int:
-	"""Make the chunks a fraction smaller so 2 halves 4 substracs 1/4."""
-	global chunk_got_bigger
-	chunk_got_bigger=False
-	cut_size=chunk // fraction
-	chunk-=cut_size
-	chunk-= chunk % FsBlockSize
-	if chunk <= FsBlockSize:
-		return FsBlockSize
-	return chunk
-
-AverageChunk=0
-ChunkCount=0
-def average_chunk_size(chunk_size):
-	global AverageChunk,ChunkCount
-	new_count=ChunkCount + 1
-	muliplier=ChunkCount/new_count
-	delta=chunk_size/new_count
-	AverageChunk=(AverageChunk*muliplier) + delta
-	ChunkCount=new_count
-	return AverageChunk
-
-# end chunk size optimising
-
-def write_chunks_to_file(input_file_path, output_file_path ):
-	#DEBUGPRINT(f'BKC {input_file_path} \n {output_file_path}')
-	global FsMaxFileSize
-	global chunk_size,chunk_got_bigger,copy_speed,prev_copy_speed
-	bytes_done=0
-	file_size = os.path.getsize(input_file_path)
-	if args.verbose:
-		print(f'filesize: {format_bytesize(file_size)}')
-	if file_size > FsMaxFileSize:
-		print(f'->{input_file_path}<-')
-		print(f'{FsMaxFileSize} {file_size} ')
-		return OSError(27,'Too Big for Filesystem.')
-		
-	with open(input_file_path, 'rb') as input_file:
-		while True:
-			start_time = time.time()
-			chunk = input_file.read(chunk_size)
-			if not chunk:
-				break
-
-			try:
-				with open(output_file_path, 'ab') as output_file:
-					output_file.write(chunk)
-			except OSError as e:
-				print('write_chunks_to_file Failed')
-				return e
-			end_time = time.time()
-			bytes_copied=len(chunk)
-			bytes_done+=bytes_copied
-			time_used = end_time - start_time
-			copy_speed = bytes_copied / time_used
-			speed_difference_percent = differ_percentage(copy_speed ,
-			                                        prev_copy_speed)
-			speed='='
-			
-			if speed_difference_percent > DIFFER_PERCENTAGE:
-				if copy_speed > prev_copy_speed:
-					speed='+'
-					if chunk_got_bigger:
-						chunk_size = double_chunk(chunk_size)
-					else:
-						chunk_size = decrease_chunk(chunk_size)
-				else:
-					speed='-'
-					if chunk_got_bigger:
-						chunk_size = decrease_chunk(chunk_size)
-					else:
-						chunk_size = double_chunk(chunk_size)
-			average_chunk_size(chunk_size)
-			prev_copy_speed = copy_speed
-			percent_done= (100*bytes_done)/file_size
-			if args.verbose:
-				print( "\r" +
-						f'{speed}' +
-						f'{speed_difference_percent:5.2f}% ' +
-						f'[{format_bytesize(AverageChunk)}] ' +
-						format_bytesize(copy_speed,9)  + '/s ' +
-						format_bytesize(file_size-bytes_done) +
-						' >[' + format_bytesize(chunk_size) + ']> ' +
-						format_bytesize(bytes_done) +
-						f' {percent_done:.2f}% done.' +
-						"     " ,
-						end=''
-					)
-	if args.verbose:print()
-	return None
-
-# def ShutilCopyFile(source_file,dest_file):
-# 	try:
-# 		shutil.copyfile(source_file,dest_file,follow_symlinks=False)
-# 		#DEBUGPRINT ('os.sync()',end=' ')
-# 		os.sync()
-# 	except IOError as e:
-# 		return e
-# 	return None
-
-def BadFile(nasty,nasty_dest,error):
-	global SourcePath
-	print (f'/nError:{error.errno} "{error.strerror}"')
-	if os.path.exists(nasty_dest):
-		os.remove(nasty_dest)
-		print (f'Removed "{nasty_dest}"')
-	
-	if not os.path.exists(bad_file): # if no bad_file write a header so it
-	# later can bee used as an copy.list file
-		with open(bad_file,'w') as bad:
-			bad.write(DATA_BEGIN_MARKER + '\n')
-			bad.write(SourcePath + '\n')
-
-	with open(bad_file,'a') as bad:
-		bad.write(nasty + '\n')
-	if error.errno == 75: #
-		return
-	if error.errno == 27: # Error:27 "File too large"
-		return
-	ErrorExit(error)
-
-def target_fs_properties(destination_path):
-	"""Determine the maximum file size and the block size for the
-	filesystem "path" is on.
-	returns the global FsMaxFileSize,FsBlockSize,
-	FsBlockSize"""
-	global FsMaxFileSize,FsBlockSize,chunk_size
+def target_fs_properties(consignment: dict):
+	"""
+	Determine the maximum file size and the block size for the
+	filesystem consignment["dest_path"] is on.
+	and set values for:
+		FsMaxFileSize
+		FsBlockSize
+	"""
 	fs_max_file = {
-	'fat16': 2 * 1024**3,    # 2 GB in bytes
-	'vfat': 4 * 1024**3,    # 4 GB in bytes
-    'fat32': 4 * 1024**3,    # 4 GB in bytes
-    'exfat': 16 * 1024**6,   # 16 EB in bytes
-    'ntfs': 16 * 1024**4,    # 16 TB in bytes
-    'hfs_plus': 8 * 1024**6, # 8 EB in bytes
-    'apfs': 8 * 1024**6,     # 8 EB in bytes
-    'ext4': 16 * 1024**4,     # 16 TB in bytes
-    'btrfs': 16 * 1024**6,    # 16 EB in bytes
-    'xfs': 8 * 1024**6,       # 8 EB in bytes
-    'reiserfs': 8 * 1024**6,  # 8 EB in bytes
-    'jfs': 4 * 1024**6,       # 4 EB in bytes
-    'ufs': 2**32 - 1,         # 4 GB in bytes (with 32-bit limit)
-    'zfs': 16 * 1024**6 ,      # 16 EB in bytes
-	'f2fs': 16 * 1024**4,
-	'udf': 16 * 1024**6 ,
-}
-	
-	partitions=psutil.disk_partitions()
+		'fat16'   : 2 * 1024 ** 3,  # 2 GB in bytes
+		'vfat'    : 4 * 1024 ** 3,  # 4 GB in bytes
+		'fat32'   : 4 * 1024 ** 3,  # 4 GB in bytes
+		'exfat'   : 16 * 1024 ** 6,  # 16 EB in bytes
+		'ntfs'    : 16 * 1024 ** 4,  # 16 TB in bytes
+		'hfs_plus': 8 * 1024 ** 6,  # 8 EB in bytes
+		'apfs'    : 8 * 1024 ** 6,  # 8 EB in bytes
+		'ext4'    : 16 * 1024 ** 4,  # 16 TB in bytes
+		'btrfs'   : 16 * 1024 ** 6,  # 16 EB in bytes
+		'xfs'     : 8 * 1024 ** 6,  # 8 EB in bytes
+		'reiserfs': 8 * 1024 ** 6,  # 8 EB in bytes
+		'jfs'     : 4 * 1024 ** 6,  # 4 EB in bytes
+		'ufs'     : 2 ** 32 - 1,  # 4 GB in bytes (with 32-bit limit)
+		'zfs'     : 16 * 1024 ** 6,  # 16 EB in bytes
+		'f2fs'    : 16 * 1024 ** 4,
+		'udf'     : 16 * 1024 ** 6,
+	}
+
+	partitions = psutil.disk_partitions()
 	sorted_partitions = sorted(partitions, key=lambda x: len(x.mountpoint),
-	                           reverse=True)
-	
+	                           reverse=True)  # !/usr/bin/python3
+
 	for part in sorted_partitions:
-		if  part.mountpoint in destination_path:
-			FsMaxFileSize=fs_max_file[part.fstype]
+		if part.mountpoint in consignment['dest_path']:
+			consignment['FsMaxFileSize'] = fs_max_file[part.fstype]
 			st = os.statvfs(part.mountpoint)
-			FsBlockSize=st.f_bsize
-			break
-	#DEBUGPRINT( f'type {part.fstype} {FsMaxFileSize=} {FsBlockSize=}')
-	return FsMaxFileSize,FsBlockSize
+			consignment['FsBlockSize'] = st.f_bsize
+			return
+	raise RuntimeError (f'target_fs_properties failed on "{consignment["dest_path"]}.')
 
-def coping_done(count):
-	global bad_file,DATA_END_MARKER
-	if not os.path.exists(bad_file):
-		#DEBUGPRINT (f'All {count} files are copied Bye.')
-		exit(0)
-	
-	print(f'{count} files with success copied .')
-	print(f'The files in "{bad_file}" failed.')
-	print('These files could not be copied,')
-	print('because of errors or filesystem limitations.')
-	print(f'You can retry this list on an other medium or filesystem.')
-	with open(bad_file,'a') as bad:
-		bad.write(DATA_END_MARKER+'\n')
-	exit(0)
-
-def read_ok_file()->int:
-	global CONT,WorkPath
-	
-	if not os.path.exists(ok_file):
-		return 0
-	# a file with the number of copied
-	# files exists read it
-	with open(ok_file,'r') as f:
-		count_copied=int(f.readline())
-		dst_path=f.readline()
-		dst_path=dst_path[:-1]
-		
-	if args.verbose:
-		print (f'{count_copied} files copied earlier.')
-	if CONT == WorkPath[:-1]:
-		#DEBUGPRINT(f'{WorkPath}')
-		WorkPath=dst_path
-	if args.verbose:
-		print (f'copy to "{WorkPath}"')
-	return count_copied
-
-def target_file_path(source_file,source_path_length):
-	global WorkPath
-	base_path = source_file[source_path_length:]
-	#file_name = os.path.join(WorkPath,base_path)
-	target_name= WorkPath + base_path
-	dest_dir = os.path.dirname(target_name)
-	#DEBUGPRINT(f'BK:S \n{WorkPath=}\n{base_path=}\n{target_name=}\n{dest_dir=}')
-	if not os.path.exists(dest_dir):
-		try:
-			os.makedirs(dest_dir, 0o755)
-		except IOError as e:
-			ErrorExit(e,f'os.makedirs("{dest_dir}", 0o755) FAILED')
-	return target_name,dest_dir
-
-def file_check_ok(src,l)->bool:
-	# if the destination of src exists and the
-	# sizes are the same it wil be ok and return is True
-	dst,_=target_file_path(src,l)
+def process_filelisting(consignment):
+	global verbose,eat
+	verbose    = [eat,print][consignment['verbose']]
+	listing    = InputFileIterator(consignment)
+	replicator = Replicator(consignment)
+	osmturbo   = OsmTurbo(consignment)
+	writable  = ''
+	if 'comment' in consignment:
+		writable = get_exiftool_writable_extensions()
+	bad_file   = consignment['bad_file']
 	try:
-		size_src=os.stat(src).st_size
-	except OSError as e:
-		print(f'{e.errno} "{e.strerror}"')
-		exit(e.errno)
-	try:
-		size_dst=os.stat(dst).st_size
-	except OSError as e:
-		if e.errno == 2: # No such file
-			return False
-		print (f'Can\'t stat "{dst}"')
-		print(f'{e.errno} "{e.strerror}"')
-		exit(e.errno)
-	if size_src == size_dst:
-		return True
-	os.remove(dst)
-	return False
-	
-def CopyTo():
-	global WorkPath,ok_file,bad_file,DATA_BEGIN_MARKER,DATA_END_MARKER,processed_file
-	global SourcePath,chunk_size
-	
-	#DEBUGPRINT(f'BK:4 {WorkPath=}')
-	count_copied= done = read_ok_file()
-	# read how many files are copied before
-	# determ the destination dir
-	#DEBUGPRINT(f'BK:4 {done=} "{WorkPath}"')
-	target_fs_properties(WorkPath)
-	#exit(0)
-	chunk_size=FsBlockSize
-	
-	while True:
-		startmark = input() # look where the list data starts
-		if startmark == DATA_BEGIN_MARKER:
-			break
-	
-	SourcePath = input()
-	#DEBUGPRINT(f'{source_path}')
-	cutlen=len(SourcePath) # length of the source path
-	
-	source_file=None # if the where files copied check if it went ok
-	
-	while done>0: # read over wath is finished
-		source_file=input()
-		done -= 1
-	#exit(0)
-	if source_file:
-		# is the last file copied before beter check on it
-		if  file_check_ok(source_file,cutlen):
-			# file exists and is the same size
-			# start with the next
-			source_file=None
-		
-	while True:
-		if source_file == None:
-			source_file = input()
-		if DATA_END_MARKER in source_file:
-			coping_done(count_copied)
-			break
-		dest_file,dest_dir = target_file_path(source_file,cutlen)
-		if args.verbose:
-			origin_basename = os.path.basename(source_file)
-			origin_dir = os.path.dirname(source_file)
-			target_dir= os.path.dirname(dest_file)
-			print(f'copy:"{origin_basename}"\nfrom:"{origin_dir}"\nto  :'
-				f'"{target_dir}"')
-			
-		if not os.path.exists(dest_file):
-			processed_file=dest_file # save for signal handler
-			start_time=time.time()
-			error = write_chunks_to_file(source_file, dest_file)
-			processed_file=None
-			if error:
-				BadFile(source_file,dest_file,error)
-			end_time=time.time()
-			if args.verbose:
-				print('File copied in: '+ time_delta_str(start_time,end_time) +
-			       f' files now copied: {count_copied+1}.\n')
+		if os.path.exists(bad_file):
+			consignment['bad_file_handle'] = open(bad_file,'wb')
 		else:
-			if args.verbose:print(f'Existed.')
-		count_copied+=1
-		with open(ok_file, 'w' ) as ok:
-			ok.write(f'{str(count_copied)}\n{WorkPath}\n')
-		source_file=None # clear to copy next
-	exit(0)
-	
+			consignment['bad_file_handle'] = open(bad_file,'ab')
+	except OSError as e:
+		exit (f'in process_filelisting.\nfile: "{bad_file}" {e}')
+
+	bad_file_handle = consignment['bad_file_handle']
+	atexit.register(close_bad,bad_file_handle)
+
+	def write_to_bad(mission):
+		line = mission["source_file_bytes"] + b' # ' + f'{mission["Error"]}'.encode('utf-8',errors='ignore') + b'\n'
+		bad_file_handle.write(line)
+		verbose(f'Bad file skipped: "{mission["Error"]}".')
+
+	#for src_full,source_tail_char_length in listing:
+	pathseeker = PathSeeker(consignment)
+
+	mission=None
+	for mission in listing.file_reaper():
+		#JDUMP(mission,"mission <- listing.file_reaper()",'298')
+		done=mission["completed"]
+		verbose(f'{"<"*20}  {"-"*20} -> {done} <- {"-"*20} {">"*20}')
+		verbose(f' origin: "{mission["source_file_bytes"].decode("utf-8",errors="ignore")}"')
+		mission["verbose"]       = consignment['verbose']
+		mission["dest_base_dir"] = consignment["dest_path"]
+		pathseeker.compose_path(mission)
+		#JDUMP(mission,"mission <- pathseeker.compose_path",305)
+		if 'Error' in mission:
+			write_to_bad(mission)
+			continue
+		mission["target_full_path"] = os.path.join(consignment["dest_path"] + mission["target_path"])
+		if 'dry_run' in consignment:
+			print(f'source: "{mission["source_path_char"]}"')
+			print(f'target: "{mission["target_full_path"]}"')
+			if 'store_labels' in consignment:
+				keys=[k for k in pathseeker.knowledege().keys()]
+				#DEBUGPRINT(f'{keys=}')
+				consignment['store_labels']=consignment['store_labels'].union(keys)
+			#JDUMP(mission,title='mission')
+			continue
+		replicator.check_destination(mission)
+		verbose(f'replica: "{mission["target_full_path"]}"')
+		listing.save_processing(mission,False)
+		succes=True
+		if 'shutil' in consignment:
+			succes =  replicator.shutil_copy(mission)
+		else:
+			succes = replicator.write_chunks_to_file(mission)
+
+		if 'Error' in mission:
+			write_to_bad(mission)
+			continue
+		if not succes: raise RuntimeError ('procces file listing got an error without an message.')
+		#DEBUG -------------------------------------------------
+		if 'comment' in mission and (mission["extension"] in writable):
+			DEBUGPRINT(f'{mission["comment"]}')
+			run_subprocess('exiftool',mission["target_full_path"],[f'-comment={mission["comment"]}'])
+
+		# if '(' in mission["target_full_path"] :
+		# 	raise RuntimeError ("Parentisis in file name")
+		filesize=str(Suffix(mission["FileSize"]))
+		verbose(f'Copied {filesize}')
+
+	if 'store_labels' in consignment:
+		for label in consignment['store_labels']:
+			print(f'{label}')
+
+	if args.gps_info:
+		listing.dump_info(args.gps_info)
+
+	if not mission:
+		raise RuntimeError ("Nothing Happened.")
+
+	print(f'Done copying {mission["completed"]} files')
+	ok = consignment['ok_file']
+	try:
+		os.remove(ok)
+		print(f'"{ok}" removed.')
+	except OSError as e:
+		print(f'Failed to remove "{ok}".')
+		print(f'{e}')
+
+def copy_random(consignment):
+	global verbose,eat
+	verbose    = [eat,print][consignment['verbose']]
+	listing    = InputFileIterator(consignment)
+	replicator = Replicator(consignment)
+	bad_file   = consignment['bad_file']
+
+	try:
+		if os.path.exists(bad_file):
+			consignment['bad_file_handle'] = open(bad_file,'wb')
+		else:
+			consignment['bad_file_handle'] = open(bad_file,'ab')
+	except OSError as e:
+		exit (f'in process_filelisting.\nfile: "{bad_file}" {e}')
+
+	bad_file_handle = consignment['bad_file_handle']
+	atexit.register(close_bad,bad_file_handle)
+
+	def write_to_bad(mission):
+		line = mission["source_file_bytes"] + b' # ' + f'{mission["Error"]}'.encode('utf-8',errors='ignore') + b'\n'
+		bad_file_handle.write(line)
+		verbose(f'Bad file skipped: "{mission["Error"]}".')
+
+	#for src_full,source_tail_char_length in listing:
+	mission=None
+	for mission in listing.file_reaper():
+		#JDUMP(mission,"mission <- listing.file_reaper()",'298')
+		done=mission["completed"]
+		verbose(f'{"<"*20}  {"-"*20} -> {done} <- {"-"*20} {">"*20}')
+		verbose(f' origin: "{mission["source_file_bytes"].decode("utf-8",errors="ignore")}"')
+		mission["verbose"]       = consignment['verbose']
+		mission["dest_base_dir"] = consignment["dest_path"]
+		if 'Error' in mission:
+			write_to_bad(mission)
+			continue
+		mission["target_full_path"] = consignment["dest_path"] + '/' + os.path.basename(mission["source_tail_char"])
+		replicator.check_destination(mission)
+		verbose(f'replica: "{mission["target_full_path"]}"')
+		listing.save_processing(mission,False)
+		succes=True
+		if 'shutil' in consignment:
+			succes =  replicator.shutil_copy(mission)
+		else:
+			succes = replicator.write_chunks_to_file(mission)
+
+		if 'Error' in mission:
+			write_to_bad(mission)
+			continue
+		if not succes: raise RuntimeError ('procces file listing got an error without an message.')
+		#DEBUG -------------------------------------------------
+		filesize=str(Suffix(mission["FileSize"]))
+		verbose(f'Copied {filesize}')
+	print(f'Done copying {mission["completed"]+1} files')
+
+		
+def track_and_trace():
+	if args.post_it:
+		return os.path.join(os.path.expanduser('~'),args.post_it)
+	return os.path.join(os.path.expanduser('~'),'listcopy')
+
 def main() -> None:
-	global WorkPath
-	if args.Path:
-		if args.Path[-1:]=='/':
-			WorkPath=args.Path
-		else:
-			WorkPath=args.Path+'/'
-	
+	consignment={}
+
 	if args.usage:
-		HowTo()
+		print(syntax_text)
 		exit(0)
+		
+	if args.json:
+		if not args.substitute:
+			print(f'Need a substitute string or file to work on.')
+			print(f'example: listcopy --substitute "file or expression" --json "file path"')
+			exit(1)
+		ps=PathSeeker(args.substitute)
+		ps.root().save_tag_list(args.json)
+		exit(0)
+		
+	if args.substitute:
+		DEBUGPRINT(f'{args.substitute=}')
+		if args.substitute.upper() == 'HELP':
+			print(syntax_text)
+			exit(0)
+		consignment['substitution']=args.substitute
+	else:
+		consignment['substitution']=None
+	
 	if args.todo:
 		list_to_do()
 		exit(0)
-	if args.source :
-		count=list_sources()
-		#DEBUGPRINT(f'Files counted {count}', file=sys.stderr)
+		
+	if (not args.destination) or (not args.input):
+		parser.print_help()
+		print(f'Need at least an input file and a destination!')
 		exit(0)
-	
-	if WorkPath:
-		CopyTo()
+
+	consignment['verbose']   = args.verbose
+	dest_path=os.path.expanduser(args.destination)
+	consignment['dest_path'] = no_end_slash(dest_path)
+
+	consignment['language']  = args.language
+	consignment['input']     = args.input
+
+	good_bad_stem=os.path.expanduser(args.post_it)
+	consignment['ok_file']  = good_bad_stem + '.ok'
+	consignment['bad_file'] = good_bad_stem + '.bad'
+
+	if args.gps_info:
+		consignment['gps_info'] = args.gps_info
+	else:
+		consignment['gps_info'] = os.path.expanduser('~/.osm.data')
+	consignment['current_file'] = None
+
+	if args.dry_run : consignment['dry_run']       = True
+	if args.throttle: consignment['throttle']      = args.throttle
+	if args.shutil  : consignment['shutil']        = args.shutil
+	if args.labels  : consignment['store_labels']  = set()
+	if args.comment : consignment['comment']       = True
+	target_fs_properties(consignment)
+	if args.random_pick:
+		consignment['random']=int(args.random_pick)
+		copy_random(consignment)
 		exit(0)
-	
-	parser.print_help()
+	process_filelisting(consignment)
 	
 if __name__ == '__main__':
-	# #DEBUGPRINT(f'{args.chunk}')
-	# if args.chunk:
-	# 	#DEBUGPRINT(f'{args.chunk}')
-	# 	exit (0)
+	DEBUGPRINT(f'\n\n{args=}')
+	print('_'*80)
 	main()

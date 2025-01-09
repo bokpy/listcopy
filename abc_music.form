@@ -1,0 +1,140 @@
+ISO:/literal{"fideo/kompaktdisk"}
+    #( label{test[1:4]:4.2f,234} )
+    ( / label{VolumeName}|
+     literal{""}
+    )
+    (
+    / subdir{-2} literal{" jier "} label{year} |
+    / subdir{-2} |
+    / literal{"jier "} label{year}  |
+    literal{""}
+    )
+    / name:subdir{-1}
+    ;
+
+# google takeout handling
+
+JSON:/literal{"json"}/name:subdir{0};
+
+image,PSD:/"ôfbyldings"/
+
+    (
+     label{xf_year}_label{xf_monthstr}  / label{addr:city}_label{addr:street}_label{addr:housenumber} |
+     label{xf_year}_label{xf_monthstr}  / label{addr:city}_label{addr:street} |
+     label{xf_year} / label{addr:city}_label{addr:street} |
+     label{addr:city}_label{addr:street} _label{addr:housenumber} |
+     label{addr:city}_label{addr:street}  |
+     label{xf_year}_label{xf_monthstr} |
+     label{xf_year} |
+     literal{"no year no address"}
+    )
+    (
+    / label{xf_make} " model " label{xf_Model}
+    | / label{xf_make}
+    | / label{xf_model}
+    | literal{""}
+    )
+(
+  / meaning{subdir,<-,0.70}
+| / meaning{subdir,->,0.9}
+| / meaning{second} / meaning{first}
+| / subdir{-1}
+| / meaning{first}
+| / label{shortname}
+| / literal{"moniker"}
+)
+name:literal{""};
+
+###################################################################################################
+#                                                                                                 #
+# lûd en ferskes <--> lûd en ferskes <--> lûd en ferskes <--> lûd en ferskes <--> lûd en ferskes  #
+#                                                                                                 #
+###################################################################################################
+
+audio:/literal{"audio"} /
+     (
+      label{mb_artist,95[:1]} / label{mb_artist,95} | # all artists that score the percentage of the artist on top
+      label{xf_AlbumArtist[:1]}  / label{xf_AlbumArtist} |
+      label{mb_performer[:1]}  / label{mb_performer} |
+      label{xf_Composer[:1]} / label{xf_Composer}  |
+      label{xf_Author[:1]}  / label{xf_Author} |
+      label{mb_name,95[:1]}  / label{mb_name,95} |
+      "@" /
+     )
+     (
+     / label{xf_AlbumTitle} |
+     / label{mb_album,97}  |
+     / meaning{subdir,->,0.7} |
+     / label{mb_cover,97}  |
+     / label{xf_Publisher} |
+      ""
+     )
+     /
+     (
+     "-" label{xf_TrackNumber:02} "- " |
+     "-" label{mb_position:02} "- " |
+     ""
+     )
+     (
+     label{mb_title,97} |
+     meaning{subdir,<-,0.7} |
+     label{xf_title}   |
+     meaning{filename,0.6} |
+     literal{"Unidentified"} _label{xf_durationstr}
+     # meaning{xf_top,0.6} |
+     # meaning{second} _ meaning{first} |
+     #meaning{first}   |
+     #label{shortname} |
+     literal{"Unidentified"}
+     )
+     name:literal{""}
+     ;
+
+######################################################################################################
+#                                                                                                    #
+#  ---<  video >-----<  video >-----<  video >-----<  video >-----<  video >-----<  video >--  #
+#                                                                                                    #
+######################################################################################################
+
+video,MP4:/literal{filmkes}/
+    (
+       label{xf_year} _ label{xf_monthstr}
+    | label{xf_Year}
+    | replace{"test"}
+    | literal{""}
+    )
+    (
+      / label{xf_make} " " label{xf_Model}
+    | / label{xf_make}
+    | / label{xf_model}
+    | literal{""}
+    )
+    (
+    / meaning{second}
+    | literal{""}
+    )
+    /
+(
+  meaning{filename,0.5}
+| meaning{top,0.54}
+| meaning{best}
+| subdir{-2}
+| label{FileName}
+| " video "
+)
+(
+_label{xf_durationstr}
+| literal{""}
+)
+name:literal{""};
+
+text:/literal{"skrift"}/
+(  label{xf_year} _ label{xf_mountstr} |
+   label{xf_year} |
+   literal{""}
+)
+name:label{FileName}
+;
+
+default:/literal{"undefined default"}/name:subdir{0};
+
